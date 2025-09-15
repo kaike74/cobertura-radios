@@ -39,7 +39,7 @@ exports.handler = async (event, context) => {
 
     console.log('🔍 Buscando rádio no Notion:', id);
 
-    // Buscar dados da página no Notion (MESMO CÓDIGO da distribuição)
+    // Buscar dados da página no Notion
     const response = await fetch(`https://api.notion.com/v1/pages/${id}`, {
       headers: {
         'Authorization': `Bearer ${notionToken}`,
@@ -79,10 +79,10 @@ exports.handler = async (event, context) => {
       propertiesKeys: Object.keys(notionData.properties || {})
     });
 
-    // Mapear propriedades do Notion (SEGUINDO PADRÃO da distribuição)
+    // Mapear propriedades do Notion
     const properties = notionData.properties || {};
     
-    // Função helper para extrair valores (MESMA LÓGICA da distribuição)
+    // Função helper para extrair valores
     const extractValue = (prop, defaultValue = '', propName = '') => {
       if (!prop) {
         console.log(`❌ Propriedade "${propName}" não encontrada`);
@@ -106,31 +106,36 @@ exports.handler = async (event, context) => {
           return prop.multi_select?.map(item => item.name).join(',') || defaultValue;
         case 'select':
           return prop.select?.name || defaultValue;
+        case 'url':
+          return prop.url || defaultValue;
         default:
           console.log(`⚠️ Tipo de propriedade não reconhecido para "${propName}": ${prop.type}`);
           return defaultValue;
       }
     };
 
-    // MAPEAR DADOS ESPECÍFICOS PARA COBERTURA
+    // MAPEAR DADOS BÁSICOS
     const radioData = {
       // Informações básicas
       name: extractValue(properties['Emissora'] || properties['emissora'], 'Rádio Desconhecida', 'Emissora'),
       dial: extractValue(properties['Dial'] || properties['dial'], 'N/A', 'Dial'),
       
-      // Coordenadas (CRÍTICO para o mapa)
+      // Coordenadas (fallback caso KML falhe)
       latitude: parseFloat(extractValue(properties['Latitude'] || properties['latitude'], -23.5505, 'Latitude')),
       longitude: parseFloat(extractValue(properties['Longitude'] || properties['longitude'], -46.6333, 'Longitude')),
       
-      // Raio de cobertura (converter para metros se necessário)
+      // Raio de cobertura (fallback)
       radius: parseFloat(extractValue(properties['Raio'] || properties['raio'] || properties['Alcance'], 50, 'Raio')) * 1000,
+      
+      // NOVO: URL do KML
+      kmlUrl: extractValue(properties['KML'] || properties['kml'], '', 'KML'),
       
       // Localização
       region: extractValue(properties['Região'] || properties['regiao'], 'N/A', 'Região'),
       uf: extractValue(properties['UF'] || properties['uf'], 'N/A', 'UF'),
       praca: extractValue(properties['Praça'] || properties['praca'], 'N/A', 'Praça'),
       
-      // Técnicas (sem classe)
+      // Técnicas
       universo: parseInt(extractValue(properties['Universo'] || properties['universo'], 0, 'Universo')),
       pmm: parseInt(extractValue(properties['PMM'] || properties['pmm'], 1000, 'PMM')),
       
@@ -143,7 +148,33 @@ exports.handler = async (event, context) => {
       lastUpdate: new Date().toISOString()
     };
 
-    // BUSCAR CIDADES DE FONTES ALTERNATIVAS
+    // NOVO: PROCESSAR KML SE DISPONÍVEL
+    if (radioData.kmlUrl) {
+      console.log('🗺️ Processando KML:', radioData.kmlUrl);
+      try {
+        const kmlData = await processKML(radioData.kmlUrl);
+        if (kmlData.coordinates && kmlData.coordinates.length > 0) {
+          radioData.kmlCoordinates = kmlData.coordinates;
+          radioData.kmlBounds = kmlData.bounds;
+          radioData.coverageType = 'kml';
+          console.log('✅ KML processado com sucesso:', {
+            coordCount: kmlData.coordinates.length,
+            bounds: kmlData.bounds
+          });
+        } else {
+          console.log('⚠️ KML não contém coordenadas válidas, usando círculo padrão');
+          radioData.coverageType = 'circle';
+        }
+      } catch (error) {
+        console.error('❌ Erro ao processar KML:', error);
+        radioData.coverageType = 'circle';
+      }
+    } else {
+      console.log('⚠️ Nenhuma URL KML fornecida, usando círculo padrão');
+      radioData.coverageType = 'circle';
+    }
+
+    // BUSCAR CIDADES
     radioData.cidades = await fetchCitiesFromMultipleSources(radioData, notionToken);
 
     // Validações básicas
@@ -162,7 +193,8 @@ exports.handler = async (event, context) => {
       name: radioData.name,
       dial: radioData.dial,
       coordinates: `${radioData.latitude}, ${radioData.longitude}`,
-      radius: `${radioData.radius / 1000}km`,
+      coverageType: radioData.coverageType,
+      kmlCoordinates: radioData.kmlCoordinates ? radioData.kmlCoordinates.length : 0,
       cidadesCount: radioData.cidades.length
     });
 
@@ -186,11 +218,108 @@ exports.handler = async (event, context) => {
   }
 };
 
-// NOVA FUNÇÃO: Buscar cidades de múltiplas fontes
+// NOVA FUNÇÃO: Processar KML do Google Drive
+async function processKML(driveUrl) {
+  try {
+    console.log('🔄 Convertendo URL do Google Drive:', driveUrl);
+    
+    // Converter URL do Google Drive para download direto
+    const directUrl = convertGoogleDriveUrl(driveUrl);
+    console.log('🔗 URL direta:', directUrl);
+    
+    // Baixar o KML
+    const response = await fetch(directUrl);
+    if (!response.ok) {
+      throw new Error(`Erro ao baixar KML: ${response.status}`);
+    }
+    
+    const kmlText = await response.text();
+    console.log('📄 KML baixado, tamanho:', kmlText.length);
+    
+    // Parsear coordenadas do KML
+    return parseKMLCoordinates(kmlText);
+    
+  } catch (error) {
+    console.error('❌ Erro ao processar KML:', error);
+    throw error;
+  }
+}
+
+// Converter URL do Google Drive para download direto
+function convertGoogleDriveUrl(url) {
+  // Extrair ID do arquivo da URL
+  const fileIdMatch = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
+  if (!fileIdMatch) {
+    throw new Error('URL do Google Drive inválida');
+  }
+  
+  const fileId = fileIdMatch[1];
+  return `https://drive.google.com/uc?export=download&id=${fileId}`;
+}
+
+// Parsear coordenadas do KML
+function parseKMLCoordinates(kmlText) {
+  const coordinates = [];
+  let minLat = Infinity, maxLat = -Infinity;
+  let minLng = Infinity, maxLng = -Infinity;
+  
+  // Regex para encontrar coordenadas no KML
+  const coordRegex = /<coordinates[^>]*>([\s\S]*?)<\/coordinates>/gi;
+  let match;
+  
+  while ((match = coordRegex.exec(kmlText)) !== null) {
+    const coordText = match[1].trim();
+    console.log('🎯 Coordenadas encontradas:', coordText.substring(0, 100) + '...');
+    
+    // Parsear coordenadas (formato: lng,lat,alt lng,lat,alt ...)
+    const coordPairs = coordText.split(/\s+/).filter(pair => pair.trim());
+    
+    const polygonCoords = [];
+    
+    for (const pair of coordPairs) {
+      const parts = pair.split(',');
+      if (parts.length >= 2) {
+        const lng = parseFloat(parts[0]);
+        const lat = parseFloat(parts[1]);
+        
+        if (!isNaN(lat) && !isNaN(lng)) {
+          polygonCoords.push([lat, lng]); // Leaflet usa [lat, lng]
+          
+          // Atualizar bounds
+          minLat = Math.min(minLat, lat);
+          maxLat = Math.max(maxLat, lat);
+          minLng = Math.min(minLng, lng);
+          maxLng = Math.max(maxLng, lng);
+        }
+      }
+    }
+    
+    if (polygonCoords.length > 0) {
+      coordinates.push(polygonCoords);
+    }
+  }
+  
+  console.log('📊 Parsing concluído:', {
+    polygonCount: coordinates.length,
+    totalPoints: coordinates.reduce((sum, poly) => sum + poly.length, 0)
+  });
+  
+  return {
+    coordinates,
+    bounds: coordinates.length > 0 ? {
+      north: maxLat,
+      south: minLat,
+      east: maxLng,
+      west: minLng
+    } : null
+  };
+}
+
+// FUNÇÃO EXISTENTE: Buscar cidades de múltiplas fontes
 async function fetchCitiesFromMultipleSources(radioData, notionToken) {
   console.log('🔍 Buscando cidades de múltiplas fontes...');
   
-  // Estratégia 1: Tentar buscar do campo original de cobertura (se ainda existir)
+  // Estratégia 1: Tentar buscar do campo original de cobertura
   try {
     const cities = await tryFetchFromNotionCoverageField(radioData.notionId, notionToken);
     if (cities && cities.length > 0) {
@@ -208,10 +337,9 @@ async function fetchCitiesFromMultipleSources(radioData, notionToken) {
   return fallbackCities;
 }
 
-// Tentar buscar do campo Cobertura original (pode ter dados antigos)
+// Tentar buscar do campo Cobertura original
 async function tryFetchFromNotionCoverageField(pageId, token) {
   try {
-    // Buscar novamente a página para tentar pegar campo Cobertura
     const response = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -227,14 +355,12 @@ async function tryFetchFromNotionCoverageField(pageId, token) {
       if (coberturaField?.rich_text?.[0]?.text?.content) {
         const fullText = coberturaField.rich_text[0].text.content;
         
-        // Se não é um link, tentar extrair cidades
         if (!fullText.includes('Ver mapa de cobertura') && !fullText.includes('http')) {
           const cities = fullText
             .split(/[,\n;]/)
             .map(city => city.trim())
             .filter(city => city.length > 0)
             .map(city => {
-              // Garantir formato "Cidade - UF"
               if (!city.includes(' - ')) {
                 return `${city} - ${data.properties?.UF?.rich_text?.[0]?.text?.content || 'BR'}`;
               }
@@ -254,92 +380,60 @@ async function tryFetchFromNotionCoverageField(pageId, token) {
   return null;
 }
 
-// Gerar cidades baseado na região/UF (fallback robusto)
+// Gerar cidades baseado na região/UF
 function generateCitiesByRegion(region, uf, praca) {
   const citiesByRegion = {
     'Sul': {
       'SC': [
         'Florianópolis - SC', 'São José - SC', 'Palhoça - SC', 'Biguaçu - SC',
         'Blumenau - SC', 'Joinville - SC', 'Chapecó - SC', 'Criciúma - SC',
-        'Itajaí - SC', 'Lages - SC', 'Balneário Camboriú - SC', 'Tubarão - SC',
-        'Santo Amaro da Imperatriz - SC', 'Governador Celso Ramos - SC',
-        'Antônio Carlos - SC', 'Águas Mornas - SC', 'São Pedro de Alcântara - SC'
+        'Itajaí - SC', 'Lages - SC', 'Balneário Camboriú - SC', 'Tubarão - SC'
       ],
       'RS': [
         'Porto Alegre - RS', 'Caxias do Sul - RS', 'Pelotas - RS', 'Santa Maria - RS',
-        'Gravataí - RS', 'Viamão - RS', 'Novo Hamburgo - RS', 'São Leopoldo - RS',
-        'Rio Grande - RS', 'Alvorada - RS', 'Passo Fundo - RS', 'Sapucaia do Sul - RS'
+        'Gravataí - RS', 'Viamão - RS', 'Novo Hamburgo - RS', 'São Leopoldo - RS'
       ],
       'PR': [
         'Curitiba - PR', 'Londrina - PR', 'Maringá - PR', 'Foz do Iguaçu - PR',
-        'São José dos Pinhais - PR', 'Cascavel - PR', 'Guarapuava - PR', 'Paranaguá - PR'
+        'São José dos Pinhais - PR', 'Cascavel - PR', 'Guarapuava - PR'
       ]
     },
     'Sudeste': {
       'SP': [
         'São Paulo - SP', 'Guarulhos - SP', 'Campinas - SP', 'São Bernardo do Campo - SP',
-        'Santo André - SP', 'Osasco - SP', 'São José dos Campos - SP', 'Ribeirão Preto - SP',
-        'Santos - SP', 'Mauá - SP', 'São José do Rio Preto - SP', 'Diadema - SP'
+        'Santo André - SP', 'Osasco - SP', 'São José dos Campos - SP', 'Ribeirão Preto - SP'
       ],
       'RJ': [
         'Rio de Janeiro - RJ', 'São Gonçalo - RJ', 'Duque de Caxias - RJ', 'Nova Iguaçu - RJ',
-        'Niterói - RJ', 'Campos dos Goytacazes - RJ', 'Petrópolis - RJ', 'Volta Redonda - RJ'
+        'Niterói - RJ', 'Campos dos Goytacazes - RJ', 'Petrópolis - RJ'
       ],
       'MG': [
         'Belo Horizonte - MG', 'Uberlândia - MG', 'Contagem - MG', 'Juiz de Fora - MG',
-        'Betim - MG', 'Montes Claros - MG', 'Ribeirão das Neves - MG', 'Uberaba - MG'
-      ],
-      'ES': [
-        'Vitória - ES', 'Vila Velha - ES', 'Cariacica - ES', 'Serra - ES',
-        'Cachoeiro de Itapemirim - ES', 'Linhares - ES', 'São Mateus - ES'
+        'Betim - MG', 'Montes Claros - MG', 'Ribeirão das Neves - MG'
       ]
     },
     'Nordeste': {
       'PE': [
-        'Recife - PE', 'Jaboatão dos Guararapes - PE', 'Olinda - PE', 'Caruaru - PE',
-        'Petrolina - PE', 'Paulista - PE', 'Cabo de Santo Agostinho - PE', 'Camaragibe - PE'
+        'Recife - PE', 'Jaboatão dos Guararapes - PE', 'Olinda - PE', 'Caruaru - PE'
       ],
       'BA': [
-        'Salvador - BA', 'Feira de Santana - BA', 'Vitória da Conquista - BA', 'Camaçari - BA',
-        'Juazeiro - BA', 'Ilhéus - BA', 'Itabuna - BA', 'Lauro de Freitas - BA'
+        'Salvador - BA', 'Feira de Santana - BA', 'Vitória da Conquista - BA', 'Camaçari - BA'
       ],
       'CE': [
-        'Fortaleza - CE', 'Caucaia - CE', 'Juazeiro do Norte - CE', 'Maracanaú - CE',
-        'Sobral - CE', 'Crato - CE', 'Itapipoca - CE', 'Maranguape - CE'
-      ]
-    },
-    'Norte': {
-      'AM': [
-        'Manaus - AM', 'Parintins - AM', 'Itacoatiara - AM', 'Manacapuru - AM'
-      ],
-      'PA': [
-        'Belém - PA', 'Ananindeua - PA', 'Santarém - PA', 'Marabá - PA'
-      ]
-    },
-    'Centro-Oeste': {
-      'DF': [
-        'Brasília - DF', 'Gama - DF', 'Taguatinga - DF', 'Ceilândia - DF'
-      ],
-      'GO': [
-        'Goiânia - GO', 'Aparecida de Goiânia - GO', 'Anápolis - GO', 'Rio Verde - GO'
+        'Fortaleza - CE', 'Caucaia - CE', 'Juazeiro do Norte - CE', 'Maracanaú - CE'
       ]
     }
   };
   
-  // Buscar cidades da região/UF
   const regionCities = citiesByRegion[region];
   if (regionCities && regionCities[uf]) {
     let cities = [...regionCities[uf]];
-    
-    // Garantir que a praça principal esteja na lista
     const pracaFormatted = `${praca} - ${uf}`;
     if (!cities.includes(pracaFormatted)) {
       cities.unshift(pracaFormatted);
     }
-    
     return cities;
   }
   
-  // Fallback final: apenas a praça principal
   return [`${praca} - ${uf}`];
 }
