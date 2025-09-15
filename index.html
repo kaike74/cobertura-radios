@@ -50,7 +50,17 @@
             opacity: 0.9;
         }
         
-        /* CARDS DE INFORMAÇÃO - AGORA ACIMA DO MAPA */
+        .coverage-type-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            margin-left: 8px;
+            font-weight: 600;
+        }
+        
+        /* CARDS DE INFORMAÇÃO */
         .info-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -97,7 +107,7 @@
             color: #1e293b;
         }
         
-        /* MAPA - AGORA DEPOIS DOS CARDS */
+        /* MAPA */
         .map-container {
             background: white;
             border-radius: 12px;
@@ -109,10 +119,10 @@
         #map {
             height: 500px;
             width: 100%;
-            min-height: 500px; /* Força altura mínima */
+            min-height: 500px;
         }
         
-        /* CIDADES - AGORA POR ÚLTIMO */
+        /* CIDADES */
         .cidades-container {
             background: white;
             border-radius: 12px;
@@ -274,7 +284,10 @@
         <!-- HEADER -->
         <div class="header">
             <h1 class="header-title" id="radio-name">📻 Carregando Rádio...</h1>
-            <div class="header-subtitle" id="radio-info">Mapa de Cobertura Interativo</div>
+            <div class="header-subtitle" id="radio-info">
+                Mapa de Cobertura Interativo
+                <span class="coverage-type-badge" id="coverage-type">🔄 Carregando...</span>
+            </div>
         </div>
         
         <!-- LOADING -->
@@ -286,17 +299,17 @@
         <!-- ERROR -->
         <div id="error" class="error" style="display: none;"></div>
         
-        <!-- INFORMAÇÕES - AGORA ANTES DO MAPA -->
+        <!-- INFORMAÇÕES -->
         <div id="info-section" class="info-grid" style="display: none;">
             <!-- Cards serão gerados dinamicamente -->
         </div>
         
-        <!-- MAPA - AGORA DEPOIS DOS CARDS -->
+        <!-- MAPA -->
         <div id="map-section" class="map-container" style="display: none;">
             <div id="map"></div>
         </div>
         
-        <!-- CIDADES - POR ÚLTIMO -->
+        <!-- CIDADES -->
         <div id="cidades-section" class="cidades-container" style="display: none;">
             <div class="cidades-header">
                 <h2 class="cidades-title">
@@ -328,7 +341,7 @@
         let map;
         let radioData = {};
         let radioMarker;
-        let coverageCircle;
+        let coverageLayer; // Polígono ou círculo
         let allCities = [];
         let filteredCities = [];
         
@@ -337,9 +350,9 @@
             console.log('🚀 Iniciando sistema de cobertura...');
             try {
                 await loadRadioData();
-                renderInfo(); // PRIMEIRO: Cards de informação
-                initializeMap(); // SEGUNDO: Mapa
-                renderCidades(); // TERCEIRO: Cidades
+                renderInfo();
+                initializeMap();
+                renderCidades();
                 hideLoading();
                 console.log('✅ Sistema carregado com sucesso!');
             } catch (error) {
@@ -348,7 +361,7 @@
             }
         });
         
-        // CARREGAR DADOS DO NOTION + CIDADES
+        // CARREGAR DADOS DO NOTION
         async function loadRadioData() {
             const params = new URLSearchParams(window.location.search);
             const notionId = params.get('id');
@@ -357,13 +370,6 @@
                 console.log('📡 Carregando do Notion:', notionId);
                 try {
                     radioData = await fetchRadioFromNotion(notionId);
-                    
-                    // CORREÇÃO: Tentar buscar cidades de múltiplas fontes
-                    if (!radioData.cidades || radioData.cidades.length === 0) {
-                        console.log('🔍 Tentando buscar cidades de fontes alternativas...');
-                        radioData.cidades = await fetchCitiesFromAlternativeSources(radioData);
-                    }
-                    
                     console.log('✅ Dados carregados do Notion:', radioData);
                 } catch (error) {
                     console.error('❌ Erro ao carregar do Notion:', error);
@@ -371,7 +377,7 @@
                 }
             } else {
                 // Dados de exemplo para desenvolvimento/teste
-                console.log('🎭 Usando dados de exemplo (nenhum ID válido fornecido)');
+                console.log('🎭 Usando dados de exemplo');
                 radioData = {
                     name: 'RÁDIO EXEMPLO FM',
                     dial: '107.3',
@@ -384,17 +390,9 @@
                     universo: 1061390,
                     pmm: 12886,
                     imageUrl: 'https://via.placeholder.com/100x75/dc2626/white?text=107.3',
+                    coverageType: 'circle',
                     cidades: [
-                        'Florianópolis - SC',
-                        'São José - SC', 
-                        'Palhoça - SC',
-                        'Biguaçu - SC',
-                        'Santo Amaro da Imperatriz - SC',
-                        'Governador Celso Ramos - SC',
-                        'Antônio Carlos - SC',
-                        'Águas Mornas - SC',
-                        'São Pedro de Alcântara - SC',
-                        'Angelina - SC'
+                        'Florianópolis - SC', 'São José - SC', 'Palhoça - SC', 'Biguaçu - SC'
                     ],
                     source: 'example'
                 };
@@ -413,59 +411,14 @@
             return await response.json();
         }
         
-        // NOVA FUNÇÃO: Buscar cidades de fontes alternativas
-        async function fetchCitiesFromAlternativeSources(radioData) {
-            // Estratégia: Gerar lista baseada na região/UF
-            const citiesByRegion = {
-                'Sul': {
-                    'SC': [
-                        'Florianópolis - SC', 'São José - SC', 'Palhoça - SC', 'Biguaçu - SC',
-                        'Blumenau - SC', 'Joinville - SC', 'Chapecó - SC', 'Criciúma - SC'
-                    ],
-                    'RS': [
-                        'Porto Alegre - RS', 'Caxias do Sul - RS', 'Pelotas - RS', 'Santa Maria - RS'
-                    ],
-                    'PR': [
-                        'Curitiba - PR', 'Londrina - PR', 'Maringá - PR', 'Foz do Iguaçu - PR'
-                    ]
-                },
-                'Sudeste': {
-                    'SP': [
-                        'São Paulo - SP', 'Guarulhos - SP', 'Campinas - SP', 'Santos - SP'
-                    ],
-                    'RJ': [
-                        'Rio de Janeiro - RJ', 'Niterói - RJ', 'Nova Iguaçu - RJ'
-                    ]
-                },
-                'Nordeste': {
-                    'PE': [
-                        'Recife - PE', 'Olinda - PE', 'Jaboatão dos Guararapes - PE'
-                    ],
-                    'BA': [
-                        'Salvador - BA', 'Feira de Santana - BA', 'Vitória da Conquista - BA'
-                    ]
-                }
-            };
-            
-            const regionCities = citiesByRegion[radioData.region];
-            if (regionCities && regionCities[radioData.uf]) {
-                console.log('🏙️ Usando cidades da região/UF como fallback');
-                return regionCities[radioData.uf];
-            }
-            
-            // Fallback final: apenas a praça principal
-            return [`${radioData.praca} - ${radioData.uf}`];
-        }
-        
-        // INICIALIZAR MAPA - COM CORREÇÃO PARA MAPA CINZA
+        // INICIALIZAR MAPA
         function initializeMap() {
             console.log('🗺️ Inicializando mapa...');
             
-            // Aguardar um frame para garantir que o container esteja renderizado
             setTimeout(() => {
                 try {
                     // Criar mapa
-                    map = L.map('map').setView([radioData.latitude, radioData.longitude], 10);
+                    map = L.map('map');
                     
                     // Adicionar tiles do OpenStreetMap
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -473,7 +426,7 @@
                         maxZoom: 18
                     }).addTo(map);
                     
-                    // CORREÇÃO CRÍTICA: Forçar recalculo do tamanho do mapa
+                    // Forçar recalculo do tamanho do mapa
                     setTimeout(() => {
                         map.invalidateSize();
                         console.log('🔧 Mapa redimensionado');
@@ -482,10 +435,10 @@
                     // Adicionar marker da rádio
                     addRadioMarker();
                     
-                    // Adicionar círculo de cobertura
-                    addCoverageCircle();
+                    // Adicionar cobertura (KML ou círculo)
+                    addCoverage();
                     
-                    // Ajustar zoom para mostrar toda a cobertura
+                    // Ajustar zoom
                     fitMapToCoverage();
                     
                 } catch (error) {
@@ -496,7 +449,6 @@
         }
         
         function addRadioMarker() {
-            // Criar ícone personalizado com fallback melhorado
             const radioIcon = L.divIcon({
                 html: `
                     <div style="
@@ -519,63 +471,138 @@
                 iconAnchor: [20, 20]
             });
             
-            // Criar popup com imagem melhorada
             const popupContent = `
                 <div class="radio-popup">
                     <img src="${radioData.imageUrl}" 
                          alt="${radioData.name}" 
                          onerror="this.src='https://via.placeholder.com/80x60/dc2626/white?text=${encodeURIComponent(radioData.dial || 'FM')}'"
-                         onload="console.log('✅ Imagem carregada')"
                     >
                     <h3>${radioData.name}</h3>
                     <p><strong>${radioData.dial}</strong></p>
                     <p>${radioData.praca} - ${radioData.uf}</p>
-                    <p>Alcance: ${(radioData.radius / 1000).toFixed(0)} km</p>
+                    <p>Tipo: ${radioData.coverageType === 'kml' ? 'Polígono KML' : 'Círculo'}</p>
                 </div>
             `;
             
-            // Adicionar marker
             radioMarker = L.marker([radioData.latitude, radioData.longitude], { icon: radioIcon })
                 .bindPopup(popupContent)
                 .addTo(map);
         }
         
+        // NOVA FUNÇÃO: Adicionar cobertura (KML ou círculo)
+        function addCoverage() {
+            console.log('🎯 Adicionando cobertura, tipo:', radioData.coverageType);
+            
+            if (radioData.coverageType === 'kml' && radioData.kmlCoordinates) {
+                // Usar polígonos do KML
+                addKMLPolygons();
+            } else {
+                // Fallback: usar círculo tradicional
+                addCoverageCircle();
+            }
+        }
+        
+        // Adicionar polígonos do KML
+        function addKMLPolygons() {
+            console.log('🗺️ Adicionando polígonos KML:', radioData.kmlCoordinates.length);
+            
+            // Criar grupo de camadas
+            const kmlGroup = L.layerGroup();
+            
+            for (const polygon of radioData.kmlCoordinates) {
+                if (polygon.length > 2) { // Mínimo 3 pontos para um polígono
+                    const leafletPolygon = L.polygon(polygon, {
+                        color: '#dc2626',
+                        fillColor: '#dc2626',
+                        fillOpacity: 0.15,
+                        weight: 2,
+                        opacity: 0.8
+                    });
+                    
+                    leafletPolygon.bindPopup(`
+                        <div style="text-align: center;">
+                            <h4>Área de Cobertura KML</h4>
+                            <p>Polígono: <strong>${polygon.length} pontos</strong></p>
+                            <p>Fonte: <strong>Arquivo KML</strong></p>
+                        </div>
+                    `);
+                    
+                    kmlGroup.addLayer(leafletPolygon);
+                }
+            }
+            
+            coverageLayer = kmlGroup;
+            coverageLayer.addTo(map);
+            
+            console.log('✅ Polígonos KML adicionados');
+        }
+        
+        // Adicionar círculo tradicional (fallback)
         function addCoverageCircle() {
-            coverageCircle = L.circle([radioData.latitude, radioData.longitude], {
+            console.log('⭕ Adicionando círculo de cobertura:', radioData.radius / 1000, 'km');
+            
+            coverageLayer = L.circle([radioData.latitude, radioData.longitude], {
                 color: '#dc2626',
                 fillColor: '#dc2626',
                 fillOpacity: 0.1,
                 radius: radioData.radius,
                 weight: 2
-            }).addTo(map);
+            });
             
-            // Popup do círculo
-            coverageCircle.bindPopup(`
+            coverageLayer.bindPopup(`
                 <div style="text-align: center;">
                     <h4>Área de Cobertura</h4>
                     <p>Raio: <strong>${(radioData.radius / 1000).toFixed(0)} km</strong></p>
                     <p>Área: <strong>${(Math.PI * Math.pow(radioData.radius / 1000, 2)).toFixed(0)} km²</strong></p>
+                    <p>Tipo: <strong>Círculo</strong></p>
                 </div>
             `);
+            
+            coverageLayer.addTo(map);
         }
         
         function fitMapToCoverage() {
-            const bounds = coverageCircle.getBounds();
-            map.fitBounds(bounds, { padding: [20, 20] });
+            if (radioData.coverageType === 'kml' && radioData.kmlBounds) {
+                // Usar bounds do KML
+                const bounds = L.latLngBounds(
+                    [radioData.kmlBounds.south, radioData.kmlBounds.west],
+                    [radioData.kmlBounds.north, radioData.kmlBounds.east]
+                );
+                map.fitBounds(bounds, { padding: [20, 20] });
+                console.log('📏 Zoom ajustado para bounds KML');
+            } else if (coverageLayer && coverageLayer.getBounds) {
+                // Usar bounds da camada
+                map.fitBounds(coverageLayer.getBounds(), { padding: [20, 20] });
+                console.log('📏 Zoom ajustado para bounds da camada');
+            } else {
+                // Centralizar na rádio
+                map.setView([radioData.latitude, radioData.longitude], 10);
+                console.log('📏 Zoom centralizado na rádio');
+            }
         }
         
-        // RENDERIZAR INFORMAÇÕES - SEM CLASSE E SEM COMERCIAL
+        // RENDERIZAR INFORMAÇÕES
         function renderInfo() {
             const container = document.getElementById('info-section');
             
-            // Valores formatados
-            const raioKm = (radioData.radius / 1000).toFixed(0);
-            const areaKm2 = (Math.PI * Math.pow(radioData.radius / 1000, 2)).toFixed(0);
+            // Calcular área estimada
+            let areaInfo = 'N/A';
+            if (radioData.coverageType === 'kml' && radioData.kmlBounds) {
+                // Estimativa simples baseada nos bounds
+                const latDiff = radioData.kmlBounds.north - radioData.kmlBounds.south;
+                const lngDiff = radioData.kmlBounds.east - radioData.kmlBounds.west;
+                const estimatedArea = latDiff * lngDiff * 12100; // Aproximação grosseira
+                areaInfo = `~${estimatedArea.toFixed(0)} km² (KML)`;
+            } else if (radioData.radius) {
+                const circleArea = Math.PI * Math.pow(radioData.radius / 1000, 2);
+                areaInfo = `${circleArea.toFixed(0)} km² (Círculo)`;
+            }
+            
             const pmmFormatted = radioData.pmm ? radioData.pmm.toLocaleString() : 'N/A';
             const universoFormatted = radioData.universo ? radioData.universo.toLocaleString() : 'N/A';
             
             container.innerHTML = `
-                <!-- TÉCNICAS - SEM CLASSE -->
+                <!-- TÉCNICAS -->
                 <div class="info-card">
                     <h3 class="card-title">📻 Informações Técnicas</h3>
                     <div class="info-item">
@@ -590,18 +617,18 @@
                         <span class="info-label">Região:</span>
                         <span class="info-value">${radioData.region}</span>
                     </div>
+                    <div class="info-item">
+                        <span class="info-label">Tipo Cobertura:</span>
+                        <span class="info-value">${radioData.coverageType === 'kml' ? '🗺️ KML' : '⭕ Círculo'}</span>
+                    </div>
                 </div>
                 
                 <!-- ALCANCE -->
                 <div class="info-card">
                     <h3 class="card-title">🌐 Alcance e Cobertura</h3>
                     <div class="info-item">
-                        <span class="info-label">Raio de Cobertura:</span>
-                        <span class="info-value">${raioKm} km</span>
-                    </div>
-                    <div class="info-item">
                         <span class="info-label">Área Total:</span>
-                        <span class="info-value">${areaKm2} km²</span>
+                        <span class="info-value">${areaInfo}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">PMM:</span>
@@ -610,6 +637,10 @@
                     <div class="info-item">
                         <span class="info-label">Universo:</span>
                         <span class="info-value">${universoFormatted}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Cidades:</span>
+                        <span class="info-value">${radioData.cidades ? radioData.cidades.length : 0}</span>
                     </div>
                 </div>
             `;
@@ -669,7 +700,7 @@
         
         function highlightCity(cityName) {
             console.log(`🎯 Destacando cidade: ${cityName}`);
-            // Implementar destaque no mapa (futuro)
+            // Futuro: destacar cidade no mapa
         }
         
         // UTILITÁRIOS
@@ -682,6 +713,16 @@
             const sourceSuffix = radioData.source === 'example' ? ' (EXEMPLO)' : '';
             document.getElementById('radio-name').textContent = radioData.name + sourceSuffix;
             document.getElementById('radio-info').textContent = `${radioData.dial} • ${radioData.praca} - ${radioData.uf}`;
+            
+            // Atualizar badge do tipo de cobertura
+            const coverageTypeElement = document.getElementById('coverage-type');
+            if (radioData.coverageType === 'kml') {
+                coverageTypeElement.textContent = '🗺️ KML Precision';
+                coverageTypeElement.style.background = 'rgba(34, 197, 94, 0.3)';
+            } else {
+                coverageTypeElement.textContent = '⭕ Círculo Estimado';
+                coverageTypeElement.style.background = 'rgba(234, 179, 8, 0.3)';
+            }
         }
         
         function showError(message) {
