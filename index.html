@@ -111,6 +111,15 @@
             color: #1e293b;
         }
         
+        /* COMERCIAL */
+        .comercial-card {
+            border-left-color: #059669;
+        }
+        
+        .comercial-card .card-title {
+            color: #059669;
+        }
+        
         /* CIDADES */
         .cidades-container {
             background: white;
@@ -392,13 +401,23 @@
             }
         });
         
-        // CARREGAR DADOS
+        // CARREGAR DADOS DO NOTION (INTEGRAÇÃO REAL)
         async function loadRadioData() {
             const params = new URLSearchParams(window.location.search);
-            const radioId = params.get('id') || params.get('radio');
+            const notionId = params.get('id');
             
-            if (!radioId) {
-                // Dados de exemplo para desenvolvimento
+            if (notionId && /^[0-9a-f]{32}$/i.test(notionId)) {
+                console.log('📡 Carregando do Notion:', notionId);
+                try {
+                    radioData = await fetchRadioFromNotion(notionId);
+                    console.log('✅ Dados carregados do Notion:', radioData);
+                } catch (error) {
+                    console.error('❌ Erro ao carregar do Notion:', error);
+                    throw new Error(`Erro ao carregar dados: ${error.message}`);
+                }
+            } else {
+                // Dados de exemplo para desenvolvimento/teste
+                console.log('🎭 Usando dados de exemplo (nenhum ID válido fornecido)');
                 radioData = {
                     name: 'RÁDIO EXEMPLO FM',
                     dial: '94.3 FM',
@@ -411,6 +430,8 @@
                     classe: 'A',
                     universo: 45000,
                     pmm: 1500,
+                    spot30: 50,
+                    test60: 150,
                     imageUrl: 'https://via.placeholder.com/100x75/dc2626/white?text=FM',
                     cidades: [
                         'São Paulo - SP',
@@ -423,15 +444,22 @@
                         'Mauá - SP',
                         'Ribeirão Pires - SP',
                         'Rio Grande da Serra - SP'
-                    ]
+                    ],
+                    source: 'example'
                 };
-                console.log('🎭 Usando dados de exemplo');
-                return;
+            }
+        }
+        
+        // BUSCAR DADOS DO NOTION VIA NETLIFY FUNCTION
+        async function fetchRadioFromNotion(notionId) {
+            const response = await fetch(`/.netlify/functions/radio-data?id=${notionId}`);
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
+                throw new Error(errorData.error || `Erro HTTP ${response.status}`);
             }
             
-            // Buscar dados reais (implementar depois)
-            console.log('📡 Buscando dados para:', radioId);
-            throw new Error('Função de busca ainda não implementada. Use sem parâmetros para ver o exemplo.');
+            return await response.json();
         }
         
         // INICIALIZAR MAPA
@@ -484,7 +512,7 @@
             // Criar popup
             const popupContent = `
                 <div class="radio-popup">
-                    <img src="${radioData.imageUrl}" alt="${radioData.name}">
+                    <img src="${radioData.imageUrl}" alt="${radioData.name}" onerror="this.src='https://via.placeholder.com/80x60/dc2626/white?text=FM'">
                     <h3>${radioData.name}</h3>
                     <p><strong>${radioData.dial}</strong></p>
                     <p>${radioData.praca} - ${radioData.uf}</p>
@@ -526,6 +554,12 @@
         function renderInfo() {
             const container = document.getElementById('info-section');
             
+            // Valores formatados
+            const raioKm = (radioData.radius / 1000).toFixed(0);
+            const areaKm2 = (Math.PI * Math.pow(radioData.radius / 1000, 2)).toFixed(0);
+            const pmmFormatted = radioData.pmm ? radioData.pmm.toLocaleString() : 'N/A';
+            const universoFormatted = radioData.universo ? radioData.universo.toLocaleString() : 'N/A';
+            
             container.innerHTML = `
                 <!-- TÉCNICAS -->
                 <div class="info-card">
@@ -553,21 +587,40 @@
                     <h3 class="card-title">🌐 Alcance e Cobertura</h3>
                     <div class="info-item">
                         <span class="info-label">Raio de Cobertura:</span>
-                        <span class="info-value">${(radioData.radius / 1000).toFixed(0)} km</span>
+                        <span class="info-value">${raioKm} km</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Área Total:</span>
-                        <span class="info-value">${(Math.PI * Math.pow(radioData.radius / 1000, 2)).toFixed(0)} km²</span>
+                        <span class="info-value">${areaKm2} km²</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">PMM:</span>
-                        <span class="info-value">${radioData.pmm?.toLocaleString() || 'N/A'}</span>
+                        <span class="info-value">${pmmFormatted}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Universo:</span>
-                        <span class="info-value">${radioData.universo?.toLocaleString() || 'N/A'}</span>
+                        <span class="info-value">${universoFormatted}</span>
                     </div>
                 </div>
+                
+                <!-- COMERCIAL (se tiver dados) -->
+                ${(radioData.spot30 || radioData.test60) ? `
+                <div class="info-card comercial-card">
+                    <h3 class="card-title">💼 Informações Comerciais</h3>
+                    ${radioData.spot30 ? `
+                    <div class="info-item">
+                        <span class="info-label">Spot 30":</span>
+                        <span class="info-value">R$ ${radioData.spot30.toLocaleString()}</span>
+                    </div>
+                    ` : ''}
+                    ${radioData.test60 ? `
+                    <div class="info-item">
+                        <span class="info-label">Test. 60":</span>
+                        <span class="info-value">R$ ${radioData.test60.toLocaleString()}</span>
+                    </div>
+                    ` : ''}
+                </div>
+                ` : ''}
             `;
             
             container.style.display = 'grid';
@@ -596,7 +649,10 @@
             }
             
             container.innerHTML = filteredCities.map(cidade => {
-                const [nome, uf] = cidade.split(' - ');
+                const parts = cidade.split(' - ');
+                const nome = parts[0];
+                const uf = parts[1] || radioData.uf;
+                
                 return `
                     <div class="cidade-item" onclick="highlightCity('${cidade}')">
                         <span class="cidade-name">${nome}</span>
@@ -632,7 +688,8 @@
             document.getElementById('actions').style.display = 'flex';
             
             // Atualizar header
-            document.getElementById('radio-name').textContent = radioData.name;
+            const sourceSuffix = radioData.source === 'example' ? ' (EXEMPLO)' : '';
+            document.getElementById('radio-name').textContent = radioData.name + sourceSuffix;
             document.getElementById('radio-info').textContent = `${radioData.dial} • ${radioData.praca} - ${radioData.uf}`;
         }
         
