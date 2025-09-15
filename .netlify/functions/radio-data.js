@@ -17,21 +17,178 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { id, radio } = event.queryStringParameters || {};
+    const { id } = event.queryStringParameters || {};
     
-    if (!id && !radio) {
+    if (!id) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'ID ou nome da rádio é obrigatório' })
+        body: JSON.stringify({ error: 'ID do registro é obrigatório' })
       };
     }
 
-    console.log('Buscando dados para:', id || radio);
+    // MESMO TOKEN usado no sistema de distribuição
+    const notionToken = process.env.DistribuicaoHTML;
+    if (!notionToken) {
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: 'Token do Notion não configurado' })
+      };
+    }
 
-    // POR ENQUANTO: Dados de exemplo
-    // FUTURO: Integrar com Google Apps Script
-    const radioData = getExampleRadioData(id || radio);
+    console.log('🔍 Buscando rádio no Notion:', id);
+    console.log('🔑 Token (primeiros 10 chars):', notionToken ? notionToken.substring(0, 10) + '...' : 'TOKEN_NAO_ENCONTRADO');
+
+    // Buscar dados da página no Notion (MESMO CÓDIGO da distribuição)
+    const response = await fetch(`https://api.notion.com/v1/pages/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${notionToken}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      }
+    });
+
+    console.log('📡 Status da resposta Notion:', response.status);
+
+    if (!response.ok) {
+      console.error('❌ Erro da API Notion:', response.status, response.statusText);
+      
+      let errorDetails = response.statusText;
+      try {
+        const errorBody = await response.text();
+        console.log('📄 Corpo do erro:', errorBody);
+        errorDetails = errorBody;
+      } catch (e) {
+        console.log('⚠️ Não foi possível ler corpo do erro');
+      }
+      
+      return {
+        statusCode: response.status,
+        headers,
+        body: JSON.stringify({ 
+          error: `Erro ao buscar dados do Notion: ${response.status}`,
+          details: errorDetails
+        })
+      };
+    }
+
+    const notionData = await response.json();
+    console.log('✅ Dados recebidos do Notion:', {
+      id: notionData.id,
+      object: notionData.object,
+      propertiesKeys: Object.keys(notionData.properties || {})
+    });
+
+    // Mapear propriedades do Notion (SEGUINDO PADRÃO da distribuição)
+    const properties = notionData.properties || {};
+    
+    // Função helper para extrair valores (MESMA LÓGICA da distribuição)
+    const extractValue = (prop, defaultValue = '', propName = '') => {
+      if (!prop) {
+        console.log(`❌ Propriedade "${propName}" não encontrada`);
+        return defaultValue;
+      }
+      
+      console.log(`✅ Extraindo propriedade "${propName}" tipo: ${prop.type}`);
+      
+      switch (prop.type) {
+        case 'number':
+          const numberValue = prop.number !== null && prop.number !== undefined ? prop.number : defaultValue;
+          console.log(`📊 Valor numérico para "${propName}": ${numberValue}`);
+          return numberValue;
+        case 'title':
+          return prop.title?.[0]?.text?.content || defaultValue;
+        case 'rich_text':
+          return prop.rich_text?.[0]?.text?.content || defaultValue;
+        case 'date':
+          return prop.date?.start || defaultValue;
+        case 'multi_select':
+          return prop.multi_select?.map(item => item.name).join(',') || defaultValue;
+        case 'select':
+          return prop.select?.name || defaultValue;
+        default:
+          console.log(`⚠️ Tipo de propriedade não reconhecido para "${propName}": ${prop.type}`);
+          return defaultValue;
+      }
+    };
+
+    // MAPEAR DADOS ESPECÍFICOS PARA COBERTURA
+    const radioData = {
+      // Informações básicas
+      name: extractValue(properties['Emissora'] || properties['emissora'], 'Rádio Desconhecida', 'Emissora'),
+      dial: extractValue(properties['Dial'] || properties['dial'], 'N/A', 'Dial'),
+      
+      // Coordenadas (CRÍTICO para o mapa)
+      latitude: parseFloat(extractValue(properties['Latitude'] || properties['latitude'], -23.5505, 'Latitude')),
+      longitude: parseFloat(extractValue(properties['Longitude'] || properties['longitude'], -46.6333, 'Longitude')),
+      
+      // Raio de cobertura (converter para metros se necessário)
+      radius: parseFloat(extractValue(properties['Raio'] || properties['raio'] || properties['Alcance'], 50, 'Raio')) * 1000,
+      
+      // Localização
+      region: extractValue(properties['Região'] || properties['regiao'], 'N/A', 'Região'),
+      uf: extractValue(properties['UF'] || properties['uf'], 'N/A', 'UF'),
+      praca: extractValue(properties['Praça'] || properties['praca'], 'N/A', 'Praça'),
+      
+      // Técnicas
+      classe: extractValue(properties['Classe'] || properties['classe'], 'N/A', 'Classe'),
+      universo: parseInt(extractValue(properties['Universo'] || properties['universo'], 0, 'Universo')),
+      pmm: parseInt(extractValue(properties['PMM'] || properties['pmm'], 1000, 'PMM')),
+      
+      // Valores comerciais (opcionais)
+      spot30: parseFloat(extractValue(properties['Valor spot 30ʺ (Tabela)'] || properties['Spot 30'], 0, 'Spot 30')),
+      test60: parseFloat(extractValue(properties['Valor test. 60ʺ (Tabela)'] || properties['Test 60'], 0, 'Test 60')),
+      
+      // URLs e mídias
+      imageUrl: extractValue(properties['Imagem'] || properties['imagem'], 'https://via.placeholder.com/100x75/dc2626/white?text=FM', 'Imagem'),
+      
+      // COBERTURA COMPLETA (SEM TRUNCAMENTO - principal diferença!)
+      coverageText: extractValue(properties['Cobertura'] || properties['cobertura'], '', 'Cobertura'),
+      
+      // Metadata
+      source: 'notion',
+      notionId: id,
+      lastUpdate: new Date().toISOString()
+    };
+
+    // Processar lista de cidades da cobertura
+    if (radioData.coverageText) {
+      // Dividir por vírgulas, quebras de linha, ou outros separadores
+      radioData.cidades = radioData.coverageText
+        .split(/[,\n;]/)
+        .map(cidade => cidade.trim())
+        .filter(cidade => cidade.length > 0)
+        .map(cidade => {
+          // Garantir formato "Cidade - UF"
+          if (!cidade.includes(' - ') && radioData.uf !== 'N/A') {
+            return `${cidade} - ${radioData.uf}`;
+          }
+          return cidade;
+        });
+    } else {
+      radioData.cidades = [`${radioData.praca} - ${radioData.uf}`];
+    }
+
+    // Validações básicas
+    if (isNaN(radioData.latitude) || isNaN(radioData.longitude)) {
+      console.log('⚠️ Coordenadas inválidas, usando São Paulo como padrão');
+      radioData.latitude = -23.5505;
+      radioData.longitude = -46.6333;
+    }
+
+    if (radioData.radius <= 0) {
+      console.log('⚠️ Raio inválido, usando 50km como padrão');
+      radioData.radius = 50000;
+    }
+
+    console.log('📋 Dados finais mapeados:', {
+      name: radioData.name,
+      dial: radioData.dial,
+      coordinates: `${radioData.latitude}, ${radioData.longitude}`,
+      radius: `${radioData.radius / 1000}km`,
+      cidadesCount: radioData.cidades.length
+    });
 
     return {
       statusCode: 200,
@@ -40,7 +197,8 @@ exports.handler = async (event, context) => {
     };
 
   } catch (error) {
-    console.error('💥 Erro na função:', error);
+    console.error('💥 Erro na função (catch geral):', error);
+    console.error('📋 Stack trace:', error.stack);
     return {
       statusCode: 500,
       headers,
@@ -51,104 +209,3 @@ exports.handler = async (event, context) => {
     };
   }
 };
-
-// FUNÇÃO PARA DADOS DE EXEMPLO
-function getExampleRadioData(identifier) {
-  // Base de dados de exemplo - simula diferentes rádios
-  const exampleRadios = {
-    'exemplo1': {
-      name: 'RÁDIO EXEMPLO FM',
-      dial: '94.3 FM',
-      latitude: -23.5505,
-      longitude: -46.6333,
-      radius: 50000,
-      region: 'Sudeste',
-      uf: 'SP',
-      praca: 'São Paulo',
-      classe: 'A',
-      universo: 45000,
-      pmm: 1500,
-      imageUrl: 'https://via.placeholder.com/100x75/dc2626/white?text=94.3',
-      cidades: [
-        'São Paulo - SP',
-        'Guarulhos - SP',
-        'Osasco - SP',
-        'Santo André - SP',
-        'São Bernardo do Campo - SP',
-        'São Caetano do Sul - SP',
-        'Diadema - SP',
-        'Mauá - SP',
-        'Ribeirão Pires - SP',
-        'Rio Grande da Serra - SP',
-        'Ferraz de Vasconcelos - SP',
-        'Poá - SP',
-        'Suzano - SP',
-        'Itaquaquecetuba - SP',
-        'Arujá - SP'
-      ]
-    },
-    'exemplo2': {
-      name: 'RÁDIO NORDESTE AM',
-      dial: '1240 AM',
-      latitude: -8.0578,
-      longitude: -34.8828,
-      radius: 75000,
-      region: 'Nordeste',
-      uf: 'PE',
-      praca: 'Recife',
-      classe: 'B',
-      universo: 65000,
-      pmm: 2200,
-      imageUrl: 'https://via.placeholder.com/100x75/059669/white?text=1240',
-      cidades: [
-        'Recife - PE',
-        'Olinda - PE',
-        'Jaboatão dos Guararapes - PE',
-        'Camaragibe - PE',
-        'São Lourenço da Mata - PE',
-        'Abreu e Lima - PE',
-        'Igarassu - PE',
-        'Paulista - PE',
-        'Cabo de Santo Agostinho - PE',
-        'Ipojuca - PE',
-        'Moreno - PE',
-        'Vitória de Santo Antão - PE',
-        'Paudalho - PE',
-        'Glória do Goitá - PE',
-        'Chã de Alegria - PE'
-      ]
-    }
-  };
-
-  // Retornar rádio específica ou a primeira como padrão
-  return exampleRadios[identifier] || exampleRadios['exemplo1'];
-}
-
-// FUTURO: Função para integrar com Google Apps Script
-async function fetchRadioFromGoogleSheets(radioId) {
-  // TODO: Implementar chamada para o Google Apps Script
-  // que vai buscar os dados reais da planilha
-  
-  /*
-  const response = await fetch(`${GOOGLE_APPS_SCRIPT_URL}?action=getRadio&id=${radioId}`);
-  const data = await response.json();
-  
-  return {
-    name: data.emissora,
-    dial: data.dial,
-    latitude: parseFloat(data.latitude),
-    longitude: parseFloat(data.longitude),
-    radius: parseFloat(data.radius) * 1000, // converter para metros
-    region: data.regiao,
-    uf: data.uf,
-    praca: data.praca,
-    classe: data.classe,
-    universo: parseInt(data.universo),
-    pmm: parseInt(data.pmm),
-    imageUrl: data.imageUrl,
-    cidades: data.cobertura.split(',').map(c => c.trim())
-  };
-  */
-  
-  throw new Error('Integração com Google Apps Script ainda não implementada');
-}
