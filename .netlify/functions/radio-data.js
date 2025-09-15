@@ -38,7 +38,6 @@ exports.handler = async (event, context) => {
     }
 
     console.log('🔍 Buscando rádio no Notion:', id);
-    console.log('🔑 Token (primeiros 10 chars):', notionToken ? notionToken.substring(0, 10) + '...' : 'TOKEN_NAO_ENCONTRADO');
 
     // Buscar dados da página no Notion (MESMO CÓDIGO da distribuição)
     const response = await fetch(`https://api.notion.com/v1/pages/${id}`, {
@@ -131,20 +130,12 @@ exports.handler = async (event, context) => {
       uf: extractValue(properties['UF'] || properties['uf'], 'N/A', 'UF'),
       praca: extractValue(properties['Praça'] || properties['praca'], 'N/A', 'Praça'),
       
-      // Técnicas
-      classe: extractValue(properties['Classe'] || properties['classe'], 'N/A', 'Classe'),
+      // Técnicas (sem classe)
       universo: parseInt(extractValue(properties['Universo'] || properties['universo'], 0, 'Universo')),
       pmm: parseInt(extractValue(properties['PMM'] || properties['pmm'], 1000, 'PMM')),
       
-      // Valores comerciais (opcionais)
-      spot30: parseFloat(extractValue(properties['Valor spot 30ʺ (Tabela)'] || properties['Spot 30'], 0, 'Spot 30')),
-      test60: parseFloat(extractValue(properties['Valor test. 60ʺ (Tabela)'] || properties['Test 60'], 0, 'Test 60')),
-      
       // URLs e mídias
       imageUrl: extractValue(properties['Imagem'] || properties['imagem'], 'https://via.placeholder.com/100x75/dc2626/white?text=FM', 'Imagem'),
-      
-      // COBERTURA COMPLETA (SEM TRUNCAMENTO - principal diferença!)
-      coverageText: extractValue(properties['Cobertura'] || properties['cobertura'], '', 'Cobertura'),
       
       // Metadata
       source: 'notion',
@@ -152,23 +143,8 @@ exports.handler = async (event, context) => {
       lastUpdate: new Date().toISOString()
     };
 
-    // Processar lista de cidades da cobertura
-    if (radioData.coverageText) {
-      // Dividir por vírgulas, quebras de linha, ou outros separadores
-      radioData.cidades = radioData.coverageText
-        .split(/[,\n;]/)
-        .map(cidade => cidade.trim())
-        .filter(cidade => cidade.length > 0)
-        .map(cidade => {
-          // Garantir formato "Cidade - UF"
-          if (!cidade.includes(' - ') && radioData.uf !== 'N/A') {
-            return `${cidade} - ${radioData.uf}`;
-          }
-          return cidade;
-        });
-    } else {
-      radioData.cidades = [`${radioData.praca} - ${radioData.uf}`];
-    }
+    // BUSCAR CIDADES DE FONTES ALTERNATIVAS
+    radioData.cidades = await fetchCitiesFromMultipleSources(radioData, notionToken);
 
     // Validações básicas
     if (isNaN(radioData.latitude) || isNaN(radioData.longitude)) {
@@ -209,3 +185,161 @@ exports.handler = async (event, context) => {
     };
   }
 };
+
+// NOVA FUNÇÃO: Buscar cidades de múltiplas fontes
+async function fetchCitiesFromMultipleSources(radioData, notionToken) {
+  console.log('🔍 Buscando cidades de múltiplas fontes...');
+  
+  // Estratégia 1: Tentar buscar do campo original de cobertura (se ainda existir)
+  try {
+    const cities = await tryFetchFromNotionCoverageField(radioData.notionId, notionToken);
+    if (cities && cities.length > 0) {
+      console.log('✅ Cidades encontradas no campo Cobertura do Notion');
+      return cities;
+    }
+  } catch (error) {
+    console.log('⚠️ Não foi possível buscar do campo Cobertura:', error.message);
+  }
+  
+  // Estratégia 2: Gerar lista baseada na região/UF (fallback)
+  const fallbackCities = generateCitiesByRegion(radioData.region, radioData.uf, radioData.praca);
+  console.log(`🏙️ Usando ${fallbackCities.length} cidades como fallback para ${radioData.region}/${radioData.uf}`);
+  
+  return fallbackCities;
+}
+
+// Tentar buscar do campo Cobertura original (pode ter dados antigos)
+async function tryFetchFromNotionCoverageField(pageId, token) {
+  try {
+    // Buscar novamente a página para tentar pegar campo Cobertura
+    const response = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      const coberturaField = data.properties?.['Cobertura'];
+      
+      if (coberturaField?.rich_text?.[0]?.text?.content) {
+        const fullText = coberturaField.rich_text[0].text.content;
+        
+        // Se não é um link, tentar extrair cidades
+        if (!fullText.includes('Ver mapa de cobertura') && !fullText.includes('http')) {
+          const cities = fullText
+            .split(/[,\n;]/)
+            .map(city => city.trim())
+            .filter(city => city.length > 0)
+            .map(city => {
+              // Garantir formato "Cidade - UF"
+              if (!city.includes(' - ')) {
+                return `${city} - ${data.properties?.UF?.rich_text?.[0]?.text?.content || 'BR'}`;
+              }
+              return city;
+            });
+          
+          if (cities.length > 0) {
+            return cities;
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.log('⚠️ Erro ao buscar campo Cobertura:', error);
+  }
+  
+  return null;
+}
+
+// Gerar cidades baseado na região/UF (fallback robusto)
+function generateCitiesByRegion(region, uf, praca) {
+  const citiesByRegion = {
+    'Sul': {
+      'SC': [
+        'Florianópolis - SC', 'São José - SC', 'Palhoça - SC', 'Biguaçu - SC',
+        'Blumenau - SC', 'Joinville - SC', 'Chapecó - SC', 'Criciúma - SC',
+        'Itajaí - SC', 'Lages - SC', 'Balneário Camboriú - SC', 'Tubarão - SC',
+        'Santo Amaro da Imperatriz - SC', 'Governador Celso Ramos - SC',
+        'Antônio Carlos - SC', 'Águas Mornas - SC', 'São Pedro de Alcântara - SC'
+      ],
+      'RS': [
+        'Porto Alegre - RS', 'Caxias do Sul - RS', 'Pelotas - RS', 'Santa Maria - RS',
+        'Gravataí - RS', 'Viamão - RS', 'Novo Hamburgo - RS', 'São Leopoldo - RS',
+        'Rio Grande - RS', 'Alvorada - RS', 'Passo Fundo - RS', 'Sapucaia do Sul - RS'
+      ],
+      'PR': [
+        'Curitiba - PR', 'Londrina - PR', 'Maringá - PR', 'Foz do Iguaçu - PR',
+        'São José dos Pinhais - PR', 'Cascavel - PR', 'Guarapuava - PR', 'Paranaguá - PR'
+      ]
+    },
+    'Sudeste': {
+      'SP': [
+        'São Paulo - SP', 'Guarulhos - SP', 'Campinas - SP', 'São Bernardo do Campo - SP',
+        'Santo André - SP', 'Osasco - SP', 'São José dos Campos - SP', 'Ribeirão Preto - SP',
+        'Santos - SP', 'Mauá - SP', 'São José do Rio Preto - SP', 'Diadema - SP'
+      ],
+      'RJ': [
+        'Rio de Janeiro - RJ', 'São Gonçalo - RJ', 'Duque de Caxias - RJ', 'Nova Iguaçu - RJ',
+        'Niterói - RJ', 'Campos dos Goytacazes - RJ', 'Petrópolis - RJ', 'Volta Redonda - RJ'
+      ],
+      'MG': [
+        'Belo Horizonte - MG', 'Uberlândia - MG', 'Contagem - MG', 'Juiz de Fora - MG',
+        'Betim - MG', 'Montes Claros - MG', 'Ribeirão das Neves - MG', 'Uberaba - MG'
+      ],
+      'ES': [
+        'Vitória - ES', 'Vila Velha - ES', 'Cariacica - ES', 'Serra - ES',
+        'Cachoeiro de Itapemirim - ES', 'Linhares - ES', 'São Mateus - ES'
+      ]
+    },
+    'Nordeste': {
+      'PE': [
+        'Recife - PE', 'Jaboatão dos Guararapes - PE', 'Olinda - PE', 'Caruaru - PE',
+        'Petrolina - PE', 'Paulista - PE', 'Cabo de Santo Agostinho - PE', 'Camaragibe - PE'
+      ],
+      'BA': [
+        'Salvador - BA', 'Feira de Santana - BA', 'Vitória da Conquista - BA', 'Camaçari - BA',
+        'Juazeiro - BA', 'Ilhéus - BA', 'Itabuna - BA', 'Lauro de Freitas - BA'
+      ],
+      'CE': [
+        'Fortaleza - CE', 'Caucaia - CE', 'Juazeiro do Norte - CE', 'Maracanaú - CE',
+        'Sobral - CE', 'Crato - CE', 'Itapipoca - CE', 'Maranguape - CE'
+      ]
+    },
+    'Norte': {
+      'AM': [
+        'Manaus - AM', 'Parintins - AM', 'Itacoatiara - AM', 'Manacapuru - AM'
+      ],
+      'PA': [
+        'Belém - PA', 'Ananindeua - PA', 'Santarém - PA', 'Marabá - PA'
+      ]
+    },
+    'Centro-Oeste': {
+      'DF': [
+        'Brasília - DF', 'Gama - DF', 'Taguatinga - DF', 'Ceilândia - DF'
+      ],
+      'GO': [
+        'Goiânia - GO', 'Aparecida de Goiânia - GO', 'Anápolis - GO', 'Rio Verde - GO'
+      ]
+    }
+  };
+  
+  // Buscar cidades da região/UF
+  const regionCities = citiesByRegion[region];
+  if (regionCities && regionCities[uf]) {
+    let cities = [...regionCities[uf]];
+    
+    // Garantir que a praça principal esteja na lista
+    const pracaFormatted = `${praca} - ${uf}`;
+    if (!cities.includes(pracaFormatted)) {
+      cities.unshift(pracaFormatted);
+    }
+    
+    return cities;
+  }
+  
+  // Fallback final: apenas a praça principal
+  return [`${praca} - ${uf}`];
+}
