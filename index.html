@@ -5,26 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa de Cobertura - E-MÍDIAS</title>
     
-    <!-- 
-    ============================================================================
-    🎨 IDENTIDADE VISUAL E-MÍDIAS APLICADA
-    ============================================================================
-    ✅ CORREÇÕES IMPLEMENTADAS:
-    1. Logo E-MÍDIAS corrigida (assets/logo E-MIDIAS png fundo branco.png)
-    2. Paleta de cores oficial do manual de marca
-    3. Tipografia Space Grotesk (Google Fonts)
-    4. Exportação Excel (.xlsx) com SheetJS
-    5. Colunas separadas: Cidade e Distância (m) - km convertido para metros
-    
-    🎨 PALETA DE CORES E-MÍDIAS:
-    - Azul Escuro: #06055B (principal)
-    - Magenta: #FC1E75 (destaque)  
-    - Rosa Claro: #D71E97 (secundário)
-    - Roxo: #AA1EA5 (accent)
-    - Roxo Acinzentado: #9E33AC
-    ============================================================================
-    -->
-    
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
@@ -49,11 +29,6 @@
             --emidias-white: #FFFFFF;           /* Branco */
             --emidias-dark: #1E293B;            /* Escuro */
             
-            /* 🎨 Gradientes E-MÍDIAS */
-            --gradient-primary: linear-gradient(135deg, var(--emidias-primary) 0%, var(--emidias-roxo) 100%);
-            --gradient-accent: linear-gradient(135deg, var(--emidias-magenta) 0%, var(--emidias-rosa) 100%);
-            --gradient-success: linear-gradient(135deg, var(--emidias-success) 0%, #34D399 100%);
-            
             /* 📝 Tipografia E-MÍDIAS */
             --font-primary: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             --font-weight-light: 300;
@@ -66,7 +41,6 @@
             --shadow-sm: 0 1px 3px rgba(6, 5, 91, 0.05);
             --shadow-md: 0 4px 12px rgba(6, 5, 91, 0.1);
             --shadow-lg: 0 8px 25px rgba(6, 5, 91, 0.15);
-            --shadow-accent: 0 4px 15px rgba(252, 30, 117, 0.2);
         }
         
         * {
@@ -90,428 +64,207 @@
         }
         
         /* =============================================================================
-           🎨 HEADER COM IDENTIDADE E-MÍDIAS
+           🎨 HEADER SIMPLIFICADO E-MÍDIAS
            ============================================================================= */
         .header {
             background: var(--emidias-white);
-            color: var(--emidias-primary);
-            padding: 32px 24px;
-            border-radius: 16px;
+            padding: 20px;
             margin-bottom: 24px;
-            box-shadow: var(--shadow-lg);
             text-align: center;
-            position: relative;
-            overflow: hidden;
-            border: 2px solid var(--emidias-primary);
-        }
-        
-        /* Efeito de brilho sutil */
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(6, 5, 91, 0.05), transparent);
-            animation: shine 4s infinite;
-        }
-        
-        @keyframes shine {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-        
-        .header-title {
-            font-size: 32px;
-            font-weight: var(--font-weight-bold);
-            margin-bottom: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 16px;
-            position: relative;
-            z-index: 1;
+            border-bottom: 2px solid var(--emidias-light-gray);
         }
         
         .header-logo {
-            width: 90px;
-            height: 68px;
+            width: 180px;
+            height: auto;
             object-fit: contain;
-            border-radius: 12px;
-            box-shadow: var(--shadow-md);
-            transition: transform 0.3s ease;
         }
         
-        .header-logo:hover {
-            transform: scale(1.05);
+        .header-title {
+            font-size: 24px;
+            font-weight: var(--font-weight-bold);
+            color: var(--emidias-primary);
         }
         
         .header-subtitle {
-            font-size: 16px;
-            opacity: 0.8;
-            font-weight: var(--font-weight-medium);
-            position: relative;
-            z-index: 1;
+            font-size: 14px;
             color: var(--emidias-gray);
+            margin-top: 4px;
         }
         
         /* =============================================================================
-           🐛 DEBUG PANEL
-           ============================================================================= */
-        .debug-panel {
-            background: var(--eradios-dark);
-            color: #E5E7EB;
-            padding: 16px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            max-height: 300px;
-            overflow-y: auto;
-            border: 2px solid var(--eradios-primary);
-        }
-        
-        .debug-panel.hidden {
-            display: none;
-        }
-        
-        .debug-title {
-            color: var(--eradios-primary-light);
-            font-weight: var(--font-weight-bold);
-            margin-bottom: 8px;
-        }
-        
-        .debug-log {
-            margin: 4px 0;
-            padding: 6px 8px;
-            border-radius: 6px;
-        }
-        
-        .debug-log.success {
-            background: rgba(16, 185, 129, 0.15);
-            color: #86EFAC;
-            border-left: 3px solid var(--eradios-success);
-        }
-        
-        .debug-log.error {
-            background: rgba(255, 107, 53, 0.15);
-            color: #FCA5A5;
-            border-left: 3px solid var(--eradios-secondary);
-        }
-        
-        .debug-log.warning {
-            background: rgba(245, 158, 11, 0.15);
-            color: #FCD34D;
-            border-left: 3px solid #F59E0B;
-        }
-        
-        .debug-log.info {
-            background: rgba(0, 102, 204, 0.15);
-            color: var(--eradios-primary-light);
-            border-left: 3px solid var(--eradios-primary);
-        }
-        
-        .debug-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--eradios-dark);
-            color: var(--eradios-white);
-            border: none;
-            padding: 10px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: var(--font-weight-medium);
-            z-index: 1000;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow-md);
-        }
-        
-        .debug-toggle:hover {
-            background: var(--eradios-primary);
-            transform: translateY(-2px);
-        }
-        
-        /* =============================================================================
-           🏢 SEÇÃO LOGO E-MÍDIAS
-           ============================================================================= */
-        .brand-section {
-            background: var(--emidias-white);
-            padding: 20px;
-            margin-bottom: 24px;
-            border-radius: 12px;
-            box-shadow: var(--shadow-sm);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border: 1px solid var(--emidias-light-gray);
-        }
-        
-        .brand-logo {
-            height: 60px;
-            width: auto;
-            object-fit: contain;
-            transition: all 0.3s ease;
-        }
-        
-        .brand-logo:hover {
-            transform: scale(1.05);
-        }
-        
-        .brand-text {
-            flex: 1;
-            text-align: right;
-            padding-right: 20px;
-        }
-        
-        .brand-title {
-            font-size: 16px;
-            font-weight: var(--font-weight-bold);
-            color: var(--emidias-primary);
-            margin: 0;
-        }
-        
-        .brand-subtitle {
-            font-size: 12px;
-            color: var(--emidias-gray);
-            margin: 4px 0 0 0;
-        }
-        /* =============================================================================
-           📋 CARDS DE INFORMAÇÃO E-MÍDIAS
+           📋 CARDS DE INFORMAÇÃO COMPACTOS
            ============================================================================= */
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
             margin-bottom: 24px;
         }
         
         .info-card {
             background: var(--emidias-white);
-            padding: 24px;
-            border-radius: 16px;
+            padding: 16px;
+            border-radius: 12px;
             box-shadow: var(--shadow-md);
-            border-left: 4px solid var(--emidias-primary);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .info-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--gradient-primary);
-        }
-        
-        .info-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-            border-left-color: var(--emidias-magenta);
-        }
-        
-        .info-card:hover::before {
-            background: var(--gradient-accent);
+            border-left: 3px solid var(--emidias-primary);
         }
         
         .card-title {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: var(--font-weight-bold);
             color: var(--emidias-primary);
-            margin-bottom: 18px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
         
         .info-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 0;
+            padding: 8px 0;
             border-bottom: 1px solid var(--emidias-light-gray);
-            transition: all 0.2s ease;
         }
         
         .info-item:last-child {
             border-bottom: none;
         }
         
-        .info-item:hover {
-            background: rgba(6, 5, 91, 0.02);
-            border-radius: 8px;
-            padding-left: 8px;
-            padding-right: 8px;
-        }
-        
         .info-label {
-            font-weight: var(--font-weight-semibold);
+            font-weight: var(--font-weight-medium);
             color: var(--emidias-gray);
+            font-size: 14px;
         }
         
         .info-value {
-            font-weight: var(--font-weight-medium);
+            font-weight: var(--font-weight-semibold);
             color: var(--emidias-dark);
+            font-size: 14px;
         }
         
         /* =============================================================================
-           🗺️ MAPA CONTAINER eRADIOS
+           🗺️ MAPA CONTAINER
            ============================================================================= */
         .map-container {
-            background: var(--eradios-white);
-            border-radius: 16px;
+            background: var(--emidias-white);
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: var(--shadow-lg);
+            box-shadow: var(--shadow-md);
             margin-bottom: 24px;
-            transition: all 0.3s ease;
-            border: 1px solid var(--eradios-light-gray);
-        }
-        
-        .map-container:hover {
-            box-shadow: 0 12px 35px rgba(0, 102, 204, 0.2);
-            transform: translateY(-2px);
+            border: 1px solid var(--emidias-light-gray);
         }
         
         #map {
-            height: 550px;
+            height: 500px;
             width: 100%;
-            min-height: 550px;
-            transition: filter 0.3s ease;
         }
         
         /* =============================================================================
-           🌍 SEÇÃO CIDADES eRADIOS
+           🌍 SEÇÃO CIDADES
            ============================================================================= */
         .cidades-container {
-            background: var(--eradios-white);
-            border-radius: 16px;
-            padding: 28px;
+            background: var(--emidias-white);
+            border-radius: 12px;
+            padding: 20px;
             box-shadow: var(--shadow-md);
-            border-left: 4px solid var(--eradios-primary);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .cidades-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--gradient-primary);
+            margin-bottom: 24px;
         }
         
         .cidades-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             flex-wrap: wrap;
-            gap: 16px;
+            gap: 12px;
         }
         
         .cidades-title {
-            font-size: 22px;
+            font-size: 18px;
             font-weight: var(--font-weight-bold);
-            color: var(--eradios-primary);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .cidades-actions {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        
-        .cidades-count {
-            background: var(--gradient-primary);
-            color: var(--eradios-white);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: var(--font-weight-semibold);
-            box-shadow: var(--shadow-sm);
-            min-width: 40px;
-            text-align: center;
-        }
-        
-        .excel-export-btn {
-            background: var(--gradient-success);
-            color: var(--eradios-white);
-            border: none;
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: var(--font-weight-semibold);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow-sm);
+            color: var(--emidias-primary);
             display: flex;
             align-items: center;
             gap: 8px;
         }
         
-        .excel-export-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        .cidades-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
         
-        .excel-export-btn:active {
-            transform: translateY(0);
+        .cidades-count {
+            background: var(--emidias-primary);
+            color: var(--emidias-white);
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: var(--font-weight-semibold);
+            min-width: 32px;
+            text-align: center;
+        }
+        
+        .excel-export-btn {
+            background: var(--emidias-success);
+            color: var(--emidias-white);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: var(--font-weight-semibold);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .excel-export-btn:hover {
+            opacity: 0.9;
         }
         
         .search-box {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
         
         .search-input {
             width: 100%;
-            padding: 16px 20px;
-            border: 2px solid var(--eradios-light-gray);
-            border-radius: 12px;
-            font-size: 16px;
+            padding: 12px 16px;
+            border: 1px solid var(--emidias-light-gray);
+            border-radius: 8px;
+            font-size: 14px;
             font-family: var(--font-primary);
-            font-weight: var(--font-weight-normal);
-            transition: all 0.3s ease;
-            background: var(--eradios-white);
         }
         
         .search-input:focus {
             outline: none;
-            border-color: var(--eradios-primary);
-            box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.1);
-            background: rgba(0, 102, 204, 0.01);
+            border-color: var(--emidias-primary);
         }
         
         .cidades-list {
-            max-height: 350px;
+            max-height: 300px;
             overflow-y: auto;
-            border: 1px solid var(--eradios-light-gray);
-            border-radius: 12px;
-            background: var(--eradios-white);
+            border: 1px solid var(--emidias-light-gray);
+            border-radius: 8px;
+            background: var(--emidias-white);
         }
         
         .cidade-item {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--eradios-light-gray);
-            transition: all 0.3s ease;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--emidias-light-gray);
+            transition: all 0.2s ease;
             cursor: pointer;
-            position: relative;
         }
         
         .cidade-item:hover {
-            background: linear-gradient(90deg, rgba(0, 102, 204, 0.03) 0%, var(--eradios-white) 100%);
-            transform: translateX(8px);
-            border-left: 4px solid var(--eradios-primary);
-            padding-left: 16px;
+            background-color: rgba(6, 5, 91, 0.03);
         }
         
         .cidade-item:last-child {
@@ -520,315 +273,121 @@
         
         .cidade-name {
             font-weight: var(--font-weight-medium);
-            color: var(--eradios-dark);
-            font-size: 15px;
+            color: var(--emidias-dark);
+            font-size: 14px;
         }
         
         .cidade-uf {
-            font-size: 13px;
-            color: var(--eradios-gray);
-            margin-left: 8px;
-            font-weight: var(--font-weight-normal);
-        }
-        
-        /* =============================================================================
-           ⏳ LOADING eRADIOS
-           ============================================================================= */
-        .loading {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--eradios-gray);
-        }
-        
-        .loading-spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid var(--eradios-light-gray);
-            border-top: 4px solid var(--eradios-primary);
-            border-radius: 50%;
-            animation: spin 1.2s linear infinite;
-            margin: 0 auto 20px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* =============================================================================
-           ❌ ERROR eRADIOS
-           ============================================================================= */
-        .error {
-            background: linear-gradient(135deg, #FEF2F2 0%, #FFFFFF 100%);
-            border: 1px solid #FECACA;
-            color: var(--eradios-secondary);
-            padding: 24px;
-            border-radius: 12px;
-            text-align: center;
-            margin: 24px 0;
-            box-shadow: var(--shadow-sm);
-        }
-        
-        .error-details {
-            margin-top: 16px;
             font-size: 12px;
-            color: #991B1B;
-            font-family: 'Courier New', monospace;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 12px;
-            border-radius: 8px;
-            text-align: left;
+            color: var(--emidias-gray);
+            margin-left: 6px;
         }
         
         /* =============================================================================
-           🦶 RODAPÉ eRADIOS
+           🦶 RODAPÉ
            ============================================================================= */
         .footer {
             text-align: center;
-            padding: 40px 20px;
-            margin-top: 40px;
-            border-top: 2px solid var(--eradios-light-gray);
-            background: linear-gradient(135deg, #FAFBFC 0%, var(--eradios-white) 100%);
-            border-radius: 16px 16px 0 0;
+            padding: 30px 20px;
+            margin-top: 30px;
+            border-top: 1px solid var(--emidias-light-gray);
         }
         
         .footer-logo {
-            width: 160px;
+            width: 120px;
             height: auto;
-            opacity: 0.8;
-            margin-bottom: 12px;
-            transition: all 0.3s ease;
-            filter: grayscale(20%);
-        }
-        
-        .footer-logo:hover {
-            opacity: 1;
-            transform: scale(1.05);
-            filter: grayscale(0%);
+            margin-bottom: 8px;
         }
         
         .footer-text {
-            font-size: 14px;
-            color: var(--eradios-gray);
-            margin: 0;
-            font-weight: var(--font-weight-medium);
+            font-size: 13px;
+            color: var(--emidias-gray);
         }
         
         /* =============================================================================
-           📱 RESPONSIVIDADE eRADIOS
+           📱 RESPONSIVIDADE
            ============================================================================= */
-            @media (max-width: 768px) {
-                .brand-section {
-                    flex-direction: column;
-                    text-align: center;
-                    gap: 12px;
-                }
-                
-                .brand-text {
-                    text-align: center;
-                    padding-right: 0;
-                }
-                
-                .brand-logo {
-                    height: 50px;
-                }
-            }
-            .container { 
-                padding: 16px; 
-            }
-            
-            .info-grid { 
-                grid-template-columns: 1fr; 
-                gap: 20px;
-            }
-            
-            #map { 
-                height: 450px; 
-                min-height: 450px; 
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
             }
             
             .header {
-                padding: 24px 20px;
-                margin-bottom: 20px;
+                flex-direction: column;
+                text-align: center;
+                gap: 12px;
+                padding: 16px;
             }
             
-            .header-title { 
-                font-size: 24px; 
-                flex-direction: column; 
-                gap: 12px; 
+            .header-logo {
+                width: 140px;
             }
             
-            .header-logo { 
-                width: 70px; 
-                height: 52px; 
+            .info-grid {
+                grid-template-columns: 1fr;
             }
             
-            .debug-toggle { 
-                top: 10px; 
-                right: 10px; 
-                padding: 8px 12px;
-                font-size: 11px;
+            #map {
+                height: 400px;
             }
             
             .cidades-header {
                 flex-direction: column;
-                align-items: stretch;
+                align-items: flex-start;
             }
             
             .cidades-actions {
+                width: 100%;
                 justify-content: space-between;
-            }
-            
-            .search-input {
-                padding: 14px 16px;
-                font-size: 16px; /* Evitar zoom no iOS */
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .header-title {
-                font-size: 20px;
-            }
-            
-            .cidades-container {
-                padding: 20px;
-            }
-            
-            .excel-export-btn {
-                padding: 8px 16px;
-                font-size: 13px;
             }
         }
         
         /* =============================================================================
-           🗺️ CUSTOMIZAÇÕES LEAFLET E-MÍDIAS
+           🗺️ CUSTOMIZAÇÕES LEAFLET
            ============================================================================= */
         .leaflet-popup-content-wrapper {
-            border-radius: 12px;
-            box-shadow: var(--shadow-lg);
-        }
-        
-        .leaflet-popup-tip {
-            box-shadow: var(--shadow-sm);
+            border-radius: 8px;
         }
         
         .radio-popup {
             text-align: center;
-            min-width: 220px;
+            min-width: 200px;
             font-family: var(--font-primary);
         }
         
         .radio-popup img {
-            width: 90px;
-            height: 68px;
+            width: 80px;
+            height: 60px;
             object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            box-shadow: var(--shadow-sm);
+            border-radius: 6px;
+            margin-bottom: 8px;
         }
         
         .radio-popup h3 {
-            margin: 0 0 8px 0;
+            margin: 0 0 6px 0;
             color: var(--emidias-primary);
-            font-size: 18px;
-            font-weight: var(--font-weight-bold);
+            font-size: 16px;
         }
         
         .radio-popup p {
-            margin: 6px 0;
-            font-size: 14px;
+            margin: 4px 0;
+            font-size: 13px;
             color: var(--emidias-gray);
-            font-weight: var(--font-weight-medium);
-        }
-        
-        /* Marcadores customizados */
-        .city-marker,
-        .radio-marker,
-        .temp-city-marker {
-            background: transparent !important;
-            border: none !important;
-        }
-        
-        .radio-marker-image {
-            width: 56px !important;
-            height: 56px !important;
-            border-radius: 50%;
-            border: 3px solid var(--emidias-white);
-            box-shadow: var(--shadow-md);
-            object-fit: cover;
-            transition: all 0.3s ease;
-        }
-        
-        .radio-marker-image:hover {
-            transform: scale(1.1);
-            box-shadow: var(--shadow-lg);
-        }
-        
-        /* =============================================================================
-           🎨 ANIMAÇÕES eRADIOS
-           ============================================================================= */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .info-card,
-        .map-container,
-        .cidades-container {
-            animation: fadeInUp 0.6s ease-out;
-        }
-        
-        .info-card:nth-child(2) {
-            animation-delay: 0.1s;
-        }
-        
-        .map-container {
-            animation-delay: 0.2s;
-        }
-        
-        .cidades-container {
-            animation-delay: 0.3s;
         }
     </style>
 </head>
 <body>
-    <button class="debug-toggle" onclick="toggleDebug()">🐛 Debug</button>
-    
     <div class="container">
-        <!-- HEADER E-MÍDIAS -->
+        <!-- HEADER SIMPLIFICADO -->
         <div class="header">
-            <h1 class="header-title" id="radio-name">
-                Carregando Rádio...
-                <img class="header-logo" id="header-logo" src="" alt="Logo" style="display: none;">
-            </h1>
-            <div class="header-subtitle">
-                <span id="radio-info">Mapa de Cobertura Interativo</span>
-            </div>
-        </div>
-        
-        <!-- SEÇÃO LOGO E-MÍDIAS -->
-        <div class="brand-section">
-            <img class="brand-logo" 
+            <img class="header-logo" 
                  src="./assets/logo E-MIDIAS png fundo branco.png" 
-                 alt="E-MÍDIAS" 
-                 id="brand-logo"
+                 alt="E-MÍDIAS"
                  onerror="this.src='./assets/logo E-MIDIAS png fundo branco HORIZONTAL.png'; this.onerror=function(){this.style.display='none'};">
-            <div class="brand-text">
-                <h3 class="brand-title">Plataforma E-MÍDIAS</h3>
-                <p class="brand-subtitle">Mapeamento de Cobertura de Rádios</p>
+            <div>
+                <h1 class="header-title" id="radio-name">Carregando Rádio...</h1>
+                <div class="header-subtitle" id="radio-info">Mapa de Cobertura Interativo</div>
             </div>
-        </div>
-        
-        <!-- DEBUG PANEL -->
-        <div id="debug-panel" class="debug-panel hidden">
-            <div class="debug-title">📋 Debug Log E-MÍDIAS</div>
-            <div id="debug-logs"></div>
         </div>
         
         <!-- LOADING -->
@@ -840,7 +399,6 @@
         <!-- ERROR -->
         <div id="error" class="error" style="display: none;">
             <div id="error-message"></div>
-            <div id="error-details" class="error-details" style="display: none;"></div>
         </div>
         
         <!-- INFORMAÇÕES -->
@@ -856,27 +414,17 @@
         <!-- CIDADES -->
         <div id="cidades-section" class="cidades-container" style="display: none;">
             <div class="cidades-header">
-                <h2 class="cidades-title">
-                    🌍 Cidades de Cobertura
-                </h2>
+                <h2 class="cidades-title">🌍 Cidades de Cobertura</h2>
                 <div class="cidades-actions">
-                    <button 
-                        class="excel-export-btn" 
-                        onclick="exportToExcel()" 
-                        title="Exportar cidades para Excel">
-                        📊 Exportar Excel (.xlsx)
+                    <button class="excel-export-btn" onclick="exportToExcel()">
+                        📊 Exportar Excel
                     </button>
                     <span class="cidades-count" id="cidades-count">0</span>
                 </div>
             </div>
             
             <div class="search-box">
-                <input 
-                    type="text" 
-                    class="search-input" 
-                    id="city-search" 
-                    placeholder="🔍 Buscar cidade ou região..."
-                >
+                <input type="text" class="search-input" id="city-search" placeholder="🔍 Buscar cidade...">
             </div>
             
             <div class="cidades-list" id="cidades-list">
@@ -884,12 +432,11 @@
             </div>
         </div>
         
-        <!-- RODAPÉ E-MÍDIAS -->
+        <!-- RODAPÉ -->
         <div class="footer">
             <img class="footer-logo" 
                  src="./assets/logo E-MIDIAS png fundo branco.png" 
-                 alt="E-MÍDIAS" 
-                 id="emidias-logo"
+                 alt="E-MÍDIAS"
                  onerror="this.src='./assets/logo E-MIDIAS png fundo branco HORIZONTAL.png'; this.onerror=function(){this.style.display='none'};">
             <p class="footer-text">Plataforma de Mapeamento de Cobertura de Rádios</p>
         </div>
@@ -903,7 +450,7 @@
     
     <script>
         // =========================================================================
-        // 🚀 VARIÁVEIS GLOBAIS E-MÍDIAS
+        // 🚀 VARIÁVEIS GLOBAIS
         // =========================================================================
         let map;
         let radioData = {};
@@ -912,43 +459,13 @@
         let cityMarkers = [];
         let allCities = [];
         let filteredCities = [];
-        let debugVisible = false;
         
         // =========================================================================
-        // 🐛 SISTEMA DE DEBUG E-MÍDIAS
-        // =========================================================================
-        function debugLog(message, type = 'info') {
-            console.log(`[${type.toUpperCase()}] ${message}`);
-            
-            const debugLogs = document.getElementById('debug-logs');
-            if (debugLogs) {
-                const logElement = document.createElement('div');
-                logElement.className = `debug-log ${type}`;
-                logElement.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-                debugLogs.appendChild(logElement);
-                debugLogs.scrollTop = debugLogs.scrollHeight;
-            }
-        }
-        
-        function toggleDebug() {
-            debugVisible = !debugVisible;
-            const panel = document.getElementById('debug-panel');
-            if (debugVisible) {
-                panel.classList.remove('hidden');
-            } else {
-                panel.classList.add('hidden');
-            }
-        }
-        
-        // =========================================================================
-        // 📊 FUNÇÃO EXPORT EXCEL (.XLSX) - E-MÍDIAS
+        // 📊 FUNÇÃO EXPORT EXCEL (.XLSX)
         // =========================================================================
         function exportToExcel() {
-            debugLog('📊 Exportando cidades para Excel (.xlsx)...', 'info');
-            
             if (!allCities || allCities.length === 0) {
                 alert('❌ Nenhuma cidade disponível para exportar.');
-                debugLog('❌ Nenhuma cidade para exportar', 'error');
                 return;
             }
             
@@ -957,7 +474,7 @@
                 const excelData = [];
                 
                 // Cabeçalho
-                excelData.push(['Região', 'UF', 'Cidade', 'Distância (m)']);
+                excelData.push(['Cidade', 'Distância (m)']);
                 
                 // Dados das cidades com separação de cidade e distância
                 allCities.forEach(cidade => {
@@ -969,10 +486,9 @@
                     
                     const parts = nomeCidadeLimpo.split(' - ');
                     const nomeCidade = parts[0].trim();
-                    const uf = parts[1] || radioData.uf;
                     
                     // Procurar distância nos placemarks KML
-                    let distanciaMetros = null;
+                    let distanciaMetros = 0;
                     if (radioData.kmlPlacemarks) {
                         const placemark = radioData.kmlPlacemarks.find(p => 
                             p.name.toLowerCase().includes(nomeCidade.toLowerCase())
@@ -983,20 +499,11 @@
                             if (distMatch) {
                                 const distanciaKm = parseFloat(distMatch[1]);
                                 distanciaMetros = Math.round(distanciaKm * 1000); // Converter para metros
-                                debugLog(`📏 ${nomeCidade}: ${distanciaKm}km = ${distanciaMetros}m`, 'info');
                             }
                         }
                     }
                     
-                    // Se não encontrou distância no KML, deixar como 0
-                    if (distanciaMetros === null) {
-                        distanciaMetros = 0;
-                        debugLog(`⚠️ ${nomeCidade}: distância não encontrada, usando 0m`, 'warning');
-                    }
-                    
                     excelData.push([
-                        radioData.region || 'N/A',
-                        uf,
                         nomeCidade, // Cidade limpa sem distância
                         distanciaMetros // Distância em metros do KML
                     ]);
@@ -1008,8 +515,6 @@
                 
                 // Configurar largura das colunas
                 ws['!cols'] = [
-                    { width: 15 }, // Região
-                    { width: 8 },  // UF
                     { width: 30 }, // Cidade
                     { width: 15 }  // Distância (m)
                 ];
@@ -1024,94 +529,53 @@
                 // Baixar arquivo Excel
                 XLSX.writeFile(wb, fileName);
                 
-                debugLog(`✅ Excel (.xlsx) exportado: ${fileName} (${allCities.length} cidades)`, 'success');
-                
                 // Feedback visual
                 const btn = document.querySelector('.excel-export-btn');
                 if (btn) {
                     const originalText = btn.innerHTML;
                     btn.innerHTML = '✅ Exportado!';
-                    btn.style.background = 'var(--gradient-success)';
                     setTimeout(() => {
                         btn.innerHTML = originalText;
-                        btn.style.background = 'var(--gradient-success)';
                     }, 2000);
                 }
                 
             } catch (error) {
-                debugLog(`❌ Erro ao exportar Excel: ${error.message}`, 'error');
-                console.error('Erro detalhado:', error);
+                console.error('Erro ao exportar Excel:', error);
                 alert('❌ Erro ao exportar arquivo. Tente novamente.');
             }
         }
         
-        // Função auxiliar para calcular distância entre coordenadas (Haversine)
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; // Raio da Terra em km
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                      Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c; // Distância em km
-        }
-        
         // =========================================================================
-        // 🚀 INICIALIZAÇÃO E-MÍDIAS
+        // 🚀 INICIALIZAÇÃO
         // =========================================================================
         document.addEventListener('DOMContentLoaded', async () => {
-            debugLog('🚀 Iniciando sistema E-MÍDIAS...', 'info');
             try {
                 await loadRadioData();
                 renderInfo();
                 await initializeMap();
                 renderCidades();
                 hideLoading();
-                debugLog('✅ Sistema E-MÍDIAS carregado com sucesso!', 'success');
             } catch (error) {
-                debugLog(`❌ Erro ao carregar: ${error.message}`, 'error');
-                console.error('Erro completo:', error);
-                showError(error.message, error.stack);
+                console.error('Erro ao carregar:', error);
+                showError(error.message);
             }
         });
         
         // =========================================================================
-        // 📡 CARREGAR DADOS DO NOTION E-MÍDIAS
+        // 📡 CARREGAR DADOS
         // =========================================================================
         async function loadRadioData() {
             const params = new URLSearchParams(window.location.search);
             const notionId = params.get('id');
             
             if (notionId && /^[0-9a-f]{32}$/i.test(notionId)) {
-                debugLog(`📡 Carregando do Notion: ${notionId}`, 'info');
                 try {
                     radioData = await fetchRadioFromNotion(notionId);
-                    debugLog('✅ Dados carregados do Notion com sucesso', 'success');
-                    
-                    // Log adicional sobre KML
-                    if (radioData.kmlUrl) {
-                        debugLog(`🗺️ URL KML encontrada: ${radioData.kmlUrl}`, 'info');
-                        debugLog(`🎯 Tipo de cobertura: ${radioData.coverageType}`, 'info');
-                        if (radioData.kmlError) {
-                            debugLog(`⚠️ Erro no KML: ${radioData.kmlError}`, 'warning');
-                        }
-                        if (radioData.kmlCoordinates) {
-                            debugLog(`📍 Coordenadas KML: ${radioData.kmlCoordinates.length} polígonos`, 'success');
-                        }
-                        if (radioData.kmlPlacemarks) {
-                            debugLog(`🏙️ Placemarks KML: ${radioData.kmlPlacemarks.length} cidades`, 'success');
-                        }
-                    } else {
-                        debugLog('⚠️ Nenhuma URL KML fornecida', 'warning');
-                    }
                 } catch (error) {
-                    debugLog(`❌ Erro ao carregar do Notion: ${error.message}`, 'error');
                     throw new Error(`Erro ao carregar dados: ${error.message}`);
                 }
             } else {
                 // Dados de exemplo para desenvolvimento/teste
-                debugLog('🎭 Usando dados de exemplo (modo desenvolvimento)', 'warning');
                 radioData = {
                     name: 'RÁDIO EXEMPLO FM',
                     dial: '107.3',
@@ -1132,112 +596,74 @@
                     source: 'example'
                 };
             }
-            
-            debugLog(`📊 Coordenadas: ${radioData.latitude}, ${radioData.longitude}`, 'info');
-            debugLog(`📡 ${radioData.name} - ${radioData.dial}`, 'info');
         }
         
         // BUSCAR DADOS DO NOTION VIA NETLIFY FUNCTION
         async function fetchRadioFromNotion(notionId) {
-            debugLog('🌐 Fazendo requisição para Netlify Function...', 'info');
-            
             const response = await fetch(`/.netlify/functions/radio-data?id=${notionId}`);
-            
-            debugLog(`📡 Status da resposta: ${response.status}`, 'info');
             
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
-                debugLog(`❌ Erro da API: ${JSON.stringify(errorData)}`, 'error');
                 throw new Error(errorData.error || `Erro HTTP ${response.status}`);
             }
             
-            const data = await response.json();
-            debugLog('✅ Dados recebidos da API', 'success');
-            return data;
+            return await response.json();
         }
         
         // =========================================================================
-        // 🗺️ INICIALIZAR MAPA E-MÍDIAS
+        // 🗺️ INICIALIZAR MAPA
         // =========================================================================
         async function initializeMap() {
-            debugLog('🗺️ Inicializando mapa...', 'info');
-            
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 setTimeout(() => {
-                    try {
-                        // Verificar se Leaflet está carregado
-                        if (typeof L === 'undefined') {
-                            throw new Error('Leaflet não foi carregado corretamente');
-                        }
-                        
-                        debugLog('📦 Leaflet carregado com sucesso', 'success');
-                        
-                        // Criar mapa
-                        const mapElement = document.getElementById('map');
-                        if (!mapElement) {
-                            throw new Error('Elemento do mapa não encontrado');
-                        }
-                        
-                        map = L.map('map');
-                        debugLog('🗺️ Objeto do mapa criado', 'success');
-                        
-                        // Adicionar tiles do OpenStreetMap
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            attribution: '© OpenStreetMap contributors',
-                            maxZoom: 18
-                        }).addTo(map);
-                        
-                        debugLog('🌍 Tiles do OpenStreetMap adicionados', 'success');
-                        
-                        // Forçar recalculo do tamanho do mapa
-                        setTimeout(() => {
-                            map.invalidateSize();
-                            debugLog('🔧 Mapa redimensionado', 'success');
-                        }, 100);
-                        
-                        // Adicionar marker da rádio
-                        addRadioMarker();
-                        
-                        // Adicionar cobertura (KML ou círculo)
-                        addCoverage();
-                        
-                        // Ajustar zoom
-                        fitMapToCoverage();
-                        
-                        debugLog('✅ Mapa inicializado completamente', 'success');
-                        resolve();
-                        
-                    } catch (error) {
-                        debugLog(`❌ Erro ao inicializar mapa: ${error.message}`, 'error');
-                        console.error('Erro detalhado do mapa:', error);
-                        reject(error);
-                    }
+                    // Criar mapa
+                    map = L.map('map');
+                    
+                    // Adicionar tiles do OpenStreetMap
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors',
+                        maxZoom: 18
+                    }).addTo(map);
+                    
+                    // Forçar recalculo do tamanho do mapa
+                    setTimeout(() => {
+                        map.invalidateSize();
+                    }, 100);
+                    
+                    // Adicionar marker da rádio
+                    addRadioMarker();
+                    
+                    // Adicionar cobertura (KML ou círculo)
+                    addCoverage();
+                    
+                    // Ajustar zoom
+                    fitMapToCoverage();
+                    
+                    resolve();
                 }, 50);
             });
         }
         
         function addRadioMarker() {
-            debugLog('📍 Adicionando marcador da rádio...', 'info');
-            
-            // Usar imagem da rádio com tema eRadios
+            // Usar imagem da rádio
             const radioIcon = L.divIcon({
                 html: `
                     <img src="${radioData.imageUrl}" 
                          alt="${radioData.name}" 
-                         class="radio-marker-image"
-                         onerror="this.src='https://via.placeholder.com/56x56/06055B/white?text=${encodeURIComponent(radioData.dial || 'FM')}'">
+                         style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"
+                         onerror="this.src='https://via.placeholder.com/48x48/06055B/white?text=${encodeURIComponent(radioData.dial || 'FM')}'">
                 `,
                 className: 'radio-marker',
-                iconSize: [56, 56],
-                iconAnchor: [28, 28]
+                iconSize: [48, 48],
+                iconAnchor: [24, 24]
             });
             
-            // Popup com tema eRadios
+            // Popup
             const popupContent = `
                 <div class="radio-popup">
                     <img src="${radioData.imageUrl}" 
                          alt="${radioData.name}" 
-                         onerror="this.src='https://via.placeholder.com/90x68/06055B/white?text=${encodeURIComponent(radioData.dial || 'FM')}'"
+                         onerror="this.src='https://via.placeholder.com/80x60/06055B/white?text=${encodeURIComponent(radioData.dial || 'FM')}'"
                     >
                     <h3>${radioData.name}</h3>
                     <p><strong>${radioData.dial}</strong></p>
@@ -1248,30 +674,19 @@
             radioMarker = L.marker([radioData.latitude, radioData.longitude], { icon: radioIcon })
                 .bindPopup(popupContent)
                 .addTo(map);
-                
-            debugLog('✅ Marcador da rádio adicionado', 'success');
         }
         
         // ADICIONAR COBERTURA
         function addCoverage() {
-            debugLog(`🎯 Adicionando cobertura, tipo: ${radioData.coverageType}`, 'info');
-            
             if (radioData.coverageType === 'kml' && radioData.kmlCoordinates && radioData.kmlCoordinates.length > 0) {
                 addKMLPolygons();
             } else {
                 addCoverageCircle();
             }
-            
-            // Adicionar marcadores das cidades do KML (se houver)
-            if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
-                addCityMarkers();
-            }
         }
         
-        // Adicionar polígonos do KML com cores eRadios
+        // Adicionar polígonos do KML
         function addKMLPolygons() {
-            debugLog(`🗺️ Adicionando polígonos KML: ${radioData.kmlCoordinates.length} polígonos`, 'info');
-            
             const kmlGroup = L.layerGroup();
             
             for (const polygon of radioData.kmlCoordinates) {
@@ -1285,7 +700,7 @@
                     });
                     
                     leafletPolygon.bindPopup(`
-                        <div style="text-align: center; font-family: var(--font-primary);">
+                        <div style="text-align: center;">
                             <h4 style="color: #06055B; margin: 0 0 8px 0;">Projeção de Cobertura</h4>
                             <p style="margin: 0; color: #64748B; font-size: 13px;">Área calculada via KML</p>
                         </div>
@@ -1297,14 +712,10 @@
             
             coverageLayer = kmlGroup;
             coverageLayer.addTo(map);
-            
-            debugLog(`✅ Polígonos KML adicionados`, 'success');
         }
         
-        // Adicionar círculo tradicional com cores eRadios
+        // Adicionar círculo tradicional
         function addCoverageCircle() {
-            debugLog(`⭕ Adicionando círculo de cobertura: ${radioData.radius / 1000} km`, 'info');
-            
             coverageLayer = L.circle([radioData.latitude, radioData.longitude], {
                 color: '#06055B',
                 fillColor: '#06055B',
@@ -1314,107 +725,25 @@
             });
             
             coverageLayer.bindPopup(`
-                <div style="text-align: center; font-family: var(--font-primary);">
+                <div style="text-align: center;">
                     <h4 style="color: #06055B; margin: 0 0 8px 0;">Projeção de Cobertura</h4>
                     <p style="margin: 0; color: #64748B;">Raio: <strong>${(radioData.radius / 1000).toFixed(0)} km</strong></p>
                 </div>
             `);
             
             coverageLayer.addTo(map);
-            debugLog('✅ Círculo de cobertura adicionado', 'success');
-        }
-        
-        // Adicionar marcadores das cidades
-        function addCityMarkers() {
-            debugLog(`📍 Adicionando marcadores das cidades: ${radioData.kmlPlacemarks.length} cidades`, 'info');
-            
-            cityMarkers.forEach(marker => map.removeLayer(marker));
-            cityMarkers = [];
-            
-            const cityIcon = L.divIcon({
-                html: `
-                    <div style="
-                        width: 18px; 
-                        height: 18px; 
-                        background: #06055B; 
-                        border-radius: 50%; 
-                        border: 2px solid white;
-                        box-shadow: 0 2px 6px rgba(6, 5, 91, 0.3);
-                    "></div>
-                `,
-                className: 'city-marker',
-                iconSize: [18, 18],
-                iconAnchor: [9, 9]
-            });
-            
-            const radioLocation = radioData.praca ? radioData.praca.toLowerCase() : '';
-            const radioName = radioData.name ? radioData.name.toLowerCase() : '';
-            
-            radioData.kmlPlacemarks.forEach((placemark, index) => {
-                const cityName = placemark.name.toLowerCase();
-                
-                // FILTROS APRIMORADOS para evitar marcadores duplicados
-                if (
-                    cityName.includes(radioLocation) || 
-                    placemark.description?.includes('0.0 km') ||
-                    placemark.description?.includes('0,0 km') ||
-                    cityName === radioLocation ||
-                    cityName.includes('origem') ||
-                    cityName.includes(radioName.replace('rádio', '').replace('fm', '').trim()) ||
-                    // Filtrar se contém o nome da rádio
-                    radioName.includes(cityName) ||
-                    // Filtrar se está muito próximo da rádio (menos de 1km)
-                    (placemark.description && placemark.description.match(/0\.[0-9]\s*km/))
-                ) {
-                    debugLog(`⏭️ Pulando marcador duplicado/origem: ${placemark.name} - ${placemark.description || 'sem descrição'}`, 'info');
-                    return;
-                }
-                
-                const [lat, lng] = placemark.coordinates;
-                
-                // Verificar se não está muito próximo da rádio (raio de 500m)
-                const distanceFromRadio = calculateDistance(
-                    radioData.latitude, radioData.longitude,
-                    lat, lng
-                );
-                
-                if (distanceFromRadio < 0.5) { // Menos de 500m
-                    debugLog(`⏭️ Pulando cidade muito próxima da rádio: ${placemark.name} (${(distanceFromRadio*1000).toFixed(0)}m)`, 'info');
-                    return;
-                }
-                
-                const cityMarker = L.marker([lat, lng], { icon: cityIcon })
-                    .bindPopup(`
-                        <div style="text-align: center; min-width: 160px; font-family: var(--font-primary);">
-                            <h4 style="margin: 0 0 8px 0; color: #06055B; font-weight: 600;">${placemark.name}</h4>
-                            ${placemark.description ? `<p style="margin: 4px 0; font-size: 12px; color: #64748B;">${placemark.description}</p>` : ''}
-                            <p style="margin: 4px 0; font-size: 11px; color: #9CA3AF;">
-                                📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}
-                            </p>
-                        </div>
-                    `)
-                    .addTo(map);
-                    
-                cityMarkers.push(cityMarker);
-            });
-            
-            debugLog(`✅ ${cityMarkers.length} marcadores de cidades adicionados (duplicados filtrados)`, 'success');
         }
         
         // Ajustar zoom para mostrar toda a cobertura
         function fitMapToCoverage() {
-            debugLog('📏 Ajustando zoom para mostrar toda a cobertura...', 'info');
-            
             if (radioData.coverageType === 'kml' && radioData.kmlBounds) {
                 const bounds = L.latLngBounds(
                     [radioData.kmlBounds.south, radioData.kmlBounds.west],
                     [radioData.kmlBounds.north, radioData.kmlBounds.east]
                 );
-                map.fitBounds(bounds, { padding: [80, 80] });
-                debugLog('📏 Zoom ajustado para bounds KML', 'success');
+                map.fitBounds(bounds, { padding: [50, 50] });
             } else if (coverageLayer && coverageLayer.getBounds) {
-                map.fitBounds(coverageLayer.getBounds(), { padding: [100, 100] });
-                debugLog('📏 Zoom ajustado para bounds da camada', 'success');
+                map.fitBounds(coverageLayer.getBounds(), { padding: [50, 50] });
             } else {
                 const radiusKm = radioData.radius / 1000;
                 let zoom = 6;
@@ -1426,16 +755,13 @@
                 else if (radiusKm > 25) zoom = 8;
                 
                 map.setView([radioData.latitude, radioData.longitude], zoom);
-                debugLog(`📏 Zoom ajustado para ${zoom} baseado no raio de ${radiusKm}km`, 'success');
             }
         }
         
         // =========================================================================
-        // 📋 RENDERIZAR INFORMAÇÕES E-MÍDIAS
+        // 📋 RENDERIZAR INFORMAÇÕES
         // =========================================================================
         function renderInfo() {
-            debugLog('📋 Renderizando informações...', 'info');
-            
             const container = document.getElementById('info-section');
             
             const pmmFormatted = radioData.pmm ? radioData.pmm.toLocaleString() : 'N/A';
@@ -1478,15 +804,12 @@
             `;
             
             container.style.display = 'grid';
-            debugLog('✅ Informações renderizadas', 'success');
         }
         
         // =========================================================================
-        // 🏙️ RENDERIZAR CIDADES E-MÍDIAS
+        // 🏙️ RENDERIZAR CIDADES
         // =========================================================================
         function renderCidades() {
-            debugLog('🏙️ Renderizando lista de cidades...', 'info');
-            
             // Filtrar nome da rádio da lista
             allCities = (radioData.cidades || []).filter(cidade => {
                 const cityName = cidade.toLowerCase();
@@ -1501,7 +824,6 @@
             setupCitySearch();
             
             document.getElementById('cidades-section').style.display = 'block';
-            debugLog(`✅ ${allCities.length} cidades renderizadas`, 'success');
         }
         
         function updateCidadesList() {
@@ -1547,9 +869,7 @@
         
         // Destacar cidade no mapa
         function highlightCity(cityName) {
-            debugLog(`🎯 Destacando cidade: ${cityName}`, 'info');
-            
-            // PRIORIDADE 1: Procurar nos marcadores KML
+            // Procurar nos marcadores KML
             if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
                 const foundPlacemark = radioData.kmlPlacemarks.find(placemark => 
                     placemark.name.toLowerCase().includes(cityName.split(' - ')[0].toLowerCase())
@@ -1558,58 +878,15 @@
                 if (foundPlacemark) {
                     const [lat, lng] = foundPlacemark.coordinates;
                     map.setView([lat, lng], 12);
-                    
-                    const markerIndex = radioData.kmlPlacemarks.indexOf(foundPlacemark);
-                    if (cityMarkers[markerIndex]) {
-                        cityMarkers[markerIndex].openPopup();
-                        debugLog(`✅ Cidade ${cityName} destacada no mapa via KML`, 'success');
-                        return;
-                    }
+                    return;
                 }
             }
             
-            // PRIORIDADE 2: Estimativa de coordenadas
+            // Estimativa de coordenadas
             const cityCoords = estimateCityCoordinates(cityName, radioData.uf);
             if (cityCoords) {
                 map.setView(cityCoords, 11);
-                
-                const tempMarker = L.marker(cityCoords, {
-                    icon: L.divIcon({
-                        html: `<div style="
-                            width: 20px; 
-                            height: 20px; 
-                            background: #FC1E75; 
-                            border-radius: 50%; 
-                            border: 2px solid white;
-                            box-shadow: 0 2px 6px rgba(252, 30, 117, 0.4);
-                        "></div>`,
-                        className: 'temp-city-marker',
-                        iconSize: [20, 20],
-                        iconAnchor: [10, 10]
-                    })
-                });
-                
-                tempMarker.addTo(map)
-                    .bindPopup(`
-                        <div style="text-align: center; font-family: var(--font-primary);">
-                            <h4 style="color: #FC1E75; margin: 0 0 8px 0;">${cityName.split(' - ')[0]}</h4>
-                            <p style="margin: 4px 0; font-size: 12px; color: #64748B;">Localização estimada</p>
-                            <p style="margin: 4px 0; font-size: 11px; color: #9CA3AF;">
-                                📍 ${cityCoords[0].toFixed(4)}, ${cityCoords[1].toFixed(4)}
-                            </p>
-                        </div>
-                    `)
-                    .openPopup();
-                
-                setTimeout(() => {
-                    map.removeLayer(tempMarker);
-                }, 5000);
-                
-                debugLog(`✅ Cidade ${cityName} destacada com coordenadas estimadas`, 'success');
-                return;
             }
-            
-            debugLog(`⚠️ Não foi possível localizar a cidade ${cityName}`, 'warning');
         }
         
         // Estimar coordenadas das cidades
@@ -1650,7 +927,7 @@
         }
         
         // =========================================================================
-        // 🎨 UTILITÁRIOS E-MÍDIAS
+        // 🎨 UTILITÁRIOS
         // =========================================================================
         function hideLoading() {
             const loadingElement = document.getElementById('loading');
@@ -1663,51 +940,21 @@
             if (infoElement) infoElement.style.display = 'grid';
             if (mapElement) mapElement.style.display = 'block';
             
-            // Atualizar header com logo
+            // Atualizar header
             const sourceSuffix = radioData.source === 'example' ? ' (EXEMPLO)' : '';
-            if (radioNameElement) {
-                radioNameElement.innerHTML = `
-                    ${radioData.name}${sourceSuffix}
-                    <img class="header-logo" src="${radioData.imageUrl}" alt="Logo ${radioData.name}" 
-                         onerror="this.style.display='none';">
-                `;
-            }
+            if (radioNameElement) radioNameElement.textContent = `${radioData.name}${sourceSuffix}`;
             if (radioInfoElement) radioInfoElement.textContent = `${radioData.dial} • ${radioData.praca} - ${radioData.uf}`;
-            
-            debugLog('✅ Interface carregada com identidade E-MÍDIAS', 'success');
         }
         
-        function showError(message, details = null) {
-            debugLog(`❌ Exibindo erro: ${message}`, 'error');
-            
+        function showError(message) {
             const loadingElement = document.getElementById('loading');
             const errorElement = document.getElementById('error');
             const errorMessageElement = document.getElementById('error-message');
-            const errorDetailsElement = document.getElementById('error-details');
             
             if (loadingElement) loadingElement.style.display = 'none';
             if (errorMessageElement) errorMessageElement.textContent = message;
-            
-            if (details && errorDetailsElement) {
-                errorDetailsElement.textContent = details;
-                errorDetailsElement.style.display = 'block';
-            }
-            
             if (errorElement) errorElement.style.display = 'block';
         }
-        
-        // =========================================================================
-        // 🚨 HANDLERS DE ERRO GLOBAIS E-MÍDIAS
-        // =========================================================================
-        window.addEventListener('error', (e) => {
-            debugLog(`🚨 Erro JavaScript: ${e.message}`, 'error');
-            console.error('Erro capturado:', e.error);
-        });
-        
-        window.addEventListener('unhandledrejection', (e) => {
-            debugLog(`🚨 Promise rejeitada: ${e.reason}`, 'error');
-            console.error('Promise rejeitada:', e.reason);
-        });
     </script>
 </body>
 </html>
