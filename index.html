@@ -69,7 +69,7 @@
             margin-bottom: 20px;
             font-family: 'Courier New', monospace;
             font-size: 12px;
-            max-height: 200px;
+            max-height: 300px;
             overflow-y: auto;
             border: 2px solid #374151;
         }
@@ -362,8 +362,8 @@
         <!-- HEADER -->
         <div class="header">
             <h1 class="header-title" id="radio-name">📻 Carregando Rádio...</h1>
-            <div class="header-subtitle" id="radio-info">
-                Mapa de Cobertura Interativo
+            <div class="header-subtitle">
+                <span id="radio-info">Mapa de Cobertura Interativo</span>
                 <span class="coverage-type-badge" id="coverage-type">🔄 Carregando...</span>
             </div>
         </div>
@@ -491,6 +491,9 @@
                         debugLog(`🎯 Tipo de cobertura: ${radioData.coverageType}`, 'info');
                         if (radioData.kmlError) {
                             debugLog(`⚠️ Erro no KML: ${radioData.kmlError}`, 'warning');
+                        }
+                        if (radioData.kmlCoordinates) {
+                            debugLog(`📍 Coordenadas KML: ${radioData.kmlCoordinates.length} polígonos`, 'success');
                         }
                     } else {
                         debugLog('⚠️ Nenhuma URL KML fornecida', 'warning');
@@ -652,7 +655,7 @@
         function addCoverage() {
             debugLog(`🎯 Adicionando cobertura, tipo: ${radioData.coverageType}`, 'info');
             
-            if (radioData.coverageType === 'kml' && radioData.kmlCoordinates) {
+            if (radioData.coverageType === 'kml' && radioData.kmlCoordinates && radioData.kmlCoordinates.length > 0) {
                 // Usar polígonos do KML
                 addKMLPolygons();
             } else {
@@ -845,7 +848,7 @@
             const container = document.getElementById('cidades-list');
             const count = document.getElementById('cidades-count');
             
-            count.textContent = filteredCities.length;
+            if (count) count.textContent = filteredCities.length;
             
             if (filteredCities.length === 0) {
                 container.innerHTML = '<div class="cidade-item">Nenhuma cidade encontrada</div>';
@@ -869,15 +872,17 @@
         function setupCitySearch() {
             const searchInput = document.getElementById('city-search');
             
-            searchInput.addEventListener('input', (e) => {
-                const query = e.target.value.toLowerCase();
-                
-                filteredCities = allCities.filter(cidade => 
-                    cidade.toLowerCase().includes(query)
-                );
-                
-                updateCidadesList();
-            });
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    const query = e.target.value.toLowerCase();
+                    
+                    filteredCities = allCities.filter(cidade => 
+                        cidade.toLowerCase().includes(query)
+                    );
+                    
+                    updateCidadesList();
+                });
+            }
         }
         
         function highlightCity(cityName) {
@@ -887,38 +892,51 @@
         
         // UTILITÁRIOS
         function hideLoading() {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('info-section').style.display = 'grid';
-            document.getElementById('map-section').style.display = 'block';
+            const loadingElement = document.getElementById('loading');
+            const infoElement = document.getElementById('info-section');
+            const mapElement = document.getElementById('map-section');
+            const radioNameElement = document.getElementById('radio-name');
+            const radioInfoElement = document.getElementById('radio-info');
+            const coverageTypeElement = document.getElementById('coverage-type');
+            
+            if (loadingElement) loadingElement.style.display = 'none';
+            if (infoElement) infoElement.style.display = 'grid';
+            if (mapElement) mapElement.style.display = 'block';
             
             // Atualizar header
             const sourceSuffix = radioData.source === 'example' ? ' (EXEMPLO)' : '';
-            document.getElementById('radio-name').textContent = radioData.name + sourceSuffix;
-            document.getElementById('radio-info').textContent = `${radioData.dial} • ${radioData.praca} - ${radioData.uf}`;
+            if (radioNameElement) radioNameElement.textContent = radioData.name + sourceSuffix;
+            if (radioInfoElement) radioInfoElement.textContent = `${radioData.dial} • ${radioData.praca} - ${radioData.uf}`;
             
             // Atualizar badge do tipo de cobertura
-            const coverageTypeElement = document.getElementById('coverage-type');
-            if (radioData.coverageType === 'kml') {
-                coverageTypeElement.textContent = '🗺️ KML Precision';
-                coverageTypeElement.style.background = 'rgba(34, 197, 94, 0.3)';
-            } else {
-                coverageTypeElement.textContent = '⭕ Círculo Estimado';
-                coverageTypeElement.style.background = 'rgba(234, 179, 8, 0.3)';
+            if (coverageTypeElement) {
+                if (radioData.coverageType === 'kml') {
+                    coverageTypeElement.textContent = '🗺️ KML Precision';
+                    coverageTypeElement.style.background = 'rgba(34, 197, 94, 0.3)';
+                } else {
+                    coverageTypeElement.textContent = '⭕ Círculo Estimado';
+                    coverageTypeElement.style.background = 'rgba(234, 179, 8, 0.3)';
+                }
             }
         }
         
         function showError(message, details = null) {
             debugLog(`❌ Exibindo erro: ${message}`, 'error');
             
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('error-message').textContent = message;
+            const loadingElement = document.getElementById('loading');
+            const errorElement = document.getElementById('error');
+            const errorMessageElement = document.getElementById('error-message');
+            const errorDetailsElement = document.getElementById('error-details');
             
-            if (details) {
-                document.getElementById('error-details').textContent = details;
-                document.getElementById('error-details').style.display = 'block';
+            if (loadingElement) loadingElement.style.display = 'none';
+            if (errorMessageElement) errorMessageElement.textContent = message;
+            
+            if (details && errorDetailsElement) {
+                errorDetailsElement.textContent = details;
+                errorDetailsElement.style.display = 'block';
             }
             
-            document.getElementById('error').style.display = 'block';
+            if (errorElement) errorElement.style.display = 'block';
         }
         
         // Handler de erro global
