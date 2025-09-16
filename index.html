@@ -809,6 +809,9 @@
         let allCities = [];
         let filteredCities = [];
         
+        // Mapeamento entre nomes de cidades e índices dos marcadores
+        window.cityPlacemarkMap = {};
+        
         // =========================================================================
         // 📊 FUNÇÃO EXPORT EXCEL (.XLSX) - E-MÍDIAS
         // =========================================================================
@@ -1133,6 +1136,9 @@
             cityMarkers.forEach(marker => map.removeLayer(marker));
             cityMarkers = [];
             
+            // Criar mapeamento entre placemarks e marcadores válidos
+            window.cityPlacemarkMap = {}; // Mapa global para acessar depois
+            
             const cityIcon = L.divIcon({
                 html: `
                     <div style="
@@ -1195,7 +1201,14 @@
                     `)
                     .addTo(map);
                     
+                // Mapear nome da cidade para índice do cityMarkers
+                const markerIndex = cityMarkers.length;
                 cityMarkers.push(cityMarker);
+                window.cityPlacemarkMap[placemark.name.toLowerCase()] = {
+                    markerIndex: markerIndex,
+                    coordinates: [lat, lng],
+                    placemark: placemark
+                };
             });
         }
         
@@ -1206,18 +1219,24 @@
                     [radioData.kmlBounds.south, radioData.kmlBounds.west],
                     [radioData.kmlBounds.north, radioData.kmlBounds.east]
                 );
-                map.fitBounds(bounds, { padding: [80, 80] });
+                // Aumentar padding para dar mais margem de visualização
+                map.fitBounds(bounds, { padding: [50, 50] });
             } else if (coverageLayer && coverageLayer.getBounds) {
-                map.fitBounds(coverageLayer.getBounds(), { padding: [100, 100] });
+                // Aumentar padding para círculos também
+                map.fitBounds(coverageLayer.getBounds(), { padding: [80, 80] });
             } else {
+                // Zoom baseado no raio - valores mais baixos (mais abertos)
                 const radiusKm = radioData.radius / 1000;
-                let zoom = 6;
-                if (radiusKm > 200) zoom = 4;
-                else if (radiusKm > 150) zoom = 5;
-                else if (radiusKm > 100) zoom = 5;
-                else if (radiusKm > 75) zoom = 6;
-                else if (radiusKm > 50) zoom = 7;
-                else if (radiusKm > 25) zoom = 8;
+                let zoom = 5; // Zoom padrão mais aberto
+                
+                if (radiusKm > 300) zoom = 3;      // Muito grande
+                else if (radiusKm > 200) zoom = 4; // Grande
+                else if (radiusKm > 150) zoom = 4; // Médio-grande
+                else if (radiusKm > 100) zoom = 5; // Médio
+                else if (radiusKm > 75) zoom = 5;  // Médio-pequeno
+                else if (radiusKm > 50) zoom = 6;  // Pequeno
+                else if (radiusKm > 25) zoom = 7;  // Muito pequeno
+                else zoom = 8; // Mínimo local
                 
                 map.setView([radioData.latitude, radioData.longitude], zoom);
             }
@@ -1331,20 +1350,41 @@
         
         // Destacar cidade no mapa (apenas coordenadas KML)
         function highlightCity(cityName) {
-            // Procurar nos marcadores KML
-            if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
-                const foundPlacemark = radioData.kmlPlacemarks.find(placemark => 
-                    placemark.name.toLowerCase().includes(cityName.split(' - ')[0].toLowerCase())
-                );
+            const cityBaseName = cityName.split(' - ')[0].toLowerCase();
+            
+            // Usar o mapeamento correto criado em addCityMarkers
+            if (window.cityPlacemarkMap && window.cityPlacemarkMap[cityBaseName]) {
+                const cityData = window.cityPlacemarkMap[cityBaseName];
+                const [lat, lng] = cityData.coordinates;
                 
-                if (foundPlacemark) {
-                    const [lat, lng] = foundPlacemark.coordinates;
-                    map.setView([lat, lng], 12);
+                // Centralizar no mapa com zoom apropriado
+                map.setView([lat, lng], 11);
+                
+                // Abrir popup do marcador correto
+                if (cityMarkers[cityData.markerIndex]) {
+                    cityMarkers[cityData.markerIndex].openPopup();
+                    return;
+                }
+            }
+            
+            // Busca alternativa: procurar por nome similar nos placemarks
+            if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
+                for (let i = 0; i < radioData.kmlPlacemarks.length; i++) {
+                    const placemark = radioData.kmlPlacemarks[i];
+                    const placemarkName = placemark.name.toLowerCase();
                     
-                    const markerIndex = radioData.kmlPlacemarks.indexOf(foundPlacemark);
-                    if (cityMarkers[markerIndex]) {
-                        cityMarkers[markerIndex].openPopup();
-                        return;
+                    if (placemarkName.includes(cityBaseName) || cityBaseName.includes(placemarkName)) {
+                        // Verificar se este placemark tem um marcador correspondente
+                        const mappedCity = window.cityPlacemarkMap[placemarkName];
+                        if (mappedCity) {
+                            const [lat, lng] = mappedCity.coordinates;
+                            map.setView([lat, lng], 11);
+                            
+                            if (cityMarkers[mappedCity.markerIndex]) {
+                                cityMarkers[mappedCity.markerIndex].openPopup();
+                                return;
+                            }
+                        }
                     }
                 }
             }
