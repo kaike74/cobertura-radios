@@ -50,13 +50,10 @@
         }
         
         .header-logo {
-            width: 60px;
-            height: 45px;
+            width: 80px;
+            height: 60px;
             object-fit: contain;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            padding: 4px;
+            border-radius: 12px;
         }
         
         .header-subtitle {
@@ -128,7 +125,7 @@
             z-index: 1000;
         }
         
-        /* CARDS DE INFORMAÇÃO */
+        /* CARDS DE INFORMAÇÃO - com toques eRadios */
         .info-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -142,6 +139,12 @@
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.08);
             border-left: 4px solid #dc2626;
+            transition: all 0.3s ease;
+        }
+        
+        .info-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
         }
         
         .card-title {
@@ -175,22 +178,28 @@
             color: #1e293b;
         }
         
-        /* MAPA */
+        /* MAPA - com melhorias visuais */
         .map-container {
             background: white;
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .map-container:hover {
+            box-shadow: 0 6px 30px rgba(0,0,0,0.15);
         }
         
         #map {
             height: 500px;
             width: 100%;
             min-height: 500px;
+            transition: filter 0.3s ease;
         }
         
-        /* CIDADES */
+        /* CIDADES - com melhorias UX */
         .cidades-container {
             background: white;
             border-radius: 12px;
@@ -216,12 +225,13 @@
         }
         
         .cidades-count {
-            background: #dc2626;
+            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
             color: white;
             padding: 4px 12px;
             border-radius: 16px;
             font-size: 12px;
             font-weight: 600;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
         }
         
         .search-box {
@@ -234,12 +244,13 @@
             border: 2px solid #e2e8f0;
             border-radius: 8px;
             font-size: 14px;
-            transition: border-color 0.2s ease;
+            transition: all 0.2s ease;
         }
         
         .search-input:focus {
             outline: none;
             border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
         }
         
         .cidades-list {
@@ -252,12 +263,14 @@
         .cidade-item {
             padding: 12px 16px;
             border-bottom: 1px solid #f1f5f9;
-            transition: background-color 0.2s ease;
+            transition: all 0.2s ease;
             cursor: pointer;
         }
         
         .cidade-item:hover {
-            background-color: #fef2f2;
+            background: linear-gradient(90deg, #fef2f2 0%, #ffffff 100%);
+            transform: translateX(4px);
+            border-left: 3px solid #dc2626;
         }
         
         .cidade-item:last-child {
@@ -325,8 +338,30 @@
             .info-grid { grid-template-columns: 1fr; }
             #map { height: 400px; min-height: 400px; }
             .header-title { font-size: 22px; flex-direction: column; gap: 8px; }
-            .header-logo { width: 50px; height: 38px; }
+            .header-logo { width: 60px; height: 45px; }
             .debug-toggle { top: 10px; right: 10px; }
+        }
+        
+        /* RODAPÉ ERADIOS */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            border-top: 1px solid #e2e8f0;
+            background: #fefefe;
+        }
+        
+        .footer-logo {
+            width: 120px;
+            height: auto;
+            opacity: 0.7;
+            margin-bottom: 8px;
+        }
+        
+        .footer-text {
+            font-size: 12px;
+            color: #64748b;
+            margin: 0;
         }
         
         /* POPUP CUSTOMIZADO */
@@ -373,15 +408,6 @@
         .temp-city-marker {
             background: transparent !important;
             border: none !important;
-        }
-        
-        .radio-marker-image {
-            width: 50px !important;
-            height: 50px !important;
-            border-radius: 50%;
-            border: 3px solid white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            object-fit: cover;
         }
         
         .radio-marker-image {
@@ -458,6 +484,15 @@
             <div class="cidades-list" id="cidades-list">
                 <!-- Lista será gerada dinamicamente -->
             </div>
+        </div>
+        
+        <!-- RODAPÉ ERADIOS -->
+        <div class="footer">
+            <img src="https://via.placeholder.com/120x40/f8fafc/64748b?text=eRadios" 
+                 alt="eRadios" 
+                 class="footer-logo"
+                 id="eradios-logo">
+            <p class="footer-text">Plataforma de Mapeamento de Cobertura de Rádios</p>
         </div>
     </div>
     
@@ -824,31 +859,32 @@
             debugLog(`✅ ${cityMarkers.length} marcadores de cidades adicionados (origem filtrada)`, 'success');
         }
         
-        // MODIFICADO: Ajustar zoom para mostrar toda a cobertura
+        // MODIFICADO: Ajustar zoom para mostrar toda a cobertura - ZOOM MUITO REDUZIDO
         function fitMapToCoverage() {
             debugLog('📏 Ajustando zoom para mostrar toda a cobertura...', 'info');
             
             if (radioData.coverageType === 'kml' && radioData.kmlBounds) {
-                // Usar bounds do KML com mais padding
+                // Usar bounds do KML com muito mais padding
                 const bounds = L.latLngBounds(
                     [radioData.kmlBounds.south, radioData.kmlBounds.west],
                     [radioData.kmlBounds.north, radioData.kmlBounds.east]
                 );
-                map.fitBounds(bounds, { padding: [50, 50] });
-                debugLog('📏 Zoom ajustado para bounds KML com padding expandido', 'success');
+                map.fitBounds(bounds, { padding: [80, 80] });
+                debugLog('📏 Zoom ajustado para bounds KML com padding muito expandido', 'success');
             } else if (coverageLayer && coverageLayer.getBounds) {
-                // Usar bounds da camada com padding maior
-                map.fitBounds(coverageLayer.getBounds(), { padding: [60, 60] });
-                debugLog('📏 Zoom ajustado para bounds da camada com padding expandido', 'success');
+                // Usar bounds da camada com padding muito maior
+                map.fitBounds(coverageLayer.getBounds(), { padding: [100, 100] });
+                debugLog('📏 Zoom ajustado para bounds da camada com padding muito expandido', 'success');
             } else {
-                // Para círculo, calcular zoom baseado no raio com zoom menor
+                // Para círculo, calcular zoom baseado no raio com zoom MUITO menor
                 const radiusKm = radioData.radius / 1000;
-                let zoom = 8; // Zoom inicial menor
-                if (radiusKm > 150) zoom = 6;
-                else if (radiusKm > 100) zoom = 6;
-                else if (radiusKm > 75) zoom = 7;
-                else if (radiusKm > 50) zoom = 8;
-                else if (radiusKm > 25) zoom = 9;
+                let zoom = 6; // Zoom inicial MUITO menor
+                if (radiusKm > 200) zoom = 4;
+                else if (radiusKm > 150) zoom = 5;
+                else if (radiusKm > 100) zoom = 5;
+                else if (radiusKm > 75) zoom = 6;
+                else if (radiusKm > 50) zoom = 7;
+                else if (radiusKm > 25) zoom = 8;
                 
                 map.setView([radioData.latitude, radioData.longitude], zoom);
                 debugLog(`📏 Zoom ajustado para ${zoom} baseado no raio de ${radiusKm}km`, 'success');
@@ -1095,20 +1131,19 @@
             return null;
         }
         
-        // MODIFICADO: Utilitários com logo no header
+        // MODIFICADO: Utilitários com logo no header e eRadios
         function hideLoading() {
             const loadingElement = document.getElementById('loading');
             const infoElement = document.getElementById('info-section');
             const mapElement = document.getElementById('map-section');
             const radioNameElement = document.getElementById('radio-name');
             const radioInfoElement = document.getElementById('radio-info');
-            const headerLogoElement = document.getElementById('header-logo');
             
             if (loadingElement) loadingElement.style.display = 'none';
             if (infoElement) infoElement.style.display = 'grid';
             if (mapElement) mapElement.style.display = 'block';
             
-            // MODIFICADO: Atualizar header com logo
+            // MODIFICADO: Atualizar header com logo (sem background)
             const sourceSuffix = radioData.source === 'example' ? ' (EXEMPLO)' : '';
             if (radioNameElement) {
                 radioNameElement.innerHTML = `
@@ -1118,6 +1153,40 @@
                 `;
             }
             if (radioInfoElement) radioInfoElement.textContent = `${radioData.dial} • ${radioData.praca} - ${radioData.uf}`;
+            
+            // NOVO: Tentar carregar logo real do eRadios
+            loadERadiosLogo();
+        }
+        
+        // NOVO: Carregar logo do eRadios
+        function loadERadiosLogo() {
+            const eradiosLogo = document.getElementById('eradios-logo');
+            if (eradiosLogo) {
+                // Tenta URLs possíveis para a logo do eRadios
+                const possibleUrls = [
+                    '/assets/eradios-logo.png',
+                    '/images/eradios-logo.png',
+                    'https://eradios.com.br/logo.png',
+                    // Fallback para placeholder
+                    'https://via.placeholder.com/120x40/f8fafc/64748b?text=eRadios'
+                ];
+                
+                tryLoadImage(possibleUrls, 0, eradiosLogo);
+            }
+        }
+        
+        function tryLoadImage(urls, index, imgElement) {
+            if (index >= urls.length) return;
+            
+            const testImg = new Image();
+            testImg.onload = () => {
+                imgElement.src = urls[index];
+                debugLog(`✅ Logo eRadios carregada: ${urls[index]}`, 'success');
+            };
+            testImg.onerror = () => {
+                tryLoadImage(urls, index + 1, imgElement);
+            };
+            testImg.src = urls[index];
         }
         
         function showError(message, details = null) {
