@@ -100,7 +100,7 @@
             color: var(--emidias-primary);
             padding: 32px 24px;
             border-radius: 16px;
-            margin-bottom: 24px;
+            margin-bottom: 16px; /* Reduzido de 24px para 16px */
             box-shadow: var(--shadow-lg);
             text-align: center;
             position: relative;
@@ -162,90 +162,12 @@
         }
         
         /* =============================================================================
-           🐛 DEBUG PANEL
-           ============================================================================= */
-        .debug-panel {
-            background: var(--emidias-dark);
-            color: #E5E7EB;
-            padding: 16px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            max-height: 300px;
-            overflow-y: auto;
-            border: 2px solid var(--emidias-primary);
-        }
-        
-        .debug-panel.hidden {
-            display: none;
-        }
-        
-        .debug-title {
-            color: var(--emidias-primary);
-            font-weight: var(--font-weight-bold);
-            margin-bottom: 8px;
-        }
-        
-        .debug-log {
-            margin: 4px 0;
-            padding: 6px 8px;
-            border-radius: 6px;
-        }
-        
-        .debug-log.success {
-            background: rgba(16, 185, 129, 0.15);
-            color: #86EFAC;
-            border-left: 3px solid var(--emidias-success);
-        }
-        
-        .debug-log.error {
-            background: rgba(255, 107, 53, 0.15);
-            color: #FCA5A5;
-            border-left: 3px solid var(--emidias-magenta);
-        }
-        
-        .debug-log.warning {
-            background: rgba(245, 158, 11, 0.15);
-            color: #FCD34D;
-            border-left: 3px solid #F59E0B;
-        }
-        
-        .debug-log.info {
-            background: rgba(6, 5, 91, 0.15);
-            color: var(--emidias-primary);
-            border-left: 3px solid var(--emidias-primary);
-        }
-        
-        .debug-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--emidias-dark);
-            color: var(--emidias-white);
-            border: none;
-            padding: 10px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: var(--font-weight-medium);
-            z-index: 1000;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow-md);
-        }
-        
-        .debug-toggle:hover {
-            background: var(--emidias-primary);
-            transform: translateY(-2px);
-        }
-        
-        /* =============================================================================
            🎨 HEADER COM LOGO E-MÍDIAS INTEGRADA
            ============================================================================= */
         .header-content {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center; /* Centralizado já que não tem mais a logo na lateral */
             gap: 20px;
             position: relative;
             z-index: 1;
@@ -256,17 +178,23 @@
             text-align: center;
         }
         
-        .brand-logo-header {
-            height: 70px; /* Aumentado de 50px */
+        /* =============================================================================
+           🏢 MARCA D'ÁGUA E-MÍDIAS INSTITUCIONAL
+           ============================================================================= */
+        .brand-watermark {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            height: 120px; /* Aumentado significativamente */
             width: auto;
-            object-fit: contain;
-            transition: all 0.3s ease;
-            opacity: 0.9;
+            opacity: 0.15; /* Bem discreta */
+            pointer-events: none; /* Não interfere com cliques */
+            z-index: 999; /* Atrás do debug mas acima do conteúdo */
+            transition: opacity 0.3s ease;
         }
         
-        .brand-logo-header:hover {
-            transform: scale(1.05);
-            opacity: 1;
+        .brand-watermark:hover {
+            opacity: 0.3; /* Fica mais visível no hover */
         }
         
         /* =============================================================================
@@ -277,7 +205,7 @@
             grid-template-columns: 1fr 1fr;
             gap: 16px;
             margin-bottom: 20px;
-            max-width: 600px; /* Reduzido para ser mais compacto */
+            max-width: 1200px; /* Mesma largura do container */
             margin-left: auto;
             margin-right: auto;
         }
@@ -423,20 +351,6 @@
             display: flex;
             align-items: center;
             gap: 16px;
-        }
-        
-        .cidades-count {
-            background: var(--gradient-primary);
-            color: var(--emidias-white); /* Texto branco para contraste */
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: var(--font-weight-bold); /* Mais bold para destacar */
-            box-shadow: var(--shadow-sm);
-            min-width: 40px;
-            text-align: center;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); /* Sombra no texto para melhor contraste */
-            border: 2px solid var(--emidias-white); /* Borda branca para destacar mais */
         }
         
         .excel-export-btn {
@@ -619,15 +533,6 @@
                 gap: 16px;
             }
             
-            .brand-logo-header {
-                height: 50px; /* Ajustado para mobile */
-                order: -1;
-            }
-            
-            .header-main {
-                order: 0;
-            }
-            
             .info-grid { 
                 grid-template-columns: 1fr; 
                 gap: 14px; /* Ajustado */
@@ -658,25 +563,24 @@
                 margin-bottom: 20px;
             }
             
-            .debug-toggle { 
-                top: 10px; 
-                right: 10px; 
-                padding: 8px 12px;
-                font-size: 11px;
-            }
-            
             .cidades-header {
                 flex-direction: column;
                 align-items: stretch;
             }
             
             .cidades-actions {
-                justify-content: space-between;
+                justify-content: center;
             }
             
             .search-input {
                 padding: 14px 16px;
                 font-size: 16px; /* Evitar zoom no iOS */
+            }
+            
+            .brand-watermark {
+                height: 80px; /* Menor no mobile */
+                top: 10px;
+                right: 10px;
             }
         }
         
@@ -691,10 +595,6 @@
                 margin-bottom: 8px;
             }
             
-            .brand-logo-header {
-                height: 40px; /* Menor no mobile muito pequeno */
-            }
-            
             .info-card {
                 padding: 12px; /* Ainda menor para mobile pequeno */
             }
@@ -706,6 +606,10 @@
             .excel-export-btn {
                 padding: 8px 16px;
                 font-size: 13px;
+            }
+            
+            .brand-watermark {
+                height: 60px; /* Ainda menor para mobile pequeno */
             }
         }
         
@@ -807,18 +711,16 @@
     </style>
 </head>
 <body>
-    <button class="debug-toggle" onclick="toggleDebug()">🐛 Debug</button>
+    <!-- MARCA D'ÁGUA E-MÍDIAS INSTITUCIONAL -->
+    <img class="brand-watermark" 
+         src="./assets/logo E-MIDIAS png fundo branco.png" 
+         alt="E-MÍDIAS" 
+         onerror="this.src='./assets/logo E-MIDIAS png fundo branco HORIZONTAL.png'; this.onerror=function(){this.style.display='none'};">
     
     <div class="container">
         <!-- HEADER E-MÍDIAS COM LOGO INTEGRADA -->
         <div class="header">
             <div class="header-content">
-                <img class="brand-logo-header" 
-                     src="./assets/logo E-MIDIAS png fundo branco.png" 
-                     alt="E-MÍDIAS" 
-                     id="brand-logo-header"
-                     onerror="this.src='./assets/logo E-MIDIAS png fundo branco HORIZONTAL.png'; this.onerror=function(){this.style.display='none'};">
-                
                 <div class="header-main">
                     <h1 class="header-title" id="radio-name">
                         Carregando Rádio...
@@ -828,15 +730,7 @@
                         <span id="radio-info">Mapa de Cobertura Interativo</span>
                     </div>
                 </div>
-                
-                <div style="width: 70px;"></div> <!-- Spacer ajustado para nova logo maior -->
             </div>
-        </div>
-        
-        <!-- DEBUG PANEL -->
-        <div id="debug-panel" class="debug-panel hidden">
-            <div class="debug-title">📋 Debug Log E-MÍDIAS</div>
-            <div id="debug-logs"></div>
         </div>
         
         <!-- LOADING -->
@@ -874,7 +768,6 @@
                         title="Exportar cidades para Excel">
                         📊 Exportar Excel (.xlsx)
                     </button>
-                    <span class="cidades-count" id="cidades-count">0</span>
                 </div>
             </div>
             
@@ -915,43 +808,13 @@
         let cityMarkers = [];
         let allCities = [];
         let filteredCities = [];
-        let debugVisible = false;
-        
-        // =========================================================================
-        // 🐛 SISTEMA DE DEBUG E-MÍDIAS
-        // =========================================================================
-        function debugLog(message, type = 'info') {
-            console.log(`[${type.toUpperCase()}] ${message}`);
-            
-            const debugLogs = document.getElementById('debug-logs');
-            if (debugLogs) {
-                const logElement = document.createElement('div');
-                logElement.className = `debug-log ${type}`;
-                logElement.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-                debugLogs.appendChild(logElement);
-                debugLogs.scrollTop = debugLogs.scrollHeight;
-            }
-        }
-        
-        function toggleDebug() {
-            debugVisible = !debugVisible;
-            const panel = document.getElementById('debug-panel');
-            if (debugVisible) {
-                panel.classList.remove('hidden');
-            } else {
-                panel.classList.add('hidden');
-            }
-        }
         
         // =========================================================================
         // 📊 FUNÇÃO EXPORT EXCEL (.XLSX) - E-MÍDIAS
         // =========================================================================
         function exportToExcel() {
-            debugLog('📊 Exportando cidades para Excel (.xlsx)...', 'info');
-            
             if (!allCities || allCities.length === 0) {
                 alert('❌ Nenhuma cidade disponível para exportar.');
-                debugLog('❌ Nenhuma cidade para exportar', 'error');
                 return;
             }
             
@@ -964,8 +827,6 @@
                 
                 // Dados das cidades extraindo distância do texto original
                 (radioData.cidades || []).forEach(cidadeOriginal => {
-                    debugLog(`📋 Processando cidade original: "${cidadeOriginal}"`, 'info');
-                    
                     // Extrair nome da cidade e distância do formato "Cidade (X.X km)"
                     let nomeCidade = cidadeOriginal;
                     let distanciaMetros = 0;
@@ -987,15 +848,12 @@
                             nomeCidade = match[1].trim(); // Nome limpo
                             const distanciaKm = parseFloat(match[2]);
                             distanciaMetros = Math.round(distanciaKm * 1000); // Converter para metros
-                            
-                            debugLog(`📏 Extraído: "${nomeCidade}" = ${distanciaKm}km → ${distanciaMetros}m`, 'success');
                         }
                     }
                     
                     // Filtrar nome da rádio
                     const radioNameClean = radioData.name.toLowerCase().replace('rádio', '').replace('fm', '').trim();
                     if (nomeCidade.toLowerCase().includes(radioNameClean)) {
-                        debugLog(`⏭️ Ignorando: "${nomeCidade}" (nome da rádio)`, 'warning');
                         return;
                     }
                     
@@ -1005,8 +863,6 @@
                         nomeCidade, // Nome limpo
                         distanciaMetros // Distância convertida para metros
                     ]);
-                    
-                    debugLog(`✅ Adicionado ao Excel: ${nomeCidade} - ${distanciaMetros}m`, 'info');
                 });
                 
                 // Criar workbook usando SheetJS
@@ -1031,8 +887,6 @@
                 // Baixar arquivo Excel
                 XLSX.writeFile(wb, fileName);
                 
-                debugLog(`✅ Excel (.xlsx) exportado: ${fileName} (${allCities.length} cidades)`, 'success');
-                
                 // Feedback visual
                 const btn = document.querySelector('.excel-export-btn');
                 if (btn) {
@@ -1046,7 +900,6 @@
                 }
                 
             } catch (error) {
-                debugLog(`❌ Erro ao exportar Excel: ${error.message}`, 'error');
                 console.error('Erro detalhado:', error);
                 alert('❌ Erro ao exportar arquivo. Tente novamente.');
             }
@@ -1068,16 +921,13 @@
         // 🚀 INICIALIZAÇÃO E-MÍDIAS
         // =========================================================================
         document.addEventListener('DOMContentLoaded', async () => {
-            debugLog('🚀 Iniciando sistema E-MÍDIAS...', 'info');
             try {
                 await loadRadioData();
                 renderInfo();
                 await initializeMap();
                 renderCidades();
                 hideLoading();
-                debugLog('✅ Sistema E-MÍDIAS carregado com sucesso!', 'success');
             } catch (error) {
-                debugLog(`❌ Erro ao carregar: ${error.message}`, 'error');
                 console.error('Erro completo:', error);
                 showError(error.message, error.stack);
             }
@@ -1091,34 +941,13 @@
             const notionId = params.get('id');
             
             if (notionId && /^[0-9a-f]{32}$/i.test(notionId)) {
-                debugLog(`📡 Carregando do Notion: ${notionId}`, 'info');
                 try {
                     radioData = await fetchRadioFromNotion(notionId);
-                    debugLog('✅ Dados carregados do Notion com sucesso', 'success');
-                    
-                    // Log adicional sobre KML
-                    if (radioData.kmlUrl) {
-                        debugLog(`🗺️ URL KML encontrada: ${radioData.kmlUrl}`, 'info');
-                        debugLog(`🎯 Tipo de cobertura: ${radioData.coverageType}`, 'info');
-                        if (radioData.kmlError) {
-                            debugLog(`⚠️ Erro no KML: ${radioData.kmlError}`, 'warning');
-                        }
-                        if (radioData.kmlCoordinates) {
-                            debugLog(`📍 Coordenadas KML: ${radioData.kmlCoordinates.length} polígonos`, 'success');
-                        }
-                        if (radioData.kmlPlacemarks) {
-                            debugLog(`🏙️ Placemarks KML: ${radioData.kmlPlacemarks.length} cidades`, 'success');
-                        }
-                    } else {
-                        debugLog('⚠️ Nenhuma URL KML fornecida', 'warning');
-                    }
                 } catch (error) {
-                    debugLog(`❌ Erro ao carregar do Notion: ${error.message}`, 'error');
                     throw new Error(`Erro ao carregar dados: ${error.message}`);
                 }
             } else {
                 // Dados de exemplo para desenvolvimento/teste
-                debugLog('🎭 Usando dados de exemplo (modo desenvolvimento)', 'warning');
                 radioData = {
                     name: 'RÁDIO EXEMPLO FM',
                     dial: '107.3',
@@ -1139,27 +968,18 @@
                     source: 'example'
                 };
             }
-            
-            debugLog(`📊 Coordenadas: ${radioData.latitude}, ${radioData.longitude}`, 'info');
-            debugLog(`📡 ${radioData.name} - ${radioData.dial}`, 'info');
         }
         
         // BUSCAR DADOS DO NOTION VIA NETLIFY FUNCTION
         async function fetchRadioFromNotion(notionId) {
-            debugLog('🌐 Fazendo requisição para Netlify Function...', 'info');
-            
             const response = await fetch(`/.netlify/functions/radio-data?id=${notionId}`);
-            
-            debugLog(`📡 Status da resposta: ${response.status}`, 'info');
             
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
-                debugLog(`❌ Erro da API: ${JSON.stringify(errorData)}`, 'error');
                 throw new Error(errorData.error || `Erro HTTP ${response.status}`);
             }
             
             const data = await response.json();
-            debugLog('✅ Dados recebidos da API', 'success');
             return data;
         }
         
@@ -1167,8 +987,6 @@
         // 🗺️ INICIALIZAR MAPA E-MÍDIAS
         // =========================================================================
         async function initializeMap() {
-            debugLog('🗺️ Inicializando mapa...', 'info');
-            
             return new Promise((resolve, reject) => {
                 setTimeout(() => {
                     try {
@@ -1177,8 +995,6 @@
                             throw new Error('Leaflet não foi carregado corretamente');
                         }
                         
-                        debugLog('📦 Leaflet carregado com sucesso', 'success');
-                        
                         // Criar mapa
                         const mapElement = document.getElementById('map');
                         if (!mapElement) {
@@ -1186,7 +1002,6 @@
                         }
                         
                         map = L.map('map');
-                        debugLog('🗺️ Objeto do mapa criado', 'success');
                         
                         // Adicionar tiles do OpenStreetMap
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1194,12 +1009,9 @@
                             maxZoom: 18
                         }).addTo(map);
                         
-                        debugLog('🌍 Tiles do OpenStreetMap adicionados', 'success');
-                        
                         // Forçar recalculo do tamanho do mapa
                         setTimeout(() => {
                             map.invalidateSize();
-                            debugLog('🔧 Mapa redimensionado', 'success');
                         }, 100);
                         
                         // Adicionar marker da rádio
@@ -1211,11 +1023,9 @@
                         // Ajustar zoom
                         fitMapToCoverage();
                         
-                        debugLog('✅ Mapa inicializado completamente', 'success');
                         resolve();
                         
                     } catch (error) {
-                        debugLog(`❌ Erro ao inicializar mapa: ${error.message}`, 'error');
                         console.error('Erro detalhado do mapa:', error);
                         reject(error);
                     }
@@ -1224,8 +1034,6 @@
         }
         
         function addRadioMarker() {
-            debugLog('📍 Adicionando marcador da rádio...', 'info');
-            
             // Usar imagem da rádio com tema E-MÍDIAS
             const radioIcon = L.divIcon({
                 html: `
@@ -1255,14 +1063,10 @@
             radioMarker = L.marker([radioData.latitude, radioData.longitude], { icon: radioIcon })
                 .bindPopup(popupContent)
                 .addTo(map);
-                
-            debugLog('✅ Marcador da rádio adicionado', 'success');
         }
         
         // ADICIONAR COBERTURA
         function addCoverage() {
-            debugLog(`🎯 Adicionando cobertura, tipo: ${radioData.coverageType}`, 'info');
-            
             if (radioData.coverageType === 'kml' && radioData.kmlCoordinates && radioData.kmlCoordinates.length > 0) {
                 addKMLPolygons();
             } else {
@@ -1277,8 +1081,6 @@
         
         // Adicionar polígonos do KML com cores E-MÍDIAS
         function addKMLPolygons() {
-            debugLog(`🗺️ Adicionando polígonos KML: ${radioData.kmlCoordinates.length} polígonos`, 'info');
-            
             const kmlGroup = L.layerGroup();
             
             for (const polygon of radioData.kmlCoordinates) {
@@ -1304,14 +1106,10 @@
             
             coverageLayer = kmlGroup;
             coverageLayer.addTo(map);
-            
-            debugLog(`✅ Polígonos KML adicionados`, 'success');
         }
         
         // Adicionar círculo tradicional com cores E-MÍDIAS
         function addCoverageCircle() {
-            debugLog(`⭕ Adicionando círculo de cobertura: ${radioData.radius / 1000} km`, 'info');
-            
             coverageLayer = L.circle([radioData.latitude, radioData.longitude], {
                 color: '#06055B',
                 fillColor: '#06055B',
@@ -1328,13 +1126,10 @@
             `);
             
             coverageLayer.addTo(map);
-            debugLog('✅ Círculo de cobertura adicionado', 'success');
         }
         
         // Adicionar marcadores das cidades
         function addCityMarkers() {
-            debugLog(`📍 Adicionando marcadores das cidades: ${radioData.kmlPlacemarks.length} cidades`, 'info');
-            
             cityMarkers.forEach(marker => map.removeLayer(marker));
             cityMarkers = [];
             
@@ -1373,7 +1168,6 @@
                     // Filtrar se está muito próximo da rádio (menos de 1km)
                     (placemark.description && placemark.description.match(/0\.[0-9]\s*km/))
                 ) {
-                    debugLog(`⏭️ Pulando marcador duplicado/origem: ${placemark.name} - ${placemark.description || 'sem descrição'}`, 'info');
                     return;
                 }
                 
@@ -1386,7 +1180,6 @@
                 );
                 
                 if (distanceFromRadio < 0.5) { // Menos de 500m
-                    debugLog(`⏭️ Pulando cidade muito próxima da rádio: ${placemark.name} (${(distanceFromRadio*1000).toFixed(0)}m)`, 'info');
                     return;
                 }
                 
@@ -1404,24 +1197,18 @@
                     
                 cityMarkers.push(cityMarker);
             });
-            
-            debugLog(`✅ ${cityMarkers.length} marcadores de cidades adicionados (duplicados filtrados)`, 'success');
         }
         
         // Ajustar zoom para mostrar toda a cobertura
         function fitMapToCoverage() {
-            debugLog('📏 Ajustando zoom para mostrar toda a cobertura...', 'info');
-            
             if (radioData.coverageType === 'kml' && radioData.kmlBounds) {
                 const bounds = L.latLngBounds(
                     [radioData.kmlBounds.south, radioData.kmlBounds.west],
                     [radioData.kmlBounds.north, radioData.kmlBounds.east]
                 );
                 map.fitBounds(bounds, { padding: [80, 80] });
-                debugLog('📏 Zoom ajustado para bounds KML', 'success');
             } else if (coverageLayer && coverageLayer.getBounds) {
                 map.fitBounds(coverageLayer.getBounds(), { padding: [100, 100] });
-                debugLog('📏 Zoom ajustado para bounds da camada', 'success');
             } else {
                 const radiusKm = radioData.radius / 1000;
                 let zoom = 6;
@@ -1433,7 +1220,6 @@
                 else if (radiusKm > 25) zoom = 8;
                 
                 map.setView([radioData.latitude, radioData.longitude], zoom);
-                debugLog(`📏 Zoom ajustado para ${zoom} baseado no raio de ${radiusKm}km`, 'success');
             }
         }
         
@@ -1441,8 +1227,6 @@
         // 📋 RENDERIZAR INFORMAÇÕES E-MÍDIAS
         // =========================================================================
         function renderInfo() {
-            debugLog('📋 Renderizando informações...', 'info');
-            
             const container = document.getElementById('info-section');
             
             const pmmFormatted = radioData.pmm ? radioData.pmm.toLocaleString() : 'N/A';
@@ -1485,15 +1269,12 @@
             `;
             
             container.style.display = 'grid';
-            debugLog('✅ Informações renderizadas', 'success');
         }
         
         // =========================================================================
         // 🏙️ RENDERIZAR CIDADES E-MÍDIAS
         // =========================================================================
         function renderCidades() {
-            debugLog('🏙️ Renderizando lista de cidades...', 'info');
-            
             // Filtrar nome da rádio da lista
             allCities = (radioData.cidades || []).filter(cidade => {
                 const cityName = cidade.toLowerCase();
@@ -1508,14 +1289,10 @@
             setupCitySearch();
             
             document.getElementById('cidades-section').style.display = 'block';
-            debugLog(`✅ ${allCities.length} cidades renderizadas`, 'success');
         }
         
         function updateCidadesList() {
             const container = document.getElementById('cidades-list');
-            const count = document.getElementById('cidades-count');
-            
-            if (count) count.textContent = filteredCities.length;
             
             if (filteredCities.length === 0) {
                 container.innerHTML = '<div class="cidade-item">❌ Nenhuma cidade encontrada</div>';
@@ -1552,11 +1329,9 @@
             }
         }
         
-        // Destacar cidade no mapa
+        // Destacar cidade no mapa (apenas coordenadas KML)
         function highlightCity(cityName) {
-            debugLog(`🎯 Destacando cidade: ${cityName}`, 'info');
-            
-            // PRIORIDADE 1: Procurar nos marcadores KML
+            // Procurar nos marcadores KML
             if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
                 const foundPlacemark = radioData.kmlPlacemarks.find(placemark => 
                     placemark.name.toLowerCase().includes(cityName.split(' - ')[0].toLowerCase())
@@ -1569,91 +1344,13 @@
                     const markerIndex = radioData.kmlPlacemarks.indexOf(foundPlacemark);
                     if (cityMarkers[markerIndex]) {
                         cityMarkers[markerIndex].openPopup();
-                        debugLog(`✅ Cidade ${cityName} destacada no mapa via KML`, 'success');
                         return;
                     }
                 }
             }
             
-            // PRIORIDADE 2: Estimativa de coordenadas
-            const cityCoords = estimateCityCoordinates(cityName, radioData.uf);
-            if (cityCoords) {
-                map.setView(cityCoords, 11);
-                
-                const tempMarker = L.marker(cityCoords, {
-                    icon: L.divIcon({
-                        html: `<div style="
-                            width: 20px; 
-                            height: 20px; 
-                            background: #FC1E75; 
-                            border-radius: 50%; 
-                            border: 2px solid white;
-                            box-shadow: 0 2px 6px rgba(252, 30, 117, 0.4);
-                        "></div>`,
-                        className: 'temp-city-marker',
-                        iconSize: [20, 20],
-                        iconAnchor: [10, 10]
-                    })
-                });
-                
-                tempMarker.addTo(map)
-                    .bindPopup(`
-                        <div style="text-align: center; font-family: var(--font-primary);">
-                            <h4 style="color: #FC1E75; margin: 0 0 8px 0;">${cityName.split(' - ')[0]}</h4>
-                            <p style="margin: 4px 0; font-size: 12px; color: #64748B;">Localização estimada</p>
-                            <p style="margin: 4px 0; font-size: 11px; color: #9CA3AF;">
-                                📍 ${cityCoords[0].toFixed(4)}, ${cityCoords[1].toFixed(4)}
-                            </p>
-                        </div>
-                    `)
-                    .openPopup();
-                
-                setTimeout(() => {
-                    map.removeLayer(tempMarker);
-                }, 5000);
-                
-                debugLog(`✅ Cidade ${cityName} destacada com coordenadas estimadas`, 'success');
-                return;
-            }
-            
-            debugLog(`⚠️ Não foi possível localizar a cidade ${cityName}`, 'warning');
-        }
-        
-        // Estimar coordenadas das cidades
-        function estimateCityCoordinates(cityName, uf) {
-            const cityBaseName = cityName.split(' - ')[0].toLowerCase();
-            
-            const cityCoordinates = {
-                'SC': {
-                    'florianópolis': [-27.5954, -48.5480],
-                    'joinville': [-26.3044, -48.8462],
-                    'blumenau': [-26.9186, -49.0661],
-                    'são josé': [-27.5969, -48.6194],
-                    'palhoça': [-27.6386, -48.6755],
-                    'biguaçu': [-27.4945, -48.6558],
-                    'chapecó': [-27.1009, -52.6156],
-                    'criciúma': [-28.6783, -49.3692],
-                    'itajaí': [-26.9077, -48.6658],
-                    'lages': [-27.8167, -50.3264],
-                    'balneário camboriú': [-26.9908, -48.6350],
-                    'tubarão': [-28.4669, -49.0057]
-                }
-            };
-            
-            if (cityCoordinates[uf] && cityCoordinates[uf][cityBaseName]) {
-                return cityCoordinates[uf][cityBaseName];
-            }
-            
-            if (radioData.latitude && radioData.longitude) {
-                const latVariation = (Math.random() - 0.5) * 0.2;
-                const lngVariation = (Math.random() - 0.5) * 0.2;
-                return [
-                    radioData.latitude + latVariation,
-                    radioData.longitude + lngVariation
-                ];
-            }
-            
-            return null;
+            // Se não encontrou nos dados KML, apenas centraliza no mapa da rádio
+            map.setView([radioData.latitude, radioData.longitude], 8);
         }
         
         // =========================================================================
@@ -1680,13 +1377,9 @@
                 `;
             }
             if (radioInfoElement) radioInfoElement.textContent = `${radioData.dial} • ${radioData.praca} - ${radioData.uf}`;
-            
-            debugLog('✅ Interface carregada com identidade E-MÍDIAS', 'success');
         }
         
         function showError(message, details = null) {
-            debugLog(`❌ Exibindo erro: ${message}`, 'error');
-            
             const loadingElement = document.getElementById('loading');
             const errorElement = document.getElementById('error');
             const errorMessageElement = document.getElementById('error-message');
@@ -1702,19 +1395,6 @@
             
             if (errorElement) errorElement.style.display = 'block';
         }
-        
-        // =========================================================================
-        // 🚨 HANDLERS DE ERRO GLOBAIS E-MÍDIAS
-        // =========================================================================
-        window.addEventListener('error', (e) => {
-            debugLog(`🚨 Erro JavaScript: ${e.message}`, 'error');
-            console.error('Erro capturado:', e.error);
-        });
-        
-        window.addEventListener('unhandledrejection', (e) => {
-            debugLog(`🚨 Promise rejeitada: ${e.reason}`, 'error');
-            console.error('Promise rejeitada:', e.reason);
-        });
     </script>
 </body>
 </html>
