@@ -353,6 +353,17 @@
             font-size: 12px;
             color: #64748b;
         }
+        
+        /* MARCADORES CUSTOMIZADOS */
+        .city-marker {
+            background: transparent !important;
+            border: none !important;
+        }
+        
+        .radio-marker {
+            background: transparent !important;
+            border: none !important;
+        }
     </style>
 </head>
 <body>
@@ -429,6 +440,7 @@
         let radioData = {};
         let radioMarker;
         let coverageLayer; // Polígono ou círculo
+        let cityMarkers = []; // NOVO: marcadores das cidades
         let allCities = [];
         let filteredCities = [];
         let debugVisible = false;
@@ -494,6 +506,9 @@
                         }
                         if (radioData.kmlCoordinates) {
                             debugLog(`📍 Coordenadas KML: ${radioData.kmlCoordinates.length} polígonos`, 'success');
+                        }
+                        if (radioData.kmlPlacemarks) {
+                            debugLog(`🏙️ Placemarks KML: ${radioData.kmlPlacemarks.length} cidades`, 'success');
                         }
                     } else {
                         debugLog('⚠️ Nenhuma URL KML fornecida', 'warning');
@@ -662,6 +677,11 @@
                 // Fallback: usar círculo tradicional
                 addCoverageCircle();
             }
+            
+            // Adicionar marcadores das cidades do KML (se houver)
+            if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
+                addCityMarkers();
+            }
         }
         
         // Adicionar polígonos do KML
@@ -726,6 +746,53 @@
             debugLog('✅ Círculo de cobertura adicionado', 'success');
         }
         
+        // NOVO: Adicionar marcadores das cidades do KML
+        function addCityMarkers() {
+            debugLog(`📍 Adicionando marcadores das cidades: ${radioData.kmlPlacemarks.length} cidades`, 'info');
+            
+            // Limpar marcadores anteriores
+            cityMarkers.forEach(marker => map.removeLayer(marker));
+            cityMarkers = [];
+            
+            // Criar ícone para as cidades
+            const cityIcon = L.divIcon({
+                html: `
+                    <div style="
+                        width: 16px; 
+                        height: 16px; 
+                        background: #3b82f6; 
+                        border-radius: 50%; 
+                        border: 2px solid white;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                    "></div>
+                `,
+                className: 'city-marker',
+                iconSize: [16, 16],
+                iconAnchor: [8, 8]
+            });
+            
+            // Adicionar um marcador para cada cidade
+            radioData.kmlPlacemarks.forEach((placemark, index) => {
+                const [lat, lng] = placemark.coordinates;
+                
+                const cityMarker = L.marker([lat, lng], { icon: cityIcon })
+                    .bindPopup(`
+                        <div style="text-align: center; min-width: 150px;">
+                            <h4 style="margin: 0 0 8px 0; color: #3b82f6;">${placemark.name}</h4>
+                            ${placemark.description ? `<p style="margin: 4px 0; font-size: 12px; color: #666;">${placemark.description}</p>` : ''}
+                            <p style="margin: 4px 0; font-size: 11px; color: #888;">
+                                📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}
+                            </p>
+                        </div>
+                    `)
+                    .addTo(map);
+                    
+                cityMarkers.push(cityMarker);
+            });
+            
+            debugLog(`✅ ${cityMarkers.length} marcadores de cidades adicionados`, 'success');
+        }
+        
         function fitMapToCoverage() {
             debugLog('📏 Ajustando zoom do mapa...', 'info');
             
@@ -742,8 +809,9 @@
                 map.fitBounds(coverageLayer.getBounds(), { padding: [20, 20] });
                 debugLog('📏 Zoom ajustado para bounds da camada', 'success');
             } else {
-                // Centralizar na rádio
-                map.setView([radioData.latitude, radioData.longitude], 10);
+                // Centralizar na rádio com zoom que mostra cidades próximas
+                const zoom = cityMarkers.length > 0 ? 9 : 10;
+                map.setView([radioData.latitude, radioData.longitude], zoom);
                 debugLog('📏 Zoom centralizado na rádio', 'success');
             }
         }
@@ -781,6 +849,24 @@
                 `;
             }
             
+            // Informações sobre dados KML
+            let kmlInfo = '';
+            if (radioData.coverageType === 'kml') {
+                const polygonCount = radioData.kmlCoordinates ? radioData.kmlCoordinates.length : 0;
+                const placemarksCount = radioData.kmlPlacemarks ? radioData.kmlPlacemarks.length : 0;
+                
+                kmlInfo = `
+                    <div class="info-item">
+                        <span class="info-label">🗺️ Polígonos KML:</span>
+                        <span class="info-value">${polygonCount}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">📍 Cidades KML:</span>
+                        <span class="info-value">${placemarksCount}</span>
+                    </div>
+                `;
+            }
+            
             container.innerHTML = `
                 <!-- TÉCNICAS -->
                 <div class="info-card">
@@ -801,6 +887,7 @@
                         <span class="info-label">Tipo Cobertura:</span>
                         <span class="info-value">${radioData.coverageType === 'kml' ? '🗺️ KML' : '⭕ Círculo'}</span>
                     </div>
+                    ${kmlInfo}
                     ${debugInfo}
                 </div>
                 
@@ -887,7 +974,29 @@
         
         function highlightCity(cityName) {
             debugLog(`🎯 Destacando cidade: ${cityName}`, 'info');
-            // Futuro: destacar cidade no mapa
+            
+            // Procurar nos marcadores KML
+            if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
+                const foundPlacemark = radioData.kmlPlacemarks.find(placemark => 
+                    placemark.name.toLowerCase().includes(cityName.toLowerCase())
+                );
+                
+                if (foundPlacemark) {
+                    const [lat, lng] = foundPlacemark.coordinates;
+                    map.setView([lat, lng], 12);
+                    
+                    // Encontrar o marcador correspondente e abrir popup
+                    const markerIndex = radioData.kmlPlacemarks.indexOf(foundPlacemark);
+                    if (cityMarkers[markerIndex]) {
+                        cityMarkers[markerIndex].openPopup();
+                        debugLog(`✅ Cidade ${cityName} destacada no mapa`, 'success');
+                    }
+                } else {
+                    debugLog(`⚠️ Cidade ${cityName} não encontrada nos marcadores KML`, 'warning');
+                }
+            } else {
+                debugLog(`⚠️ Nenhum marcador KML disponível para destacar`, 'warning');
+            }
         }
         
         // UTILITÁRIOS
