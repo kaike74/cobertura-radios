@@ -435,11 +435,10 @@ function parseKMLCoordinates(kmlText) {
   };
 }
 
-// FUNÇÃO EXISTENTE: Buscar cidades de múltiplas fontes
+// RESTO DAS FUNÇÕES ORIGINAIS...
 async function fetchCitiesFromMultipleSources(radioData, notionToken) {
   console.log('🔍 Buscando cidades de múltiplas fontes...');
   
-  // Estratégia 1: Tentar buscar do campo original de cobertura
   try {
     const cities = await tryFetchFromNotionCoverageField(radioData.notionId, notionToken);
     if (cities && cities.length > 0) {
@@ -450,14 +449,12 @@ async function fetchCitiesFromMultipleSources(radioData, notionToken) {
     console.log('⚠️ Não foi possível buscar do campo Cobertura:', error.message);
   }
   
-  // Estratégia 2: Gerar lista baseada na região/UF (fallback)
   const fallbackCities = generateCitiesByRegion(radioData.region, radioData.uf, radioData.praca);
   console.log(`🏙️ Usando ${fallbackCities.length} cidades como fallback para ${radioData.region}/${radioData.uf}`);
   
   return fallbackCities;
 }
 
-// Tentar buscar do campo Cobertura original
 async function tryFetchFromNotionCoverageField(pageId, token) {
   try {
     const response = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
@@ -500,7 +497,6 @@ async function tryFetchFromNotionCoverageField(pageId, token) {
   return null;
 }
 
-// Gerar cidades baseado na região/UF
 function generateCitiesByRegion(region, uf, praca) {
   const citiesByRegion = {
     'Sul': {
