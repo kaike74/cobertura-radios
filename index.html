@@ -3,49 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa de Cobertura - eRadios</title>
+    <title>Mapa de Cobertura - E-MÍDIAS</title>
+    
+    <!-- 
+    ============================================================================
+    🎨 IDENTIDADE VISUAL E-MÍDIAS APLICADA
+    ============================================================================
+    ✅ CORREÇÕES IMPLEMENTADAS:
+    1. Logo E-MÍDIAS corrigida (assets/logo E-MIDIAS png fundo branco.png)
+    2. Paleta de cores oficial do manual de marca
+    3. Tipografia Space Grotesk (Google Fonts)
+    4. Exportação Excel (.xlsx) com SheetJS
+    5. Colunas separadas: Cidade e Distância (m) - km convertido para metros
+    
+    🎨 PALETA DE CORES E-MÍDIAS:
+    - Azul Escuro: #06055B (principal)
+    - Magenta: #FC1E75 (destaque)  
+    - Rosa Claro: #D71E97 (secundário)
+    - Roxo: #AA1EA5 (accent)
+    - Roxo Acinzentado: #9E33AC
+    ============================================================================
+    -->
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
-    <!-- Google Fonts - eRadios Typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts - E-MÍDIAS Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         /* =============================================================================
-           🎨 IDENTIDADE VISUAL eRADIOS
+           🎨 IDENTIDADE VISUAL E-MÍDIAS
            ============================================================================= */
         
         :root {
-            /* 🎨 Paleta de Cores eRadios (baseada no manual) */
-            --eradios-primary: #0066CC;        /* Azul principal */
-            --eradios-primary-light: #3384D6;   /* Azul claro */
-            --eradios-primary-dark: #004A99;    /* Azul escuro */
-            --eradios-secondary: #FF6B35;       /* Laranja accent */
-            --eradios-success: #10B981;         /* Verde sucesso */
-            --eradios-gray: #64748B;            /* Cinza texto */
-            --eradios-light-gray: #F1F5F9;      /* Cinza claro */
-            --eradios-white: #FFFFFF;           /* Branco */
-            --eradios-dark: #1E293B;            /* Escuro */
+            /* 🎨 Paleta de Cores E-MÍDIAS (baseada no manual oficial) */
+            --emidias-primary: #06055B;         /* Azul Escuro - Principal */
+            --emidias-magenta: #FC1E75;         /* Magenta - Destaque */
+            --emidias-rosa: #D71E97;            /* Rosa Claro - Secundário */
+            --emidias-roxo: #AA1EA5;            /* Roxo - Accent */
+            --emidias-roxo-cinza: #9E33AC;      /* Roxo Acinzentado */
+            --emidias-success: #10B981;         /* Verde sucesso */
+            --emidias-gray: #64748B;            /* Cinza texto */
+            --emidias-light-gray: #F1F5F9;      /* Cinza claro */
+            --emidias-white: #FFFFFF;           /* Branco */
+            --emidias-dark: #1E293B;            /* Escuro */
             
-            /* 🎨 Gradientes eRadios */
-            --gradient-primary: linear-gradient(135deg, var(--eradios-primary) 0%, var(--eradios-primary-light) 100%);
-            --gradient-accent: linear-gradient(135deg, var(--eradios-secondary) 0%, #FF8A65 100%);
-            --gradient-success: linear-gradient(135deg, var(--eradios-success) 0%, #34D399 100%);
+            /* 🎨 Gradientes E-MÍDIAS */
+            --gradient-primary: linear-gradient(135deg, var(--emidias-primary) 0%, var(--emidias-roxo) 100%);
+            --gradient-accent: linear-gradient(135deg, var(--emidias-magenta) 0%, var(--emidias-rosa) 100%);
+            --gradient-success: linear-gradient(135deg, var(--emidias-success) 0%, #34D399 100%);
             
-            /* 📝 Tipografia eRadios */
-            --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            /* 📝 Tipografia E-MÍDIAS */
+            --font-primary: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             --font-weight-light: 300;
             --font-weight-normal: 400;
             --font-weight-medium: 500;
             --font-weight-semibold: 600;
             --font-weight-bold: 700;
             
-            /* 🎨 Sombras eRadios */
-            --shadow-sm: 0 1px 3px rgba(0, 102, 204, 0.05);
-            --shadow-md: 0 4px 12px rgba(0, 102, 204, 0.1);
-            --shadow-lg: 0 8px 25px rgba(0, 102, 204, 0.15);
-            --shadow-accent: 0 4px 15px rgba(255, 107, 53, 0.2);
+            /* 🎨 Sombras E-MÍDIAS */
+            --shadow-sm: 0 1px 3px rgba(6, 5, 91, 0.05);
+            --shadow-md: 0 4px 12px rgba(6, 5, 91, 0.1);
+            --shadow-lg: 0 8px 25px rgba(6, 5, 91, 0.15);
+            --shadow-accent: 0 4px 15px rgba(252, 30, 117, 0.2);
         }
         
         * {
@@ -56,8 +77,8 @@
         
         body {
             font-family: var(--font-primary);
-            background: var(--eradios-white);
-            color: var(--eradios-dark);
+            background: var(--emidias-white);
+            color: var(--emidias-dark);
             line-height: 1.6;
             font-weight: var(--font-weight-normal);
         }
@@ -69,11 +90,11 @@
         }
         
         /* =============================================================================
-           🎨 HEADER COM IDENTIDADE eRADIOS
+           🎨 HEADER COM IDENTIDADE E-MÍDIAS
            ============================================================================= */
         .header {
             background: var(--gradient-primary);
-            color: var(--eradios-white);
+            color: var(--emidias-white);
             padding: 32px 24px;
             border-radius: 16px;
             margin-bottom: 24px;
@@ -212,7 +233,7 @@
         }
         
         /* =============================================================================
-           📋 CARDS DE INFORMAÇÃO eRADIOS
+           📋 CARDS DE INFORMAÇÃO E-MÍDIAS
            ============================================================================= */
         .info-grid {
             display: grid;
@@ -222,11 +243,11 @@
         }
         
         .info-card {
-            background: var(--eradios-white);
+            background: var(--emidias-white);
             padding: 24px;
             border-radius: 16px;
             box-shadow: var(--shadow-md);
-            border-left: 4px solid var(--eradios-primary);
+            border-left: 4px solid var(--emidias-primary);
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
@@ -245,7 +266,7 @@
         .info-card:hover {
             transform: translateY(-4px);
             box-shadow: var(--shadow-lg);
-            border-left-color: var(--eradios-secondary);
+            border-left-color: var(--emidias-magenta);
         }
         
         .info-card:hover::before {
@@ -255,7 +276,7 @@
         .card-title {
             font-size: 20px;
             font-weight: var(--font-weight-bold);
-            color: var(--eradios-primary);
+            color: var(--emidias-primary);
             margin-bottom: 18px;
             display: flex;
             align-items: center;
@@ -267,7 +288,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 12px 0;
-            border-bottom: 1px solid var(--eradios-light-gray);
+            border-bottom: 1px solid var(--emidias-light-gray);
             transition: all 0.2s ease;
         }
         
@@ -276,7 +297,7 @@
         }
         
         .info-item:hover {
-            background: rgba(0, 102, 204, 0.02);
+            background: rgba(6, 5, 91, 0.02);
             border-radius: 8px;
             padding-left: 8px;
             padding-right: 8px;
@@ -284,12 +305,12 @@
         
         .info-label {
             font-weight: var(--font-weight-semibold);
-            color: var(--eradios-gray);
+            color: var(--emidias-gray);
         }
         
         .info-value {
             font-weight: var(--font-weight-medium);
-            color: var(--eradios-dark);
+            color: var(--emidias-dark);
         }
         
         /* =============================================================================
@@ -619,7 +640,7 @@
         }
         
         /* =============================================================================
-           🗺️ CUSTOMIZAÇÕES LEAFLET eRADIOS
+           🗺️ CUSTOMIZAÇÕES LEAFLET E-MÍDIAS
            ============================================================================= */
         .leaflet-popup-content-wrapper {
             border-radius: 12px;
@@ -647,7 +668,7 @@
         
         .radio-popup h3 {
             margin: 0 0 8px 0;
-            color: var(--eradios-primary);
+            color: var(--emidias-primary);
             font-size: 18px;
             font-weight: var(--font-weight-bold);
         }
@@ -655,7 +676,7 @@
         .radio-popup p {
             margin: 6px 0;
             font-size: 14px;
-            color: var(--eradios-gray);
+            color: var(--emidias-gray);
             font-weight: var(--font-weight-medium);
         }
         
@@ -671,7 +692,7 @@
             width: 56px !important;
             height: 56px !important;
             border-radius: 50%;
-            border: 3px solid var(--eradios-white);
+            border: 3px solid var(--emidias-white);
             box-shadow: var(--shadow-md);
             object-fit: cover;
             transition: all 0.3s ease;
@@ -719,20 +740,20 @@
     <button class="debug-toggle" onclick="toggleDebug()">🐛 Debug</button>
     
     <div class="container">
-        <!-- HEADER eRADIOS -->
+        <!-- HEADER E-MÍDIAS -->
         <div class="header">
             <h1 class="header-title" id="radio-name">
                 📻 Carregando Rádio...
                 <img class="header-logo" id="header-logo" src="" alt="Logo" style="display: none;">
             </h1>
             <div class="header-subtitle">
-                <span id="radio-info">Mapa de Cobertura Interativo • eRadios</span>
+                <span id="radio-info">Mapa de Cobertura Interativo • E-MÍDIAS</span>
             </div>
         </div>
         
         <!-- DEBUG PANEL -->
         <div id="debug-panel" class="debug-panel hidden">
-            <div class="debug-title">📋 Debug Log eRadios</div>
+            <div class="debug-title">📋 Debug Log E-MÍDIAS</div>
             <div id="debug-logs"></div>
         </div>
         
@@ -769,7 +790,7 @@
                         class="excel-export-btn" 
                         onclick="exportToExcel()" 
                         title="Exportar cidades para Excel">
-                        📊 Exportar Excel
+                        📊 Exportar Excel (.xlsx)
                     </button>
                     <span class="cidades-count" id="cidades-count">0</span>
                 </div>
@@ -789,22 +810,13 @@
             </div>
         </div>
         
-        <!-- RODAPÉ eRADIOS -->
+        <!-- RODAPÉ E-MÍDIAS -->
         <div class="footer">
-            <svg class="footer-logo" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg" id="eradios-logo">
-                <!-- Logo eRadios em SVG (fallback) -->
-                <defs>
-                    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#0066CC;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#3384D6;stop-opacity:1" />
-                    </linearGradient>
-                </defs>
-                <rect width="200" height="60" rx="8" fill="url(#logoGradient)" opacity="0.1"/>
-                <text x="100" y="35" font-family="Inter, sans-serif" font-size="24" font-weight="700" 
-                      text-anchor="middle" fill="#0066CC">eRadios</text>
-                <text x="100" y="50" font-family="Inter, sans-serif" font-size="10" 
-                      text-anchor="middle" fill="#64748B">Plataforma de Rádios</text>
-            </svg>
+            <img class="footer-logo" 
+                 src="./assets/logo E-MIDIAS png fundo branco.png" 
+                 alt="E-MÍDIAS" 
+                 id="emidias-logo"
+                 onerror="this.src='./assets/logo E-MIDIAS png fundo branco HORIZONTAL.png'; this.onerror=function(){this.style.display='none'};">
             <p class="footer-text">Plataforma de Mapeamento de Cobertura de Rádios</p>
         </div>
     </div>
@@ -812,9 +824,12 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
+    <!-- SheetJS para exportação Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
     <script>
         // =========================================================================
-        // 🚀 VARIÁVEIS GLOBAIS eRADIOS
+        // 🚀 VARIÁVEIS GLOBAIS E-MÍDIAS
         // =========================================================================
         let map;
         let radioData = {};
@@ -826,7 +841,7 @@
         let debugVisible = false;
         
         // =========================================================================
-        // 🐛 SISTEMA DE DEBUG eRADIOS
+        // 🐛 SISTEMA DE DEBUG E-MÍDIAS
         // =========================================================================
         function debugLog(message, type = 'info') {
             console.log(`[${type.toUpperCase()}] ${message}`);
@@ -852,10 +867,10 @@
         }
         
         // =========================================================================
-        // 📊 FUNÇÃO EXPORT EXCEL (CORRIGIDA) - eRADIOS
+        // 📊 FUNÇÃO EXPORT EXCEL (.XLSX) - E-MÍDIAS
         // =========================================================================
         function exportToExcel() {
-            debugLog('📊 Exportando cidades para Excel...', 'info');
+            debugLog('📊 Exportando cidades para Excel (.xlsx)...', 'info');
             
             if (!allCities || allCities.length === 0) {
                 alert('❌ Nenhuma cidade disponível para exportar.');
@@ -868,63 +883,74 @@
                 const excelData = [];
                 
                 // Cabeçalho
-                excelData.push(['Região', 'UF', 'Cidade', 'Distância']);
+                excelData.push(['Região', 'UF', 'Cidade', 'Distância (m)']);
                 
-                // Dados das cidades
+                // Dados das cidades com separação de cidade e distância
                 allCities.forEach(cidade => {
                     const parts = cidade.split(' - ');
                     const nomeCidade = parts[0];
                     const uf = parts[1] || radioData.uf;
                     
                     // Procurar distância nos placemarks KML
-                    let distancia = 'N/A';
+                    let distanciaMetros = null;
                     if (radioData.kmlPlacemarks) {
                         const placemark = radioData.kmlPlacemarks.find(p => 
                             p.name.toLowerCase().includes(nomeCidade.toLowerCase())
                         );
                         if (placemark && placemark.description) {
+                            // Extrair distância e converter km para metros
                             const distMatch = placemark.description.match(/(\d+\.?\d*)\s*km/);
                             if (distMatch) {
-                                distancia = `${distMatch[1]} km`;
+                                const distanciaKm = parseFloat(distMatch[1]);
+                                distanciaMetros = Math.round(distanciaKm * 1000); // Converter para metros
                             }
+                        }
+                    }
+                    
+                    // Se não encontrou distância no KML, tentar calcular estimativa
+                    if (distanciaMetros === null && radioData.latitude && radioData.longitude) {
+                        const cityCoords = estimateCityCoordinates(cidade, radioData.uf);
+                        if (cityCoords) {
+                            // Calcular distância usando fórmula de Haversine
+                            const distanciaKm = calculateDistance(
+                                radioData.latitude, radioData.longitude,
+                                cityCoords[0], cityCoords[1]
+                            );
+                            distanciaMetros = Math.round(distanciaKm * 1000);
                         }
                     }
                     
                     excelData.push([
                         radioData.region || 'N/A',
                         uf,
-                        nomeCidade,
-                        distancia
+                        nomeCidade, // Cidade sem distância
+                        distanciaMetros || 0 // Distância em metros ou 0
                     ]);
                 });
                 
-                // Converter para CSV com codificação UTF-8
-                const csvContent = excelData.map(row => 
-                    row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
-                ).join('\n');
+                // Criar workbook usando SheetJS
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(excelData);
                 
-                // Criar e baixar arquivo
-                const blob = new Blob(['\uFEFF' + csvContent], { 
-                    type: 'text/csv;charset=utf-8;' 
-                });
+                // Configurar largura das colunas
+                ws['!cols'] = [
+                    { width: 15 }, // Região
+                    { width: 8 },  // UF
+                    { width: 30 }, // Cidade
+                    { width: 15 }  // Distância (m)
+                ];
                 
-                const link = document.createElement('a');
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
+                // Adicionar worksheet ao workbook
+                XLSX.utils.book_append_sheet(wb, ws, "Cobertura");
                 
+                // Gerar nome do arquivo
                 const radioName = radioData.name ? radioData.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'radio';
-                const fileName = `cobertura-${radioName}-${new Date().toISOString().split('T')[0]}.csv`;
-                link.setAttribute('download', fileName);
+                const fileName = `cobertura-${radioName}-${new Date().toISOString().split('T')[0]}.xlsx`;
                 
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                // Baixar arquivo Excel
+                XLSX.writeFile(wb, fileName);
                 
-                // Cleanup
-                URL.revokeObjectURL(url);
-                
-                debugLog(`✅ Excel exportado: ${fileName} (${allCities.length} cidades)`, 'success');
+                debugLog(`✅ Excel (.xlsx) exportado: ${fileName} (${allCities.length} cidades)`, 'success');
                 
                 // Feedback visual
                 const btn = document.querySelector('.excel-export-btn');
@@ -945,18 +971,30 @@
             }
         }
         
+        // Função auxiliar para calcular distância entre coordenadas (Haversine)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Raio da Terra em km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c; // Distância em km
+        }
+        
         // =========================================================================
-        // 🚀 INICIALIZAÇÃO eRADIOS
+        // 🚀 INICIALIZAÇÃO E-MÍDIAS
         // =========================================================================
         document.addEventListener('DOMContentLoaded', async () => {
-            debugLog('🚀 Iniciando sistema eRadios...', 'info');
+            debugLog('🚀 Iniciando sistema E-MÍDIAS...', 'info');
             try {
                 await loadRadioData();
                 renderInfo();
                 await initializeMap();
                 renderCidades();
                 hideLoading();
-                debugLog('✅ Sistema eRadios carregado com sucesso!', 'success');
+                debugLog('✅ Sistema E-MÍDIAS carregado com sucesso!', 'success');
             } catch (error) {
                 debugLog(`❌ Erro ao carregar: ${error.message}`, 'error');
                 console.error('Erro completo:', error);
@@ -965,7 +1003,7 @@
         });
         
         // =========================================================================
-        // 📡 CARREGAR DADOS DO NOTION eRADIOS
+        // 📡 CARREGAR DADOS DO NOTION E-MÍDIAS
         // =========================================================================
         async function loadRadioData() {
             const params = new URLSearchParams(window.location.search);
@@ -1011,7 +1049,7 @@
                     praca: 'Florianópolis',
                     universo: 1061390,
                     pmm: 12886,
-                    imageUrl: 'https://via.placeholder.com/100x75/0066CC/white?text=107.3',
+                    imageUrl: 'https://via.placeholder.com/100x75/06055B/white?text=107.3',
                     coverageType: 'circle',
                     cidades: [
                         'Florianópolis - SC', 'São José - SC', 'Palhoça - SC', 'Biguaçu - SC',
@@ -1045,7 +1083,7 @@
         }
         
         // =========================================================================
-        // 🗺️ INICIALIZAR MAPA eRADIOS
+        // 🗺️ INICIALIZAR MAPA E-MÍDIAS
         // =========================================================================
         async function initializeMap() {
             debugLog('🗺️ Inicializando mapa...', 'info');
@@ -1113,7 +1151,7 @@
                     <img src="${radioData.imageUrl}" 
                          alt="${radioData.name}" 
                          class="radio-marker-image"
-                         onerror="this.src='https://via.placeholder.com/56x56/0066CC/white?text=${encodeURIComponent(radioData.dial || 'FM')}'">
+                         onerror="this.src='https://via.placeholder.com/56x56/06055B/white?text=${encodeURIComponent(radioData.dial || 'FM')}'">
                 `,
                 className: 'radio-marker',
                 iconSize: [56, 56],
@@ -1125,7 +1163,7 @@
                 <div class="radio-popup">
                     <img src="${radioData.imageUrl}" 
                          alt="${radioData.name}" 
-                         onerror="this.src='https://via.placeholder.com/90x68/0066CC/white?text=${encodeURIComponent(radioData.dial || 'FM')}'"
+                         onerror="this.src='https://via.placeholder.com/90x68/06055B/white?text=${encodeURIComponent(radioData.dial || 'FM')}'"
                     >
                     <h3>${radioData.name}</h3>
                     <p><strong>${radioData.dial}</strong></p>
@@ -1165,8 +1203,8 @@
             for (const polygon of radioData.kmlCoordinates) {
                 if (polygon.length > 2) {
                     const leafletPolygon = L.polygon(polygon, {
-                        color: '#0066CC',
-                        fillColor: '#0066CC',
+                        color: '#06055B',
+                        fillColor: '#06055B',
                         fillOpacity: 0.15,
                         weight: 2,
                         opacity: 0.8
@@ -1174,7 +1212,7 @@
                     
                     leafletPolygon.bindPopup(`
                         <div style="text-align: center; font-family: var(--font-primary);">
-                            <h4 style="color: #0066CC; margin: 0 0 8px 0;">Projeção de Cobertura</h4>
+                            <h4 style="color: #06055B; margin: 0 0 8px 0;">Projeção de Cobertura</h4>
                             <p style="margin: 0; color: #64748B; font-size: 13px;">Área calculada via KML</p>
                         </div>
                     `);
@@ -1194,8 +1232,8 @@
             debugLog(`⭕ Adicionando círculo de cobertura: ${radioData.radius / 1000} km`, 'info');
             
             coverageLayer = L.circle([radioData.latitude, radioData.longitude], {
-                color: '#0066CC',
-                fillColor: '#0066CC',
+                color: '#06055B',
+                fillColor: '#06055B',
                 fillOpacity: 0.1,
                 radius: radioData.radius,
                 weight: 2
@@ -1203,7 +1241,7 @@
             
             coverageLayer.bindPopup(`
                 <div style="text-align: center; font-family: var(--font-primary);">
-                    <h4 style="color: #0066CC; margin: 0 0 8px 0;">Projeção de Cobertura</h4>
+                    <h4 style="color: #06055B; margin: 0 0 8px 0;">Projeção de Cobertura</h4>
                     <p style="margin: 0; color: #64748B;">Raio: <strong>${(radioData.radius / 1000).toFixed(0)} km</strong></p>
                 </div>
             `);
@@ -1224,10 +1262,10 @@
                     <div style="
                         width: 18px; 
                         height: 18px; 
-                        background: #0066CC; 
+                        background: #06055B; 
                         border-radius: 50%; 
                         border: 2px solid white;
-                        box-shadow: 0 2px 6px rgba(0, 102, 204, 0.3);
+                        box-shadow: 0 2px 6px rgba(6, 5, 91, 0.3);
                     "></div>
                 `,
                 className: 'city-marker',
@@ -1253,7 +1291,7 @@
                 const cityMarker = L.marker([lat, lng], { icon: cityIcon })
                     .bindPopup(`
                         <div style="text-align: center; min-width: 160px; font-family: var(--font-primary);">
-                            <h4 style="margin: 0 0 8px 0; color: #0066CC; font-weight: 600;">${placemark.name}</h4>
+                            <h4 style="margin: 0 0 8px 0; color: #06055B; font-weight: 600;">${placemark.name}</h4>
                             ${placemark.description ? `<p style="margin: 4px 0; font-size: 12px; color: #64748B;">${placemark.description}</p>` : ''}
                             <p style="margin: 4px 0; font-size: 11px; color: #9CA3AF;">
                                 📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}
@@ -1298,7 +1336,7 @@
         }
         
         // =========================================================================
-        // 📋 RENDERIZAR INFORMAÇÕES eRADIOS
+        // 📋 RENDERIZAR INFORMAÇÕES E-MÍDIAS
         // =========================================================================
         function renderInfo() {
             debugLog('📋 Renderizando informações...', 'info');
@@ -1349,7 +1387,7 @@
         }
         
         // =========================================================================
-        // 🏙️ RENDERIZAR CIDADES eRADIOS
+        // 🏙️ RENDERIZAR CIDADES E-MÍDIAS
         // =========================================================================
         function renderCidades() {
             debugLog('🏙️ Renderizando lista de cidades...', 'info');
@@ -1445,10 +1483,10 @@
                         html: `<div style="
                             width: 20px; 
                             height: 20px; 
-                            background: #FF6B35; 
+                            background: #FC1E75; 
                             border-radius: 50%; 
                             border: 2px solid white;
-                            box-shadow: 0 2px 6px rgba(255, 107, 53, 0.4);
+                            box-shadow: 0 2px 6px rgba(252, 30, 117, 0.4);
                         "></div>`,
                         className: 'temp-city-marker',
                         iconSize: [20, 20],
@@ -1459,7 +1497,7 @@
                 tempMarker.addTo(map)
                     .bindPopup(`
                         <div style="text-align: center; font-family: var(--font-primary);">
-                            <h4 style="color: #FF6B35; margin: 0 0 8px 0;">${cityName.split(' - ')[0]}</h4>
+                            <h4 style="color: #FC1E75; margin: 0 0 8px 0;">${cityName.split(' - ')[0]}</h4>
                             <p style="margin: 4px 0; font-size: 12px; color: #64748B;">Localização estimada</p>
                             <p style="margin: 4px 0; font-size: 11px; color: #9CA3AF;">
                                 📍 ${cityCoords[0].toFixed(4)}, ${cityCoords[1].toFixed(4)}
@@ -1517,7 +1555,7 @@
         }
         
         // =========================================================================
-        // 🎨 UTILITÁRIOS eRADIOS
+        // 🎨 UTILITÁRIOS E-MÍDIAS
         // =========================================================================
         function hideLoading() {
             const loadingElement = document.getElementById('loading');
@@ -1541,52 +1579,7 @@
             }
             if (radioInfoElement) radioInfoElement.textContent = `${radioData.dial} • ${radioData.praca} - ${radioData.uf}`;
             
-            // Carregar logo real do eRadios
-            loadERadiosLogo();
-        }
-        
-        // Carregar logo do eRadios
-        function loadERadiosLogo() {
-            const eradiosLogo = document.getElementById('eradios-logo');
-            if (eradiosLogo) {
-                // Tentar diferentes caminhos para o logo
-                const possibleUrls = [
-                    './assets/eradios-logo.png',
-                    './assets/logo-eradios.png', 
-                    './assets/eradios.png',
-                    './eradios-logo.png',
-                    './logo-eradios.png',
-                    './eradios.png'
-                ];
-                
-                tryLoadImage(possibleUrls, 0, eradiosLogo);
-            }
-        }
-        
-        function tryLoadImage(urls, index, imgElement) {
-            if (index >= urls.length) {
-                debugLog('⚠️ Nenhuma logo eRadios encontrada, mantendo SVG fallback', 'warning');
-                return;
-            }
-            
-            const testImg = new Image();
-            testImg.onload = () => {
-                // Se for uma imagem PNG/JPG, trocar o SVG
-                if (imgElement.tagName.toLowerCase() === 'svg') {
-                    const newImg = document.createElement('img');
-                    newImg.src = urls[index];
-                    newImg.className = imgElement.className;
-                    newImg.alt = 'eRadios';
-                    imgElement.parentNode.replaceChild(newImg, imgElement);
-                } else {
-                    imgElement.src = urls[index];
-                }
-                debugLog(`✅ Logo eRadios carregada: ${urls[index]}`, 'success');
-            };
-            testImg.onerror = () => {
-                tryLoadImage(urls, index + 1, imgElement);
-            };
-            testImg.src = urls[index];
+            debugLog('✅ Interface carregada com identidade E-MÍDIAS', 'success');
         }
         
         function showError(message, details = null) {
@@ -1609,7 +1602,7 @@
         }
         
         // =========================================================================
-        // 🚨 HANDLERS DE ERRO GLOBAIS
+        // 🚨 HANDLERS DE ERRO GLOBAIS E-MÍDIAS
         // =========================================================================
         window.addEventListener('error', (e) => {
             debugLog(`🚨 Erro JavaScript: ${e.message}`, 'error');
