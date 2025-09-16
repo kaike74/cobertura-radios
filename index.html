@@ -3,91 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa de Cobertura - Rádios</title>
+    <title>Mapa de Cobertura - eRadios</title>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
+    <!-- Google Fonts - eRadios Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
+        /* =============================================================================
+           🎨 IDENTIDADE VISUAL eRADIOS
+           ============================================================================= */
+        
+        :root {
+            /* 🎨 Paleta de Cores eRadios (baseada no manual) */
+            --eradios-primary: #0066CC;        /* Azul principal */
+            --eradios-primary-light: #3384D6;   /* Azul claro */
+            --eradios-primary-dark: #004A99;    /* Azul escuro */
+            --eradios-secondary: #FF6B35;       /* Laranja accent */
+            --eradios-success: #10B981;         /* Verde sucesso */
+            --eradios-gray: #64748B;            /* Cinza texto */
+            --eradios-light-gray: #F1F5F9;      /* Cinza claro */
+            --eradios-white: #FFFFFF;           /* Branco */
+            --eradios-dark: #1E293B;            /* Escuro */
+            
+            /* 🎨 Gradientes eRadios */
+            --gradient-primary: linear-gradient(135deg, var(--eradios-primary) 0%, var(--eradios-primary-light) 100%);
+            --gradient-accent: linear-gradient(135deg, var(--eradios-secondary) 0%, #FF8A65 100%);
+            --gradient-success: linear-gradient(135deg, var(--eradios-success) 0%, #34D399 100%);
+            
+            /* 📝 Tipografia eRadios */
+            --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-weight-light: 300;
+            --font-weight-normal: 400;
+            --font-weight-medium: 500;
+            --font-weight-semibold: 600;
+            --font-weight-bold: 700;
+            
+            /* 🎨 Sombras eRadios */
+            --shadow-sm: 0 1px 3px rgba(0, 102, 204, 0.05);
+            --shadow-md: 0 4px 12px rgba(0, 102, 204, 0.1);
+            --shadow-lg: 0 8px 25px rgba(0, 102, 204, 0.15);
+            --shadow-accent: 0 4px 15px rgba(255, 107, 53, 0.2);
+        }
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
         
-        // NOVA: Função para exportar cidades para Excel
-        function exportToExcel() {
-            debugLog('📊 Exportando cidades para Excel...', 'info');
-            
-            if (!allCities || allCities.length === 0) {
-                alert('Nenhuma cidade disponível para exportar.');
-                return;
-            }
-            
-            // Preparar dados para Excel
-            const excelData = [];
-            
-            // Cabeçalho
-            excelData.push(['Região', 'UF', 'Praça', 'Distância']);
-            
-            // Dados das cidades
-            allCities.forEach(cidade => {
-                const parts = cidade.split(' - ');
-                const nomeCidade = parts[0];
-                const uf = parts[1] || radioData.uf;
-                
-                // Procurar distância nos placemarks KML
-                let distancia = 'N/A';
-                if (radioData.kmlPlacemarks) {
-                    const placemark = radioData.kmlPlacemarks.find(p => 
-                        p.name.toLowerCase().includes(nomeCidade.toLowerCase())
-                    );
-                    if (placemark && placemark.description) {
-                        const distMatch = placemark.description.match(/(\d+\.?\d*)\s*km/);
-                        if (distMatch) {
-                            distancia = `${distMatch[1]} km`;
-                        }
-                    }
-                }
-                
-                excelData.push([
-                    radioData.region || 'N/A',
-                    uf,
-                    nomeCidade,
-                    distancia
-                ]);
-            });
-            
-            // Converter para CSV
-            const csvContent = excelData.map(row => 
-                row.map(cell => `"${cell}"`).join(',')
-            ).join('\n');
-            
-            // Criar e baixar arquivo
-            const blob = new Blob(['\uFEFF' + csvContent], { 
-                type: 'text/csv;charset=utf-8;' 
-            });
-            
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            
-            const fileName = `cobertura-${radioData.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}-${new Date().toISOString().split('T')[0]}.csv`;
-            link.setAttribute('download', fileName);
-            
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            debugLog(`✅ Excel exportado: ${fileName}`, 'success');
-        }
-        
         body {
-            font-family: 'Arial', sans-serif;
-            background: #f8fafc;
-            color: #333;
-            line-height: 1.4;
+            font-family: var(--font-primary);
+            background: var(--eradios-white);
+            color: var(--eradios-dark);
+            line-height: 1.6;
+            font-weight: var(--font-weight-normal);
         }
         
         .container {
@@ -96,51 +68,85 @@
             padding: 20px;
         }
         
-        /* HEADER */
+        /* =============================================================================
+           🎨 HEADER COM IDENTIDADE eRADIOS
+           ============================================================================= */
         .header {
-            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-            color: white;
-            padding: 24px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 20px rgba(220, 38, 38, 0.15);
+            background: var(--gradient-primary);
+            color: var(--eradios-white);
+            padding: 32px 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-lg);
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Efeito de brilho sutil */
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% { left: -100%; }
+            100% { left: 100%; }
         }
         
         .header-title {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 8px;
+            font-size: 32px;
+            font-weight: var(--font-weight-bold);
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 16px;
+            position: relative;
+            z-index: 1;
         }
         
         .header-logo {
-            width: 80px;
-            height: 60px;
+            width: 90px;
+            height: 68px;
             object-fit: contain;
             border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            transition: transform 0.3s ease;
+        }
+        
+        .header-logo:hover {
+            transform: scale(1.05);
         }
         
         .header-subtitle {
-            font-size: 16px;
-            opacity: 0.9;
+            font-size: 18px;
+            opacity: 0.95;
+            font-weight: var(--font-weight-medium);
+            position: relative;
+            z-index: 1;
         }
         
-        /* DEBUG PANEL */
+        /* =============================================================================
+           🐛 DEBUG PANEL
+           ============================================================================= */
         .debug-panel {
-            background: #1f2937;
-            color: #e5e7eb;
+            background: var(--eradios-dark);
+            color: #E5E7EB;
             padding: 16px;
-            border-radius: 8px;
+            border-radius: 12px;
             margin-bottom: 20px;
             font-family: 'Courier New', monospace;
             font-size: 12px;
             max-height: 300px;
             overflow-y: auto;
-            border: 2px solid #374151;
+            border: 2px solid var(--eradios-primary);
         }
         
         .debug-panel.hidden {
@@ -148,215 +154,297 @@
         }
         
         .debug-title {
-            color: #60a5fa;
-            font-weight: bold;
+            color: var(--eradios-primary-light);
+            font-weight: var(--font-weight-bold);
             margin-bottom: 8px;
         }
         
         .debug-log {
             margin: 4px 0;
-            padding: 4px;
-            border-radius: 4px;
+            padding: 6px 8px;
+            border-radius: 6px;
         }
         
         .debug-log.success {
-            background: rgba(34, 197, 94, 0.2);
-            color: #86efac;
+            background: rgba(16, 185, 129, 0.15);
+            color: #86EFAC;
+            border-left: 3px solid var(--eradios-success);
         }
         
         .debug-log.error {
-            background: rgba(239, 68, 68, 0.2);
-            color: #fca5a5;
+            background: rgba(255, 107, 53, 0.15);
+            color: #FCA5A5;
+            border-left: 3px solid var(--eradios-secondary);
         }
         
         .debug-log.warning {
-            background: rgba(245, 158, 11, 0.2);
-            color: #fcd34d;
+            background: rgba(245, 158, 11, 0.15);
+            color: #FCD34D;
+            border-left: 3px solid #F59E0B;
         }
         
         .debug-log.info {
-            background: rgba(59, 130, 246, 0.2);
-            color: #93c5fd;
+            background: rgba(0, 102, 204, 0.15);
+            color: var(--eradios-primary-light);
+            border-left: 3px solid var(--eradios-primary);
         }
         
         .debug-toggle {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #1f2937;
-            color: white;
+            background: var(--eradios-dark);
+            color: var(--eradios-white);
             border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
+            padding: 10px 16px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 12px;
+            font-weight: var(--font-weight-medium);
             z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-md);
         }
         
-        /* CARDS DE INFORMAÇÃO - com toques eRadios */
+        .debug-toggle:hover {
+            background: var(--eradios-primary);
+            transform: translateY(-2px);
+        }
+        
+        /* =============================================================================
+           📋 CARDS DE INFORMAÇÃO eRADIOS
+           ============================================================================= */
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
         }
         
         .info-card {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            border-left: 4px solid #dc2626;
+            background: var(--eradios-white);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            border-left: 4px solid var(--eradios-primary);
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .info-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gradient-primary);
         }
         
         .info-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-left-color: var(--eradios-secondary);
+        }
+        
+        .info-card:hover::before {
+            background: var(--gradient-accent);
         }
         
         .card-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #dc2626;
-            margin-bottom: 16px;
+            font-size: 20px;
+            font-weight: var(--font-weight-bold);
+            color: var(--eradios-primary);
+            margin-bottom: 18px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
         
         .info-item {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #f1f5f9;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--eradios-light-gray);
+            transition: all 0.2s ease;
         }
         
         .info-item:last-child {
             border-bottom: none;
         }
         
+        .info-item:hover {
+            background: rgba(0, 102, 204, 0.02);
+            border-radius: 8px;
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+        
         .info-label {
-            font-weight: 600;
-            color: #64748b;
+            font-weight: var(--font-weight-semibold);
+            color: var(--eradios-gray);
         }
         
         .info-value {
-            font-weight: 500;
-            color: #1e293b;
+            font-weight: var(--font-weight-medium);
+            color: var(--eradios-dark);
         }
         
-        /* MAPA - com melhorias visuais */
+        /* =============================================================================
+           🗺️ MAPA CONTAINER eRADIOS
+           ============================================================================= */
         .map-container {
-            background: white;
-            border-radius: 12px;
+            background: var(--eradios-white);
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 24px;
             transition: all 0.3s ease;
+            border: 1px solid var(--eradios-light-gray);
         }
         
         .map-container:hover {
-            box-shadow: 0 6px 30px rgba(0,0,0,0.15);
+            box-shadow: 0 12px 35px rgba(0, 102, 204, 0.2);
+            transform: translateY(-2px);
         }
         
         #map {
-            height: 500px;
+            height: 550px;
             width: 100%;
-            min-height: 500px;
+            min-height: 550px;
             transition: filter 0.3s ease;
         }
         
-        /* CIDADES - com melhorias UX */
+        /* =============================================================================
+           🌍 SEÇÃO CIDADES eRADIOS
+           ============================================================================= */
         .cidades-container {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            border-left: 4px solid #dc2626;
+            background: var(--eradios-white);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: var(--shadow-md);
+            border-left: 4px solid var(--eradios-primary);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cidades-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gradient-primary);
         }
         
         .cidades-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
         }
         
         .cidades-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #dc2626;
+            font-size: 22px;
+            font-weight: var(--font-weight-bold);
+            color: var(--eradios-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .cidades-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .cidades-count {
+            background: var(--gradient-primary);
+            color: var(--eradios-white);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: var(--font-weight-semibold);
+            box-shadow: var(--shadow-sm);
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        .excel-export-btn {
+            background: var(--gradient-success);
+            color: var(--eradios-white);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: var(--font-weight-semibold);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
             display: flex;
             align-items: center;
             gap: 8px;
         }
         
-        .cidades-count {
-            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 16px;
-            font-size: 12px;
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
-        }
-        
-        .excel-export-btn {
-            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 6px rgba(5, 150, 105, 0.3);
-        }
-        
         .excel-export-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .excel-export-btn:active {
+            transform: translateY(0);
         }
         
         .search-box {
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
         
         .search-input {
             width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: all 0.2s ease;
+            padding: 16px 20px;
+            border: 2px solid var(--eradios-light-gray);
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: var(--font-primary);
+            font-weight: var(--font-weight-normal);
+            transition: all 0.3s ease;
+            background: var(--eradios-white);
         }
         
         .search-input:focus {
             outline: none;
-            border-color: #dc2626;
-            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+            border-color: var(--eradios-primary);
+            box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.1);
+            background: rgba(0, 102, 204, 0.01);
         }
         
         .cidades-list {
-            max-height: 300px;
+            max-height: 350px;
             overflow-y: auto;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
+            border: 1px solid var(--eradios-light-gray);
+            border-radius: 12px;
+            background: var(--eradios-white);
         }
         
         .cidade-item {
-            padding: 12px 16px;
-            border-bottom: 1px solid #f1f5f9;
-            transition: all 0.2s ease;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--eradios-light-gray);
+            transition: all 0.3s ease;
             cursor: pointer;
+            position: relative;
         }
         
         .cidade-item:hover {
-            background: linear-gradient(90deg, #fef2f2 0%, #ffffff 100%);
-            transform: translateX(4px);
-            border-left: 3px solid #dc2626;
+            background: linear-gradient(90deg, rgba(0, 102, 204, 0.03) 0%, var(--eradios-white) 100%);
+            transform: translateX(8px);
+            border-left: 4px solid var(--eradios-primary);
+            padding-left: 16px;
         }
         
         .cidade-item:last-child {
@@ -364,31 +452,35 @@
         }
         
         .cidade-name {
-            font-weight: 500;
-            color: #1e293b;
+            font-weight: var(--font-weight-medium);
+            color: var(--eradios-dark);
+            font-size: 15px;
         }
         
         .cidade-uf {
-            font-size: 12px;
-            color: #64748b;
+            font-size: 13px;
+            color: var(--eradios-gray);
             margin-left: 8px;
+            font-weight: var(--font-weight-normal);
         }
         
-        /* LOADING */
+        /* =============================================================================
+           ⏳ LOADING eRADIOS
+           ============================================================================= */
         .loading {
             text-align: center;
-            padding: 40px;
-            color: #64748b;
+            padding: 60px 20px;
+            color: var(--eradios-gray);
         }
         
         .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #e2e8f0;
-            border-top: 4px solid #dc2626;
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--eradios-light-gray);
+            border-top: 4px solid var(--eradios-primary);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 16px;
+            animation: spin 1.2s linear infinite;
+            margin: 0 auto 20px;
         }
         
         @keyframes spin {
@@ -396,113 +488,230 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* ERROR */
+        /* =============================================================================
+           ❌ ERROR eRADIOS
+           ============================================================================= */
         .error {
-            background: #fee2e2;
-            border: 1px solid #fecaca;
-            color: #dc2626;
-            padding: 20px;
-            border-radius: 8px;
+            background: linear-gradient(135deg, #FEF2F2 0%, #FFFFFF 100%);
+            border: 1px solid #FECACA;
+            color: var(--eradios-secondary);
+            padding: 24px;
+            border-radius: 12px;
             text-align: center;
-            margin: 20px 0;
+            margin: 24px 0;
+            box-shadow: var(--shadow-sm);
         }
         
         .error-details {
-            margin-top: 12px;
+            margin-top: 16px;
             font-size: 12px;
-            color: #991b1b;
+            color: #991B1B;
             font-family: 'Courier New', monospace;
-            background: rgba(255, 255, 255, 0.5);
-            padding: 8px;
-            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 12px;
+            border-radius: 8px;
             text-align: left;
         }
         
-        /* RESPONSIVIDADE */
-        @media (max-width: 768px) {
-            .container { padding: 12px; }
-            .info-grid { grid-template-columns: 1fr; }
-            #map { height: 400px; min-height: 400px; }
-            .header-title { font-size: 22px; flex-direction: column; gap: 8px; }
-            .header-logo { width: 60px; height: 45px; }
-            .debug-toggle { top: 10px; right: 10px; }
-        }
-        
-        /* RODAPÉ ERADIOS */
+        /* =============================================================================
+           🦶 RODAPÉ eRADIOS
+           ============================================================================= */
         .footer {
             text-align: center;
-            padding: 20px;
-            margin-top: 30px;
-            border-top: 1px solid #e2e8f0;
-            background: #fefefe;
+            padding: 40px 20px;
+            margin-top: 40px;
+            border-top: 2px solid var(--eradios-light-gray);
+            background: linear-gradient(135deg, #FAFBFC 0%, var(--eradios-white) 100%);
+            border-radius: 16px 16px 0 0;
         }
         
         .footer-logo {
-            width: 120px;
+            width: 160px;
             height: auto;
-            opacity: 0.7;
-            margin-bottom: 8px;
+            opacity: 0.8;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            filter: grayscale(20%);
+        }
+        
+        .footer-logo:hover {
+            opacity: 1;
+            transform: scale(1.05);
+            filter: grayscale(0%);
         }
         
         .footer-text {
-            font-size: 12px;
-            color: #64748b;
+            font-size: 14px;
+            color: var(--eradios-gray);
             margin: 0;
+            font-weight: var(--font-weight-medium);
         }
         
-        /* POPUP CUSTOMIZADO */
+        /* =============================================================================
+           📱 RESPONSIVIDADE eRADIOS
+           ============================================================================= */
+        @media (max-width: 768px) {
+            .container { 
+                padding: 16px; 
+            }
+            
+            .info-grid { 
+                grid-template-columns: 1fr; 
+                gap: 20px;
+            }
+            
+            #map { 
+                height: 450px; 
+                min-height: 450px; 
+            }
+            
+            .header {
+                padding: 24px 20px;
+                margin-bottom: 20px;
+            }
+            
+            .header-title { 
+                font-size: 24px; 
+                flex-direction: column; 
+                gap: 12px; 
+            }
+            
+            .header-logo { 
+                width: 70px; 
+                height: 52px; 
+            }
+            
+            .debug-toggle { 
+                top: 10px; 
+                right: 10px; 
+                padding: 8px 12px;
+                font-size: 11px;
+            }
+            
+            .cidades-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .cidades-actions {
+                justify-content: space-between;
+            }
+            
+            .search-input {
+                padding: 14px 16px;
+                font-size: 16px; /* Evitar zoom no iOS */
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header-title {
+                font-size: 20px;
+            }
+            
+            .cidades-container {
+                padding: 20px;
+            }
+            
+            .excel-export-btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+        }
+        
+        /* =============================================================================
+           🗺️ CUSTOMIZAÇÕES LEAFLET eRADIOS
+           ============================================================================= */
         .leaflet-popup-content-wrapper {
-            border-radius: 8px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .leaflet-popup-tip {
+            box-shadow: var(--shadow-sm);
         }
         
         .radio-popup {
             text-align: center;
-            min-width: 200px;
+            min-width: 220px;
+            font-family: var(--font-primary);
         }
         
         .radio-popup img {
-            width: 80px;
-            height: 60px;
+            width: 90px;
+            height: 68px;
             object-fit: cover;
-            border-radius: 6px;
-            margin-bottom: 8px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow-sm);
         }
         
         .radio-popup h3 {
             margin: 0 0 8px 0;
-            color: #dc2626;
-            font-size: 16px;
+            color: var(--eradios-primary);
+            font-size: 18px;
+            font-weight: var(--font-weight-bold);
         }
         
         .radio-popup p {
-            margin: 4px 0;
-            font-size: 12px;
-            color: #64748b;
+            margin: 6px 0;
+            font-size: 14px;
+            color: var(--eradios-gray);
+            font-weight: var(--font-weight-medium);
         }
         
-        /* MARCADORES CUSTOMIZADOS */
-        .city-marker {
-            background: transparent !important;
-            border: none !important;
-        }
-        
-        .radio-marker {
-            background: transparent !important;
-            border: none !important;
-        }
-        
+        /* Marcadores customizados */
+        .city-marker,
+        .radio-marker,
         .temp-city-marker {
             background: transparent !important;
             border: none !important;
         }
         
         .radio-marker-image {
-            width: 50px !important;
-            height: 50px !important;
+            width: 56px !important;
+            height: 56px !important;
             border-radius: 50%;
-            border: 3px solid white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border: 3px solid var(--eradios-white);
+            box-shadow: var(--shadow-md);
             object-fit: cover;
+            transition: all 0.3s ease;
+        }
+        
+        .radio-marker-image:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        /* =============================================================================
+           🎨 ANIMAÇÕES eRADIOS
+           ============================================================================= */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .info-card,
+        .map-container,
+        .cidades-container {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .info-card:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+        
+        .map-container {
+            animation-delay: 0.2s;
+        }
+        
+        .cidades-container {
+            animation-delay: 0.3s;
         }
     </style>
 </head>
@@ -510,20 +719,20 @@
     <button class="debug-toggle" onclick="toggleDebug()">🐛 Debug</button>
     
     <div class="container">
-        <!-- HEADER -->
+        <!-- HEADER eRADIOS -->
         <div class="header">
             <h1 class="header-title" id="radio-name">
                 📻 Carregando Rádio...
                 <img class="header-logo" id="header-logo" src="" alt="Logo" style="display: none;">
             </h1>
             <div class="header-subtitle">
-                <span id="radio-info">Mapa de Cobertura Interativo</span>
+                <span id="radio-info">Mapa de Cobertura Interativo • eRadios</span>
             </div>
         </div>
         
         <!-- DEBUG PANEL -->
         <div id="debug-panel" class="debug-panel hidden">
-            <div class="debug-title">📋 Debug Log</div>
+            <div class="debug-title">📋 Debug Log eRadios</div>
             <div id="debug-logs"></div>
         </div>
         
@@ -555,12 +764,12 @@
                 <h2 class="cidades-title">
                     🌍 Cidades de Cobertura
                 </h2>
-                <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="cidades-actions">
                     <button 
                         class="excel-export-btn" 
                         onclick="exportToExcel()" 
-                        title="Exportar para Excel">
-                        📊 Excel
+                        title="Exportar cidades para Excel">
+                        📊 Exportar Excel
                     </button>
                     <span class="cidades-count" id="cidades-count">0</span>
                 </div>
@@ -571,7 +780,7 @@
                     type="text" 
                     class="search-input" 
                     id="city-search" 
-                    placeholder="🔍 Buscar cidade..."
+                    placeholder="🔍 Buscar cidade ou região..."
                 >
             </div>
             
@@ -580,12 +789,22 @@
             </div>
         </div>
         
-        <!-- RODAPÉ ERADIOS -->
+        <!-- RODAPÉ eRADIOS -->
         <div class="footer">
-            <img src="https://via.placeholder.com/120x40/f8fafc/64748b?text=eRadios" 
-                 alt="eRadios" 
-                 class="footer-logo"
-                 id="eradios-logo">
+            <svg class="footer-logo" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg" id="eradios-logo">
+                <!-- Logo eRadios em SVG (fallback) -->
+                <defs>
+                    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#0066CC;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#3384D6;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <rect width="200" height="60" rx="8" fill="url(#logoGradient)" opacity="0.1"/>
+                <text x="100" y="35" font-family="Inter, sans-serif" font-size="24" font-weight="700" 
+                      text-anchor="middle" fill="#0066CC">eRadios</text>
+                <text x="100" y="50" font-family="Inter, sans-serif" font-size="10" 
+                      text-anchor="middle" fill="#64748B">Plataforma de Rádios</text>
+            </svg>
             <p class="footer-text">Plataforma de Mapeamento de Cobertura de Rádios</p>
         </div>
     </div>
@@ -594,17 +813,21 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script>
-        // VARIÁVEIS GLOBAIS
+        // =========================================================================
+        // 🚀 VARIÁVEIS GLOBAIS eRADIOS
+        // =========================================================================
         let map;
         let radioData = {};
         let radioMarker;
-        let coverageLayer; // Polígono ou círculo
-        let cityMarkers = []; // NOVO: marcadores das cidades
+        let coverageLayer;
+        let cityMarkers = [];
         let allCities = [];
         let filteredCities = [];
         let debugVisible = false;
         
-        // SISTEMA DE DEBUG
+        // =========================================================================
+        // 🐛 SISTEMA DE DEBUG eRADIOS
+        // =========================================================================
         function debugLog(message, type = 'info') {
             console.log(`[${type.toUpperCase()}] ${message}`);
             
@@ -628,16 +851,112 @@
             }
         }
         
-        // INICIALIZAÇÃO
+        // =========================================================================
+        // 📊 FUNÇÃO EXPORT EXCEL (CORRIGIDA) - eRADIOS
+        // =========================================================================
+        function exportToExcel() {
+            debugLog('📊 Exportando cidades para Excel...', 'info');
+            
+            if (!allCities || allCities.length === 0) {
+                alert('❌ Nenhuma cidade disponível para exportar.');
+                debugLog('❌ Nenhuma cidade para exportar', 'error');
+                return;
+            }
+            
+            try {
+                // Preparar dados para Excel
+                const excelData = [];
+                
+                // Cabeçalho
+                excelData.push(['Região', 'UF', 'Cidade', 'Distância']);
+                
+                // Dados das cidades
+                allCities.forEach(cidade => {
+                    const parts = cidade.split(' - ');
+                    const nomeCidade = parts[0];
+                    const uf = parts[1] || radioData.uf;
+                    
+                    // Procurar distância nos placemarks KML
+                    let distancia = 'N/A';
+                    if (radioData.kmlPlacemarks) {
+                        const placemark = radioData.kmlPlacemarks.find(p => 
+                            p.name.toLowerCase().includes(nomeCidade.toLowerCase())
+                        );
+                        if (placemark && placemark.description) {
+                            const distMatch = placemark.description.match(/(\d+\.?\d*)\s*km/);
+                            if (distMatch) {
+                                distancia = `${distMatch[1]} km`;
+                            }
+                        }
+                    }
+                    
+                    excelData.push([
+                        radioData.region || 'N/A',
+                        uf,
+                        nomeCidade,
+                        distancia
+                    ]);
+                });
+                
+                // Converter para CSV com codificação UTF-8
+                const csvContent = excelData.map(row => 
+                    row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+                ).join('\n');
+                
+                // Criar e baixar arquivo
+                const blob = new Blob(['\uFEFF' + csvContent], { 
+                    type: 'text/csv;charset=utf-8;' 
+                });
+                
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                
+                const radioName = radioData.name ? radioData.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'radio';
+                const fileName = `cobertura-${radioName}-${new Date().toISOString().split('T')[0]}.csv`;
+                link.setAttribute('download', fileName);
+                
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Cleanup
+                URL.revokeObjectURL(url);
+                
+                debugLog(`✅ Excel exportado: ${fileName} (${allCities.length} cidades)`, 'success');
+                
+                // Feedback visual
+                const btn = document.querySelector('.excel-export-btn');
+                if (btn) {
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '✅ Exportado!';
+                    btn.style.background = 'var(--gradient-success)';
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.style.background = 'var(--gradient-success)';
+                    }, 2000);
+                }
+                
+            } catch (error) {
+                debugLog(`❌ Erro ao exportar Excel: ${error.message}`, 'error');
+                console.error('Erro detalhado:', error);
+                alert('❌ Erro ao exportar arquivo. Tente novamente.');
+            }
+        }
+        
+        // =========================================================================
+        // 🚀 INICIALIZAÇÃO eRADIOS
+        // =========================================================================
         document.addEventListener('DOMContentLoaded', async () => {
-            debugLog('🚀 Iniciando sistema de cobertura...', 'info');
+            debugLog('🚀 Iniciando sistema eRadios...', 'info');
             try {
                 await loadRadioData();
                 renderInfo();
                 await initializeMap();
                 renderCidades();
                 hideLoading();
-                debugLog('✅ Sistema carregado com sucesso!', 'success');
+                debugLog('✅ Sistema eRadios carregado com sucesso!', 'success');
             } catch (error) {
                 debugLog(`❌ Erro ao carregar: ${error.message}`, 'error');
                 console.error('Erro completo:', error);
@@ -645,7 +964,9 @@
             }
         });
         
-        // CARREGAR DADOS DO NOTION
+        // =========================================================================
+        // 📡 CARREGAR DADOS DO NOTION eRADIOS
+        // =========================================================================
         async function loadRadioData() {
             const params = new URLSearchParams(window.location.search);
             const notionId = params.get('id');
@@ -690,10 +1011,11 @@
                     praca: 'Florianópolis',
                     universo: 1061390,
                     pmm: 12886,
-                    imageUrl: 'https://via.placeholder.com/100x75/dc2626/white?text=107.3',
+                    imageUrl: 'https://via.placeholder.com/100x75/0066CC/white?text=107.3',
                     coverageType: 'circle',
                     cidades: [
-                        'Florianópolis - SC', 'São José - SC', 'Palhoça - SC', 'Biguaçu - SC'
+                        'Florianópolis - SC', 'São José - SC', 'Palhoça - SC', 'Biguaçu - SC',
+                        'Blumenau - SC', 'Joinville - SC', 'Itajaí - SC'
                     ],
                     source: 'example'
                 };
@@ -722,7 +1044,9 @@
             return data;
         }
         
-        // INICIALIZAR MAPA
+        // =========================================================================
+        // 🗺️ INICIALIZAR MAPA eRADIOS
+        // =========================================================================
         async function initializeMap() {
             debugLog('🗺️ Inicializando mapa...', 'info');
             
@@ -765,7 +1089,7 @@
                         // Adicionar cobertura (KML ou círculo)
                         addCoverage();
                         
-                        // Ajustar zoom MODIFICADO para mostrar toda a cobertura
+                        // Ajustar zoom
                         fitMapToCoverage();
                         
                         debugLog('✅ Mapa inicializado completamente', 'success');
@@ -783,25 +1107,25 @@
         function addRadioMarker() {
             debugLog('📍 Adicionando marcador da rádio...', 'info');
             
-            // MODIFICADO: Usar imagem da rádio em vez do emoji
+            // Usar imagem da rádio com tema eRadios
             const radioIcon = L.divIcon({
                 html: `
                     <img src="${radioData.imageUrl}" 
                          alt="${radioData.name}" 
                          class="radio-marker-image"
-                         onerror="this.src='https://via.placeholder.com/50x50/dc2626/white?text=${encodeURIComponent(radioData.dial || 'FM')}'">
+                         onerror="this.src='https://via.placeholder.com/56x56/0066CC/white?text=${encodeURIComponent(radioData.dial || 'FM')}'">
                 `,
                 className: 'radio-marker',
-                iconSize: [50, 50],
-                iconAnchor: [25, 25]
+                iconSize: [56, 56],
+                iconAnchor: [28, 28]
             });
             
-            // MODIFICADO: Card do popup removendo "Tipo:"
+            // Popup com tema eRadios
             const popupContent = `
                 <div class="radio-popup">
                     <img src="${radioData.imageUrl}" 
                          alt="${radioData.name}" 
-                         onerror="this.src='https://via.placeholder.com/80x60/dc2626/white?text=${encodeURIComponent(radioData.dial || 'FM')}'"
+                         onerror="this.src='https://via.placeholder.com/90x68/0066CC/white?text=${encodeURIComponent(radioData.dial || 'FM')}'"
                     >
                     <h3>${radioData.name}</h3>
                     <p><strong>${radioData.dial}</strong></p>
@@ -821,10 +1145,8 @@
             debugLog(`🎯 Adicionando cobertura, tipo: ${radioData.coverageType}`, 'info');
             
             if (radioData.coverageType === 'kml' && radioData.kmlCoordinates && radioData.kmlCoordinates.length > 0) {
-                // Usar polígonos do KML
                 addKMLPolygons();
             } else {
-                // Fallback: usar círculo tradicional
                 addCoverageCircle();
             }
             
@@ -834,27 +1156,26 @@
             }
         }
         
-        // Adicionar polígonos do KML
+        // Adicionar polígonos do KML com cores eRadios
         function addKMLPolygons() {
             debugLog(`🗺️ Adicionando polígonos KML: ${radioData.kmlCoordinates.length} polígonos`, 'info');
             
-            // Criar grupo de camadas
             const kmlGroup = L.layerGroup();
             
             for (const polygon of radioData.kmlCoordinates) {
-                if (polygon.length > 2) { // Mínimo 3 pontos para um polígono
+                if (polygon.length > 2) {
                     const leafletPolygon = L.polygon(polygon, {
-                        color: '#dc2626',
-                        fillColor: '#dc2626',
+                        color: '#0066CC',
+                        fillColor: '#0066CC',
                         fillOpacity: 0.15,
                         weight: 2,
                         opacity: 0.8
                     });
                     
-                    // MODIFICADO: Popup simplificado
                     leafletPolygon.bindPopup(`
-                        <div style="text-align: center;">
-                            <h4>Projeção de Cobertura</h4>
+                        <div style="text-align: center; font-family: var(--font-primary);">
+                            <h4 style="color: #0066CC; margin: 0 0 8px 0;">Projeção de Cobertura</h4>
+                            <p style="margin: 0; color: #64748B; font-size: 13px;">Área calculada via KML</p>
                         </div>
                     `);
                     
@@ -868,23 +1189,22 @@
             debugLog(`✅ Polígonos KML adicionados`, 'success');
         }
         
-        // Adicionar círculo tradicional (fallback)
+        // Adicionar círculo tradicional com cores eRadios
         function addCoverageCircle() {
             debugLog(`⭕ Adicionando círculo de cobertura: ${radioData.radius / 1000} km`, 'info');
             
             coverageLayer = L.circle([radioData.latitude, radioData.longitude], {
-                color: '#dc2626',
-                fillColor: '#dc2626',
+                color: '#0066CC',
+                fillColor: '#0066CC',
                 fillOpacity: 0.1,
                 radius: radioData.radius,
                 weight: 2
             });
             
-            // MODIFICADO: Popup simplificado
             coverageLayer.bindPopup(`
-                <div style="text-align: center;">
-                    <h4>Projeção de Cobertura</h4>
-                    <p>Raio: <strong>${(radioData.radius / 1000).toFixed(0)} km</strong></p>
+                <div style="text-align: center; font-family: var(--font-primary);">
+                    <h4 style="color: #0066CC; margin: 0 0 8px 0;">Projeção de Cobertura</h4>
+                    <p style="margin: 0; color: #64748B;">Raio: <strong>${(radioData.radius / 1000).toFixed(0)} km</strong></p>
                 </div>
             `);
             
@@ -892,39 +1212,34 @@
             debugLog('✅ Círculo de cobertura adicionado', 'success');
         }
         
-        // NOVO: Adicionar marcadores das cidades do KML (filtrado)
+        // Adicionar marcadores das cidades
         function addCityMarkers() {
             debugLog(`📍 Adicionando marcadores das cidades: ${radioData.kmlPlacemarks.length} cidades`, 'info');
             
-            // Limpar marcadores anteriores
             cityMarkers.forEach(marker => map.removeLayer(marker));
             cityMarkers = [];
             
-            // Criar ícone para as cidades
             const cityIcon = L.divIcon({
                 html: `
                     <div style="
-                        width: 16px; 
-                        height: 16px; 
-                        background: #3b82f6; 
+                        width: 18px; 
+                        height: 18px; 
+                        background: #0066CC; 
                         border-radius: 50%; 
                         border: 2px solid white;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+                        box-shadow: 0 2px 6px rgba(0, 102, 204, 0.3);
                     "></div>
                 `,
                 className: 'city-marker',
-                iconSize: [16, 16],
-                iconAnchor: [8, 8]
+                iconSize: [18, 18],
+                iconAnchor: [9, 9]
             });
             
-            // MODIFICADO: Filtrar cidade de origem da rádio
             const radioLocation = radioData.praca ? radioData.praca.toLowerCase() : '';
             
-            // Adicionar um marcador para cada cidade (exceto a cidade da rádio)
             radioData.kmlPlacemarks.forEach((placemark, index) => {
                 const cityName = placemark.name.toLowerCase();
                 
-                // FILTRO: Não adicionar marcador se for a cidade da rádio ou contiver "0.0 km"
                 if (cityName.includes(radioLocation) || 
                     placemark.description?.includes('0.0 km') ||
                     cityName === radioLocation ||
@@ -937,10 +1252,10 @@
                 
                 const cityMarker = L.marker([lat, lng], { icon: cityIcon })
                     .bindPopup(`
-                        <div style="text-align: center; min-width: 150px;">
-                            <h4 style="margin: 0 0 8px 0; color: #3b82f6;">${placemark.name}</h4>
-                            ${placemark.description ? `<p style="margin: 4px 0; font-size: 12px; color: #666;">${placemark.description}</p>` : ''}
-                            <p style="margin: 4px 0; font-size: 11px; color: #888;">
+                        <div style="text-align: center; min-width: 160px; font-family: var(--font-primary);">
+                            <h4 style="margin: 0 0 8px 0; color: #0066CC; font-weight: 600;">${placemark.name}</h4>
+                            ${placemark.description ? `<p style="margin: 4px 0; font-size: 12px; color: #64748B;">${placemark.description}</p>` : ''}
+                            <p style="margin: 4px 0; font-size: 11px; color: #9CA3AF;">
                                 📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}
                             </p>
                         </div>
@@ -950,29 +1265,26 @@
                 cityMarkers.push(cityMarker);
             });
             
-            debugLog(`✅ ${cityMarkers.length} marcadores de cidades adicionados (origem filtrada)`, 'success');
+            debugLog(`✅ ${cityMarkers.length} marcadores de cidades adicionados`, 'success');
         }
         
-        // MODIFICADO: Ajustar zoom para mostrar toda a cobertura - ZOOM MUITO REDUZIDO
+        // Ajustar zoom para mostrar toda a cobertura
         function fitMapToCoverage() {
             debugLog('📏 Ajustando zoom para mostrar toda a cobertura...', 'info');
             
             if (radioData.coverageType === 'kml' && radioData.kmlBounds) {
-                // Usar bounds do KML com muito mais padding
                 const bounds = L.latLngBounds(
                     [radioData.kmlBounds.south, radioData.kmlBounds.west],
                     [radioData.kmlBounds.north, radioData.kmlBounds.east]
                 );
                 map.fitBounds(bounds, { padding: [80, 80] });
-                debugLog('📏 Zoom ajustado para bounds KML com padding muito expandido', 'success');
+                debugLog('📏 Zoom ajustado para bounds KML', 'success');
             } else if (coverageLayer && coverageLayer.getBounds) {
-                // Usar bounds da camada com padding muito maior
                 map.fitBounds(coverageLayer.getBounds(), { padding: [100, 100] });
-                debugLog('📏 Zoom ajustado para bounds da camada com padding muito expandido', 'success');
+                debugLog('📏 Zoom ajustado para bounds da camada', 'success');
             } else {
-                // Para círculo, calcular zoom baseado no raio com zoom MUITO menor
                 const radiusKm = radioData.radius / 1000;
-                let zoom = 6; // Zoom inicial MUITO menor
+                let zoom = 6;
                 if (radiusKm > 200) zoom = 4;
                 else if (radiusKm > 150) zoom = 5;
                 else if (radiusKm > 100) zoom = 5;
@@ -985,7 +1297,9 @@
             }
         }
         
-        // MODIFICADO: Renderizar informações sem campos KML
+        // =========================================================================
+        // 📋 RENDERIZAR INFORMAÇÕES eRADIOS
+        // =========================================================================
         function renderInfo() {
             debugLog('📋 Renderizando informações...', 'info');
             
@@ -994,7 +1308,6 @@
             const pmmFormatted = radioData.pmm ? radioData.pmm.toLocaleString() : 'N/A';
             const universoFormatted = radioData.universo ? radioData.universo.toLocaleString() : 'N/A';
             
-            // MODIFICADO: Remover informações sobre KML
             container.innerHTML = `
                 <!-- TÉCNICAS -->
                 <div class="info-card">
@@ -1035,16 +1348,17 @@
             debugLog('✅ Informações renderizadas', 'success');
         }
         
-        // RENDERIZAR CIDADES
+        // =========================================================================
+        // 🏙️ RENDERIZAR CIDADES eRADIOS
+        // =========================================================================
         function renderCidades() {
             debugLog('🏙️ Renderizando lista de cidades...', 'info');
             
-            // MODIFICADO: Filtrar nome da rádio da lista
+            // Filtrar nome da rádio da lista
             allCities = (radioData.cidades || []).filter(cidade => {
                 const cityName = cidade.toLowerCase();
                 const radioName = radioData.name.toLowerCase();
                 
-                // Filtrar se a cidade contém o nome da rádio (ex: "RÁDIO MASSA" não deve aparecer)
                 return !cityName.includes(radioName.replace('rádio', '').replace('fm', '').trim());
             });
             
@@ -1054,7 +1368,7 @@
             setupCitySearch();
             
             document.getElementById('cidades-section').style.display = 'block';
-            debugLog(`✅ ${allCities.length} cidades renderizadas (nome da rádio filtrado)`, 'success');
+            debugLog(`✅ ${allCities.length} cidades renderizadas`, 'success');
         }
         
         function updateCidadesList() {
@@ -1064,7 +1378,7 @@
             if (count) count.textContent = filteredCities.length;
             
             if (filteredCities.length === 0) {
-                container.innerHTML = '<div class="cidade-item">Nenhuma cidade encontrada</div>';
+                container.innerHTML = '<div class="cidade-item">❌ Nenhuma cidade encontrada</div>';
                 return;
             }
             
@@ -1098,7 +1412,7 @@
             }
         }
         
-        // MODIFICADO: Função melhorada para destacar cidade
+        // Destacar cidade no mapa
         function highlightCity(cityName) {
             debugLog(`🎯 Destacando cidade: ${cityName}`, 'info');
             
@@ -1112,7 +1426,6 @@
                     const [lat, lng] = foundPlacemark.coordinates;
                     map.setView([lat, lng], 12);
                     
-                    // Encontrar o marcador correspondente e abrir popup
                     const markerIndex = radioData.kmlPlacemarks.indexOf(foundPlacemark);
                     if (cityMarkers[markerIndex]) {
                         cityMarkers[markerIndex].openPopup();
@@ -1122,21 +1435,20 @@
                 }
             }
             
-            // PRIORIDADE 2: Estimativa de coordenadas por região (fallback)
+            // PRIORIDADE 2: Estimativa de coordenadas
             const cityCoords = estimateCityCoordinates(cityName, radioData.uf);
             if (cityCoords) {
                 map.setView(cityCoords, 11);
                 
-                // Criar marcador temporário para mostrar a cidade
                 const tempMarker = L.marker(cityCoords, {
                     icon: L.divIcon({
                         html: `<div style="
                             width: 20px; 
                             height: 20px; 
-                            background: #f59e0b; 
+                            background: #FF6B35; 
                             border-radius: 50%; 
                             border: 2px solid white;
-                            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                            box-shadow: 0 2px 6px rgba(255, 107, 53, 0.4);
                         "></div>`,
                         className: 'temp-city-marker',
                         iconSize: [20, 20],
@@ -1146,17 +1458,16 @@
                 
                 tempMarker.addTo(map)
                     .bindPopup(`
-                        <div style="text-align: center;">
-                            <h4 style="color: #f59e0b; margin: 0 0 8px 0;">${cityName.split(' - ')[0]}</h4>
-                            <p style="margin: 4px 0; font-size: 12px; color: #666;">Localização estimada</p>
-                            <p style="margin: 4px 0; font-size: 11px; color: #888;">
+                        <div style="text-align: center; font-family: var(--font-primary);">
+                            <h4 style="color: #FF6B35; margin: 0 0 8px 0;">${cityName.split(' - ')[0]}</h4>
+                            <p style="margin: 4px 0; font-size: 12px; color: #64748B;">Localização estimada</p>
+                            <p style="margin: 4px 0; font-size: 11px; color: #9CA3AF;">
                                 📍 ${cityCoords[0].toFixed(4)}, ${cityCoords[1].toFixed(4)}
                             </p>
                         </div>
                     `)
                     .openPopup();
                 
-                // Remover marcador temporário após 5 segundos
                 setTimeout(() => {
                     map.removeLayer(tempMarker);
                 }, 5000);
@@ -1168,11 +1479,10 @@
             debugLog(`⚠️ Não foi possível localizar a cidade ${cityName}`, 'warning');
         }
         
-        // NOVA: Função para estimar coordenadas das cidades
+        // Estimar coordenadas das cidades
         function estimateCityCoordinates(cityName, uf) {
             const cityBaseName = cityName.split(' - ')[0].toLowerCase();
             
-            // Base de coordenadas aproximadas das principais cidades por UF
             const cityCoordinates = {
                 'SC': {
                     'florianópolis': [-27.5954, -48.5480],
@@ -1187,34 +1497,15 @@
                     'lages': [-27.8167, -50.3264],
                     'balneário camboriú': [-26.9908, -48.6350],
                     'tubarão': [-28.4669, -49.0057]
-                },
-                'SP': {
-                    'são paulo': [-23.5505, -46.6333],
-                    'campinas': [-22.9099, -47.0626],
-                    'santos': [-23.9618, -46.3322],
-                    'guarulhos': [-23.4538, -46.5333],
-                    'são bernardo do campo': [-23.6914, -46.5646],
-                    'santo andré': [-23.6532, -46.5308],
-                    'osasco': [-23.5329, -46.7918]
-                },
-                'RJ': {
-                    'rio de janeiro': [-22.9068, -43.1729],
-                    'niterói': [-22.8833, -43.1035],
-                    'duque de caxias': [-22.7858, -43.3114],
-                    'nova iguaçu': [-22.7595, -43.4511],
-                    'são gonçalo': [-22.8268, -43.0540]
                 }
-                // Adicione mais estados conforme necessário
             };
             
             if (cityCoordinates[uf] && cityCoordinates[uf][cityBaseName]) {
                 return cityCoordinates[uf][cityBaseName];
             }
             
-            // Se não encontrar coordenadas específicas, usar coordenadas da rádio como aproximação
             if (radioData.latitude && radioData.longitude) {
-                // Adicionar pequena variação para não ficar exatamente no mesmo ponto
-                const latVariation = (Math.random() - 0.5) * 0.2; // ±0.1 graus
+                const latVariation = (Math.random() - 0.5) * 0.2;
                 const lngVariation = (Math.random() - 0.5) * 0.2;
                 return [
                     radioData.latitude + latVariation,
@@ -1225,7 +1516,9 @@
             return null;
         }
         
-        // MODIFICADO: Utilitários com logo no header e eRadios
+        // =========================================================================
+        // 🎨 UTILITÁRIOS eRADIOS
+        // =========================================================================
         function hideLoading() {
             const loadingElement = document.getElementById('loading');
             const infoElement = document.getElementById('info-section');
@@ -1237,7 +1530,7 @@
             if (infoElement) infoElement.style.display = 'grid';
             if (mapElement) mapElement.style.display = 'block';
             
-            // MODIFICADO: Atualizar header com logo (sem background)
+            // Atualizar header com logo
             const sourceSuffix = radioData.source === 'example' ? ' (EXEMPLO)' : '';
             if (radioNameElement) {
                 radioNameElement.innerHTML = `
@@ -1248,21 +1541,22 @@
             }
             if (radioInfoElement) radioInfoElement.textContent = `${radioData.dial} • ${radioData.praca} - ${radioData.uf}`;
             
-            // NOVO: Tentar carregar logo real do eRadios
+            // Carregar logo real do eRadios
             loadERadiosLogo();
         }
         
-        // CORRIGIDO: Carregar logo do eRadios da raiz
+        // Carregar logo do eRadios
         function loadERadiosLogo() {
             const eradiosLogo = document.getElementById('eradios-logo');
             if (eradiosLogo) {
-                // URLs corretas - logos estão na raiz do projeto
+                // Tentar diferentes caminhos para o logo
                 const possibleUrls = [
+                    './assets/eradios-logo.png',
+                    './assets/logo-eradios.png', 
+                    './assets/eradios.png',
                     './eradios-logo.png',
-                    './logo-eradios.png', 
-                    './eradios.png',
-                    // Fallback para placeholder se nenhuma funcionar
-                    'https://via.placeholder.com/120x40/f8fafc/64748b?text=eRadios'
+                    './logo-eradios.png',
+                    './eradios.png'
                 ];
                 
                 tryLoadImage(possibleUrls, 0, eradiosLogo);
@@ -1270,11 +1564,23 @@
         }
         
         function tryLoadImage(urls, index, imgElement) {
-            if (index >= urls.length) return;
+            if (index >= urls.length) {
+                debugLog('⚠️ Nenhuma logo eRadios encontrada, mantendo SVG fallback', 'warning');
+                return;
+            }
             
             const testImg = new Image();
             testImg.onload = () => {
-                imgElement.src = urls[index];
+                // Se for uma imagem PNG/JPG, trocar o SVG
+                if (imgElement.tagName.toLowerCase() === 'svg') {
+                    const newImg = document.createElement('img');
+                    newImg.src = urls[index];
+                    newImg.className = imgElement.className;
+                    newImg.alt = 'eRadios';
+                    imgElement.parentNode.replaceChild(newImg, imgElement);
+                } else {
+                    imgElement.src = urls[index];
+                }
                 debugLog(`✅ Logo eRadios carregada: ${urls[index]}`, 'success');
             };
             testImg.onerror = () => {
@@ -1302,7 +1608,9 @@
             if (errorElement) errorElement.style.display = 'block';
         }
         
-        // Handler de erro global
+        // =========================================================================
+        // 🚨 HANDLERS DE ERRO GLOBAIS
+        // =========================================================================
         window.addEventListener('error', (e) => {
             debugLog(`🚨 Erro JavaScript: ${e.message}`, 'error');
             console.error('Erro capturado:', e.error);
