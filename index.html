@@ -93,8 +93,8 @@
            🎨 HEADER COM IDENTIDADE E-MÍDIAS
            ============================================================================= */
         .header {
-            background: var(--gradient-primary);
-            color: var(--emidias-white);
+            background: var(--emidias-white);
+            color: var(--emidias-primary);
             padding: 32px 24px;
             border-radius: 16px;
             margin-bottom: 24px;
@@ -102,6 +102,7 @@
             text-align: center;
             position: relative;
             overflow: hidden;
+            border: 2px solid var(--emidias-primary);
         }
         
         /* Efeito de brilho sutil */
@@ -112,8 +113,8 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            animation: shine 3s infinite;
+            background: linear-gradient(90deg, transparent, rgba(6, 5, 91, 0.05), transparent);
+            animation: shine 4s infinite;
         }
         
         @keyframes shine {
@@ -147,11 +148,12 @@
         }
         
         .header-subtitle {
-            font-size: 18px;
-            opacity: 0.95;
+            font-size: 16px;
+            opacity: 0.8;
             font-weight: var(--font-weight-medium);
             position: relative;
             z-index: 1;
+            color: var(--emidias-gray);
         }
         
         /* =============================================================================
@@ -232,6 +234,50 @@
             transform: translateY(-2px);
         }
         
+        /* =============================================================================
+           🏢 SEÇÃO LOGO E-MÍDIAS
+           ============================================================================= */
+        .brand-section {
+            background: var(--emidias-white);
+            padding: 20px;
+            margin-bottom: 24px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid var(--emidias-light-gray);
+        }
+        
+        .brand-logo {
+            height: 60px;
+            width: auto;
+            object-fit: contain;
+            transition: all 0.3s ease;
+        }
+        
+        .brand-logo:hover {
+            transform: scale(1.05);
+        }
+        
+        .brand-text {
+            flex: 1;
+            text-align: right;
+            padding-right: 20px;
+        }
+        
+        .brand-title {
+            font-size: 16px;
+            font-weight: var(--font-weight-bold);
+            color: var(--emidias-primary);
+            margin: 0;
+        }
+        
+        .brand-subtitle {
+            font-size: 12px;
+            color: var(--emidias-gray);
+            margin: 4px 0 0 0;
+        }
         /* =============================================================================
            📋 CARDS DE INFORMAÇÃO E-MÍDIAS
            ============================================================================= */
@@ -571,7 +617,22 @@
         /* =============================================================================
            📱 RESPONSIVIDADE eRADIOS
            ============================================================================= */
-        @media (max-width: 768px) {
+            @media (max-width: 768px) {
+                .brand-section {
+                    flex-direction: column;
+                    text-align: center;
+                    gap: 12px;
+                }
+                
+                .brand-text {
+                    text-align: center;
+                    padding-right: 0;
+                }
+                
+                .brand-logo {
+                    height: 50px;
+                }
+            }
             .container { 
                 padding: 16px; 
             }
@@ -743,11 +804,24 @@
         <!-- HEADER E-MÍDIAS -->
         <div class="header">
             <h1 class="header-title" id="radio-name">
-                📻 Carregando Rádio...
+                Carregando Rádio...
                 <img class="header-logo" id="header-logo" src="" alt="Logo" style="display: none;">
             </h1>
             <div class="header-subtitle">
-                <span id="radio-info">Mapa de Cobertura Interativo • E-MÍDIAS</span>
+                <span id="radio-info">Mapa de Cobertura Interativo</span>
+            </div>
+        </div>
+        
+        <!-- SEÇÃO LOGO E-MÍDIAS -->
+        <div class="brand-section">
+            <img class="brand-logo" 
+                 src="./assets/logo E-MIDIAS png fundo branco.png" 
+                 alt="E-MÍDIAS" 
+                 id="brand-logo"
+                 onerror="this.src='./assets/logo E-MIDIAS png fundo branco HORIZONTAL.png'; this.onerror=function(){this.style.display='none'};">
+            <div class="brand-text">
+                <h3 class="brand-title">Plataforma E-MÍDIAS</h3>
+                <p class="brand-subtitle">Mapeamento de Cobertura de Rádios</p>
             </div>
         </div>
         
@@ -887,8 +961,14 @@
                 
                 // Dados das cidades com separação de cidade e distância
                 allCities.forEach(cidade => {
-                    const parts = cidade.split(' - ');
-                    const nomeCidade = parts[0];
+                    // Limpar nome da cidade removendo qualquer coisa entre parênteses
+                    let nomeCidadeLimpo = cidade;
+                    if (cidade.includes('(')) {
+                        nomeCidadeLimpo = cidade.substring(0, cidade.indexOf('(')).trim();
+                    }
+                    
+                    const parts = nomeCidadeLimpo.split(' - ');
+                    const nomeCidade = parts[0].trim();
                     const uf = parts[1] || radioData.uf;
                     
                     // Procurar distância nos placemarks KML
@@ -898,33 +978,27 @@
                             p.name.toLowerCase().includes(nomeCidade.toLowerCase())
                         );
                         if (placemark && placemark.description) {
-                            // Extrair distância e converter km para metros
+                            // Extrair distância da descrição do KML
                             const distMatch = placemark.description.match(/(\d+\.?\d*)\s*km/);
                             if (distMatch) {
                                 const distanciaKm = parseFloat(distMatch[1]);
                                 distanciaMetros = Math.round(distanciaKm * 1000); // Converter para metros
+                                debugLog(`📏 ${nomeCidade}: ${distanciaKm}km = ${distanciaMetros}m`, 'info');
                             }
                         }
                     }
                     
-                    // Se não encontrou distância no KML, tentar calcular estimativa
-                    if (distanciaMetros === null && radioData.latitude && radioData.longitude) {
-                        const cityCoords = estimateCityCoordinates(cidade, radioData.uf);
-                        if (cityCoords) {
-                            // Calcular distância usando fórmula de Haversine
-                            const distanciaKm = calculateDistance(
-                                radioData.latitude, radioData.longitude,
-                                cityCoords[0], cityCoords[1]
-                            );
-                            distanciaMetros = Math.round(distanciaKm * 1000);
-                        }
+                    // Se não encontrou distância no KML, deixar como 0
+                    if (distanciaMetros === null) {
+                        distanciaMetros = 0;
+                        debugLog(`⚠️ ${nomeCidade}: distância não encontrada, usando 0m`, 'warning');
                     }
                     
                     excelData.push([
                         radioData.region || 'N/A',
                         uf,
-                        nomeCidade, // Cidade sem distância
-                        distanciaMetros || 0 // Distância em metros ou 0
+                        nomeCidade, // Cidade limpa sem distância
+                        distanciaMetros // Distância em metros do KML
                     ]);
                 });
                 
@@ -1274,19 +1348,40 @@
             });
             
             const radioLocation = radioData.praca ? radioData.praca.toLowerCase() : '';
+            const radioName = radioData.name ? radioData.name.toLowerCase() : '';
             
             radioData.kmlPlacemarks.forEach((placemark, index) => {
                 const cityName = placemark.name.toLowerCase();
                 
-                if (cityName.includes(radioLocation) || 
+                // FILTROS APRIMORADOS para evitar marcadores duplicados
+                if (
+                    cityName.includes(radioLocation) || 
                     placemark.description?.includes('0.0 km') ||
+                    placemark.description?.includes('0,0 km') ||
                     cityName === radioLocation ||
-                    cityName.includes('origem')) {
-                    debugLog(`⏭️ Pulando cidade de origem: ${placemark.name}`, 'info');
+                    cityName.includes('origem') ||
+                    cityName.includes(radioName.replace('rádio', '').replace('fm', '').trim()) ||
+                    // Filtrar se contém o nome da rádio
+                    radioName.includes(cityName) ||
+                    // Filtrar se está muito próximo da rádio (menos de 1km)
+                    (placemark.description && placemark.description.match(/0\.[0-9]\s*km/))
+                ) {
+                    debugLog(`⏭️ Pulando marcador duplicado/origem: ${placemark.name} - ${placemark.description || 'sem descrição'}`, 'info');
                     return;
                 }
                 
                 const [lat, lng] = placemark.coordinates;
+                
+                // Verificar se não está muito próximo da rádio (raio de 500m)
+                const distanceFromRadio = calculateDistance(
+                    radioData.latitude, radioData.longitude,
+                    lat, lng
+                );
+                
+                if (distanceFromRadio < 0.5) { // Menos de 500m
+                    debugLog(`⏭️ Pulando cidade muito próxima da rádio: ${placemark.name} (${(distanceFromRadio*1000).toFixed(0)}m)`, 'info');
+                    return;
+                }
                 
                 const cityMarker = L.marker([lat, lng], { icon: cityIcon })
                     .bindPopup(`
@@ -1303,7 +1398,7 @@
                 cityMarkers.push(cityMarker);
             });
             
-            debugLog(`✅ ${cityMarkers.length} marcadores de cidades adicionados`, 'success');
+            debugLog(`✅ ${cityMarkers.length} marcadores de cidades adicionados (duplicados filtrados)`, 'success');
         }
         
         // Ajustar zoom para mostrar toda a cobertura
@@ -1572,7 +1667,7 @@
             const sourceSuffix = radioData.source === 'example' ? ' (EXEMPLO)' : '';
             if (radioNameElement) {
                 radioNameElement.innerHTML = `
-                    📻 ${radioData.name}${sourceSuffix}
+                    ${radioData.name}${sourceSuffix}
                     <img class="header-logo" src="${radioData.imageUrl}" alt="Logo ${radioData.name}" 
                          onerror="this.style.display='none';">
                 `;
