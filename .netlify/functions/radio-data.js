@@ -148,7 +148,7 @@ exports.handler = async (event, context) => {
       lastUpdate: new Date().toISOString()
     };
 
-    // NOVO: PROCESSAR KML SE DISPONÍVEL - COM MELHOR TRATAMENTO DE ERRO
+    // PROCESSAR KML SE DISPONÍVEL
     if (radioData.kmlUrl && radioData.kmlUrl.trim()) {
       console.log('🗺️ Processando KML:', radioData.kmlUrl);
       try {
@@ -221,14 +221,18 @@ exports.handler = async (event, context) => {
   }
 };
 
-// NOVA FUNÇÃO: Processar KML com múltiplas tentativas e fallbacks
+// PROCESSAR KML COM MÚLTIPLAS TENTATIVAS
 async function processKMLWithFallback(driveUrl) {
+  console.log('🔄 Iniciando processamento KML:', driveUrl);
+  
   const attempts = [
     () => processKMLMethod1(driveUrl), // Método original
-    () => processKMLMethod2(driveUrl), // Método alternativo
+    () => processKMLMethod2(driveUrl), // Método alternativo  
     () => processKMLMethod3(driveUrl), // Método com proxy
   ];
 
+  let lastError;
+  
   for (let i = 0; i < attempts.length; i++) {
     try {
       console.log(`🔄 Tentativa ${i + 1} de processar KML`);
@@ -236,72 +240,110 @@ async function processKMLWithFallback(driveUrl) {
       if (result && result.coordinates && result.coordinates.length > 0) {
         console.log(`✅ Sucesso na tentativa ${i + 1}`);
         return result;
+      } else {
+        console.log(`⚠️ Tentativa ${i + 1} retornou dados vazios`);
       }
     } catch (error) {
       console.error(`❌ Tentativa ${i + 1} falhou:`, error.message);
-      if (i === attempts.length - 1) {
-        throw error; // Se todas falharam, lança o último erro
+      lastError = error;
+      
+      // Pequena pausa entre tentativas
+      if (i < attempts.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
   }
 
-  throw new Error('Todas as tentativas de processar KML falharam');
+  throw lastError || new Error('Todas as tentativas de processar KML falharam');
 }
 
-// MÉTODO 1: Original (download direto)
+// MÉTODO 1: Download direto via Google Drive
 async function processKMLMethod1(driveUrl) {
-  console.log('🔄 Método 1: Download direto');
+  console.log('🔄 Método 1: Download direto do Google Drive');
   
   const directUrl = convertGoogleDriveUrl(driveUrl);
   console.log('🔗 URL direta:', directUrl);
   
-  const response = await fetch(directUrl, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; RadioCoverageBot/1.0)',
-      'Accept': 'application/vnd.google-earth.kml+xml,application/xml,text/xml,*/*'
-    },
-    timeout: 10000 // 10 segundos
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 segundos
   
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  try {
+    const response = await fetch(directUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'application/vnd.google-earth.kml+xml,application/xml,text/xml,text/plain,*/*'
+      },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const kmlText = await response.text();
+    console.log('📄 KML baixado, tamanho:', kmlText.length);
+    
+    if (kmlText.length < 50) {
+      throw new Error('KML muito pequeno ou vazio');
+    }
+    
+    // Verificar se não é página de erro do Google
+    if (kmlText.includes('<!DOCTYPE html>') || kmlText.includes('<html')) {
+      throw new Error('Recebido HTML ao invés de KML - arquivo pode não estar público');
+    }
+    
+    return parseKMLCoordinates(kmlText);
+    
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
   }
-  
-  const kmlText = await response.text();
-  console.log('📄 KML baixado, tamanho:', kmlText.length);
-  
-  if (kmlText.length < 100) {
-    throw new Error('KML muito pequeno, provavelmente não é válido');
-  }
-  
-  return parseKMLCoordinates(kmlText);
 }
 
-// MÉTODO 2: URL alternativa
+// MÉTODO 2: URL alternativa docs.google.com
 async function processKMLMethod2(driveUrl) {
-  console.log('🔄 Método 2: URL alternativa');
+  console.log('🔄 Método 2: URL alternativa docs.google.com');
   
   const fileId = extractFileId(driveUrl);
   const altUrl = `https://docs.google.com/uc?export=download&id=${fileId}`;
   
   console.log('🔗 URL alternativa:', altUrl);
   
-  const response = await fetch(altUrl, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; RadioCoverageBot/1.0)'
-    },
-    timeout: 10000
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
   
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  try {
+    const response = await fetch(altUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const kmlText = await response.text();
+    
+    // Verificar se não é página de erro
+    if (kmlText.includes('<!DOCTYPE html>') || kmlText.includes('<html')) {
+      throw new Error('Recebido HTML ao invés de KML');
+    }
+    
+    return parseKMLCoordinates(kmlText);
+    
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
   }
-  
-  const kmlText = await response.text();
-  return parseKMLCoordinates(kmlText);
 }
 
-// MÉTODO 3: Usando proxy CORS (como fallback final)
+// MÉTODO 3: Usando proxy CORS
 async function processKMLMethod3(driveUrl) {
   console.log('🔄 Método 3: Proxy CORS');
   
@@ -310,35 +352,55 @@ async function processKMLMethod3(driveUrl) {
   
   console.log('🔗 URL com proxy:', proxyUrl);
   
-  const response = await fetch(proxyUrl, {
-    timeout: 15000 // Mais tempo para proxy
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20000); // Mais tempo para proxy
   
-  if (!response.ok) {
-    throw new Error(`Proxy falhou: ${response.status}`);
+  try {
+    const response = await fetch(proxyUrl, {
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      throw new Error(`Proxy falhou: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.contents) {
+      throw new Error('Proxy não retornou conteúdo');
+    }
+    
+    // Verificar se não é HTML
+    if (data.contents.includes('<!DOCTYPE html>') || data.contents.includes('<html')) {
+      throw new Error('Proxy retornou HTML ao invés de KML');
+    }
+    
+    return parseKMLCoordinates(data.contents);
+    
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
   }
-  
-  const data = await response.json();
-  
-  if (!data.contents) {
-    throw new Error('Proxy não retornou conteúdo');
-  }
-  
-  return parseKMLCoordinates(data.contents);
 }
 
-// Extrair ID do arquivo de diferentes formatos de URL
+// Extrair ID do arquivo do Google Drive
 function extractFileId(url) {
+  console.log('🔍 Extraindo File ID de:', url);
+  
   // Diferentes padrões de URL do Google Drive
   const patterns = [
     /\/file\/d\/([a-zA-Z0-9-_]+)/,
     /id=([a-zA-Z0-9-_]+)/,
-    /\/d\/([a-zA-Z0-9-_]+)/
+    /\/d\/([a-zA-Z0-9-_]+)/,
+    /open\?id=([a-zA-Z0-9-_]+)/
   ];
   
   for (const pattern of patterns) {
     const match = url.match(pattern);
     if (match) {
+      console.log('✅ File ID encontrado:', match[1]);
       return match[1];
     }
   }
@@ -346,7 +408,7 @@ function extractFileId(url) {
   throw new Error('Não foi possível extrair ID do arquivo da URL');
 }
 
-// Converter URL do Google Drive para download direto (melhorado)
+// Converter URL do Google Drive para download direto
 function convertGoogleDriveUrl(url) {
   const fileId = extractFileId(url);
   return `https://drive.google.com/uc?export=download&id=${fileId}`;
@@ -354,30 +416,42 @@ function convertGoogleDriveUrl(url) {
 
 // Parsear coordenadas do KML (melhorado)
 function parseKMLCoordinates(kmlText) {
+  console.log('📊 Iniciando parsing do KML...');
+  
   const coordinates = [];
   let minLat = Infinity, maxLat = -Infinity;
   let minLng = Infinity, maxLng = -Infinity;
   
   // Verificar se é realmente KML
-  if (!kmlText.includes('<kml') && !kmlText.includes('<coordinates')) {
+  if (!kmlText.includes('<kml') && !kmlText.includes('<coordinates') && !kmlText.includes('<?xml')) {
     throw new Error('Arquivo não parece ser KML válido');
   }
   
+  // Remover espaços e quebras de linha desnecessárias
+  const cleanKml = kmlText.replace(/\s+/g, ' ').trim();
+  
   // Regex melhorado para encontrar coordenadas no KML
-  const coordRegex = /<coordinates[^>]*>([\s\S]*?)<\/coordinates>/gi;
+  const coordRegex = /<coordinates[^>]*>(.*?)<\/coordinates>/gi;
   let match;
   let totalPoints = 0;
   
-  while ((match = coordRegex.exec(kmlText)) !== null) {
+  while ((match = coordRegex.exec(cleanKml)) !== null) {
     const coordText = match[1].trim();
-    console.log('🎯 Coordenadas encontradas:', coordText.substring(0, 100) + '...');
+    console.log('🎯 Bloco de coordenadas encontrado, tamanho:', coordText.length);
+    
+    if (coordText.length === 0) {
+      console.log('⚠️ Bloco de coordenadas vazio, pulando...');
+      continue;
+    }
     
     // Parsear coordenadas (formato: lng,lat,alt lng,lat,alt ...)
     const coordPairs = coordText
-      .replace(/\s+/g, ' ') // Normalizar espaços
+      .replace(/\s+/g, ' ')
       .trim()
       .split(/\s+/)
       .filter(pair => pair.trim() && pair.includes(','));
+    
+    console.log(`📍 Encontrados ${coordPairs.length} pares de coordenadas neste bloco`);
     
     const polygonCoords = [];
     
@@ -387,7 +461,7 @@ function parseKMLCoordinates(kmlText) {
         const lng = parseFloat(parts[0]);
         const lat = parseFloat(parts[1]);
         
-        // Validar coordenadas
+        // Validar coordenadas (Brasil: lat -35 a 5, lng -75 a -30 aproximadamente)
         if (!isNaN(lat) && !isNaN(lng) && 
             lat >= -90 && lat <= 90 && 
             lng >= -180 && lng <= 180) {
@@ -400,12 +474,17 @@ function parseKMLCoordinates(kmlText) {
           maxLat = Math.max(maxLat, lat);
           minLng = Math.min(minLng, lng);
           maxLng = Math.max(maxLng, lng);
+        } else {
+          console.log(`⚠️ Coordenada inválida ignorada: ${lat}, ${lng}`);
         }
       }
     }
     
     if (polygonCoords.length > 2) { // Mínimo 3 pontos para um polígono válido
       coordinates.push(polygonCoords);
+      console.log(`✅ Polígono adicionado com ${polygonCoords.length} pontos`);
+    } else {
+      console.log(`⚠️ Polígono com poucos pontos ignorado: ${polygonCoords.length} pontos`);
     }
   }
   
@@ -413,10 +492,10 @@ function parseKMLCoordinates(kmlText) {
     polygonCount: coordinates.length,
     totalPoints: totalPoints,
     bounds: {
-      north: maxLat,
-      south: minLat,
-      east: maxLng,
-      west: minLng
+      north: maxLat === -Infinity ? 0 : maxLat,
+      south: minLat === Infinity ? 0 : minLat,
+      east: maxLng === -Infinity ? 0 : maxLng,
+      west: minLng === Infinity ? 0 : minLng
     }
   });
   
@@ -427,15 +506,15 @@ function parseKMLCoordinates(kmlText) {
   return {
     coordinates,
     bounds: {
-      north: maxLat,
-      south: minLat,
-      east: maxLng,
-      west: minLng
+      north: maxLat === -Infinity ? 0 : maxLat,
+      south: minLat === Infinity ? 0 : minLat,
+      east: maxLng === -Infinity ? 0 : maxLng,
+      west: minLng === Infinity ? 0 : minLng
     }
   };
 }
 
-// RESTO DAS FUNÇÕES ORIGINAIS...
+// BUSCAR CIDADES DE MÚLTIPLAS FONTES
 async function fetchCitiesFromMultipleSources(radioData, notionToken) {
   console.log('🔍 Buscando cidades de múltiplas fontes...');
   
