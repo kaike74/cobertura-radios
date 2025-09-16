@@ -15,6 +15,74 @@
             box-sizing: border-box;
         }
         
+        // NOVA: Função para exportar cidades para Excel
+        function exportToExcel() {
+            debugLog('📊 Exportando cidades para Excel...', 'info');
+            
+            if (!allCities || allCities.length === 0) {
+                alert('Nenhuma cidade disponível para exportar.');
+                return;
+            }
+            
+            // Preparar dados para Excel
+            const excelData = [];
+            
+            // Cabeçalho
+            excelData.push(['Região', 'UF', 'Praça', 'Distância']);
+            
+            // Dados das cidades
+            allCities.forEach(cidade => {
+                const parts = cidade.split(' - ');
+                const nomeCidade = parts[0];
+                const uf = parts[1] || radioData.uf;
+                
+                // Procurar distância nos placemarks KML
+                let distancia = 'N/A';
+                if (radioData.kmlPlacemarks) {
+                    const placemark = radioData.kmlPlacemarks.find(p => 
+                        p.name.toLowerCase().includes(nomeCidade.toLowerCase())
+                    );
+                    if (placemark && placemark.description) {
+                        const distMatch = placemark.description.match(/(\d+\.?\d*)\s*km/);
+                        if (distMatch) {
+                            distancia = `${distMatch[1]} km`;
+                        }
+                    }
+                }
+                
+                excelData.push([
+                    radioData.region || 'N/A',
+                    uf,
+                    nomeCidade,
+                    distancia
+                ]);
+            });
+            
+            // Converter para CSV
+            const csvContent = excelData.map(row => 
+                row.map(cell => `"${cell}"`).join(',')
+            ).join('\n');
+            
+            // Criar e baixar arquivo
+            const blob = new Blob(['\uFEFF' + csvContent], { 
+                type: 'text/csv;charset=utf-8;' 
+            });
+            
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            
+            const fileName = `cobertura-${radioData.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}-${new Date().toISOString().split('T')[0]}.csv`;
+            link.setAttribute('download', fileName);
+            
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            debugLog(`✅ Excel exportado: ${fileName}`, 'success');
+        }
+        
         body {
             font-family: 'Arial', sans-serif;
             background: #f8fafc;
@@ -232,6 +300,24 @@
             font-size: 12px;
             font-weight: 600;
             box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+        }
+        
+        .excel-export-btn {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(5, 150, 105, 0.3);
+        }
+        
+        .excel-export-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4);
         }
         
         .search-box {
@@ -469,7 +555,15 @@
                 <h2 class="cidades-title">
                     🌍 Cidades de Cobertura
                 </h2>
-                <span class="cidades-count" id="cidades-count">0</span>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button 
+                        class="excel-export-btn" 
+                        onclick="exportToExcel()" 
+                        title="Exportar para Excel">
+                        📊 Excel
+                    </button>
+                    <span class="cidades-count" id="cidades-count">0</span>
+                </div>
             </div>
             
             <div class="search-box">
@@ -1158,16 +1252,16 @@
             loadERadiosLogo();
         }
         
-        // NOVO: Carregar logo do eRadios
+        // CORRIGIDO: Carregar logo do eRadios da raiz
         function loadERadiosLogo() {
             const eradiosLogo = document.getElementById('eradios-logo');
             if (eradiosLogo) {
-                // Tenta URLs possíveis para a logo do eRadios
+                // URLs corretas - logos estão na raiz do projeto
                 const possibleUrls = [
-                    '/assets/eradios-logo.png',
-                    '/images/eradios-logo.png',
-                    'https://eradios.com.br/logo.png',
-                    // Fallback para placeholder
+                    './eradios-logo.png',
+                    './logo-eradios.png', 
+                    './eradios.png',
+                    // Fallback para placeholder se nenhuma funcionar
                     'https://via.placeholder.com/120x40/f8fafc/64748b?text=eRadios'
                 ];
                 
