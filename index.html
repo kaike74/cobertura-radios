@@ -50,11 +50,13 @@
         }
         
         .header-logo {
-            width: 50px;
-            height: 38px;
-            object-fit: cover;
-            border-radius: 6px;
+            width: 60px;
+            height: 45px;
+            object-fit: contain;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
             border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 4px;
         }
         
         .header-subtitle {
@@ -323,7 +325,7 @@
             .info-grid { grid-template-columns: 1fr; }
             #map { height: 400px; min-height: 400px; }
             .header-title { font-size: 22px; flex-direction: column; gap: 8px; }
-            .header-logo { width: 40px; height: 30px; }
+            .header-logo { width: 50px; height: 38px; }
             .debug-toggle { top: 10px; right: 10px; }
         }
         
@@ -364,6 +366,11 @@
         }
         
         .radio-marker {
+            background: transparent !important;
+            border: none !important;
+        }
+        
+        .temp-city-marker {
             background: transparent !important;
             border: none !important;
         }
@@ -756,7 +763,7 @@
             debugLog('✅ Círculo de cobertura adicionado', 'success');
         }
         
-        // NOVO: Adicionar marcadores das cidades do KML
+        // NOVO: Adicionar marcadores das cidades do KML (filtrado)
         function addCityMarkers() {
             debugLog(`📍 Adicionando marcadores das cidades: ${radioData.kmlPlacemarks.length} cidades`, 'info');
             
@@ -781,8 +788,22 @@
                 iconAnchor: [8, 8]
             });
             
-            // Adicionar um marcador para cada cidade
+            // MODIFICADO: Filtrar cidade de origem da rádio
+            const radioLocation = radioData.praca ? radioData.praca.toLowerCase() : '';
+            
+            // Adicionar um marcador para cada cidade (exceto a cidade da rádio)
             radioData.kmlPlacemarks.forEach((placemark, index) => {
+                const cityName = placemark.name.toLowerCase();
+                
+                // FILTRO: Não adicionar marcador se for a cidade da rádio ou contiver "0.0 km"
+                if (cityName.includes(radioLocation) || 
+                    placemark.description?.includes('0.0 km') ||
+                    cityName === radioLocation ||
+                    cityName.includes('origem')) {
+                    debugLog(`⏭️ Pulando cidade de origem: ${placemark.name}`, 'info');
+                    return;
+                }
+                
                 const [lat, lng] = placemark.coordinates;
                 
                 const cityMarker = L.marker([lat, lng], { icon: cityIcon })
@@ -800,7 +821,7 @@
                 cityMarkers.push(cityMarker);
             });
             
-            debugLog(`✅ ${cityMarkers.length} marcadores de cidades adicionados`, 'success');
+            debugLog(`✅ ${cityMarkers.length} marcadores de cidades adicionados (origem filtrada)`, 'success');
         }
         
         // MODIFICADO: Ajustar zoom para mostrar toda a cobertura
@@ -813,17 +834,19 @@
                     [radioData.kmlBounds.south, radioData.kmlBounds.west],
                     [radioData.kmlBounds.north, radioData.kmlBounds.east]
                 );
-                map.fitBounds(bounds, { padding: [40, 40] });
+                map.fitBounds(bounds, { padding: [50, 50] });
                 debugLog('📏 Zoom ajustado para bounds KML com padding expandido', 'success');
             } else if (coverageLayer && coverageLayer.getBounds) {
-                // Usar bounds da camada com padding
-                map.fitBounds(coverageLayer.getBounds(), { padding: [40, 40] });
+                // Usar bounds da camada com padding maior
+                map.fitBounds(coverageLayer.getBounds(), { padding: [60, 60] });
                 debugLog('📏 Zoom ajustado para bounds da camada com padding expandido', 'success');
             } else {
-                // Para círculo, calcular zoom baseado no raio
+                // Para círculo, calcular zoom baseado no raio com zoom menor
                 const radiusKm = radioData.radius / 1000;
-                let zoom = 10;
-                if (radiusKm > 100) zoom = 7;
+                let zoom = 8; // Zoom inicial menor
+                if (radiusKm > 150) zoom = 6;
+                else if (radiusKm > 100) zoom = 6;
+                else if (radiusKm > 75) zoom = 7;
                 else if (radiusKm > 50) zoom = 8;
                 else if (radiusKm > 25) zoom = 9;
                 
@@ -886,14 +909,22 @@
         function renderCidades() {
             debugLog('🏙️ Renderizando lista de cidades...', 'info');
             
-            allCities = radioData.cidades || [];
+            // MODIFICADO: Filtrar nome da rádio da lista
+            allCities = (radioData.cidades || []).filter(cidade => {
+                const cityName = cidade.toLowerCase();
+                const radioName = radioData.name.toLowerCase();
+                
+                // Filtrar se a cidade contém o nome da rádio (ex: "RÁDIO MASSA" não deve aparecer)
+                return !cityName.includes(radioName.replace('rádio', '').replace('fm', '').trim());
+            });
+            
             filteredCities = [...allCities];
             
             updateCidadesList();
             setupCitySearch();
             
             document.getElementById('cidades-section').style.display = 'block';
-            debugLog(`✅ ${allCities.length} cidades renderizadas`, 'success');
+            debugLog(`✅ ${allCities.length} cidades renderizadas (nome da rádio filtrado)`, 'success');
         }
         
         function updateCidadesList() {
@@ -937,13 +968,14 @@
             }
         }
         
+        // MODIFICADO: Função melhorada para destacar cidade
         function highlightCity(cityName) {
             debugLog(`🎯 Destacando cidade: ${cityName}`, 'info');
             
-            // Procurar nos marcadores KML
+            // PRIORIDADE 1: Procurar nos marcadores KML
             if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
                 const foundPlacemark = radioData.kmlPlacemarks.find(placemark => 
-                    placemark.name.toLowerCase().includes(cityName.toLowerCase())
+                    placemark.name.toLowerCase().includes(cityName.split(' - ')[0].toLowerCase())
                 );
                 
                 if (foundPlacemark) {
@@ -954,14 +986,113 @@
                     const markerIndex = radioData.kmlPlacemarks.indexOf(foundPlacemark);
                     if (cityMarkers[markerIndex]) {
                         cityMarkers[markerIndex].openPopup();
-                        debugLog(`✅ Cidade ${cityName} destacada no mapa`, 'success');
+                        debugLog(`✅ Cidade ${cityName} destacada no mapa via KML`, 'success');
+                        return;
                     }
-                } else {
-                    debugLog(`⚠️ Cidade ${cityName} não encontrada nos marcadores KML`, 'warning');
                 }
-            } else {
-                debugLog(`⚠️ Nenhum marcador KML disponível para destacar`, 'warning');
             }
+            
+            // PRIORIDADE 2: Estimativa de coordenadas por região (fallback)
+            const cityCoords = estimateCityCoordinates(cityName, radioData.uf);
+            if (cityCoords) {
+                map.setView(cityCoords, 11);
+                
+                // Criar marcador temporário para mostrar a cidade
+                const tempMarker = L.marker(cityCoords, {
+                    icon: L.divIcon({
+                        html: `<div style="
+                            width: 20px; 
+                            height: 20px; 
+                            background: #f59e0b; 
+                            border-radius: 50%; 
+                            border: 2px solid white;
+                            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                        "></div>`,
+                        className: 'temp-city-marker',
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10]
+                    })
+                });
+                
+                tempMarker.addTo(map)
+                    .bindPopup(`
+                        <div style="text-align: center;">
+                            <h4 style="color: #f59e0b; margin: 0 0 8px 0;">${cityName.split(' - ')[0]}</h4>
+                            <p style="margin: 4px 0; font-size: 12px; color: #666;">Localização estimada</p>
+                            <p style="margin: 4px 0; font-size: 11px; color: #888;">
+                                📍 ${cityCoords[0].toFixed(4)}, ${cityCoords[1].toFixed(4)}
+                            </p>
+                        </div>
+                    `)
+                    .openPopup();
+                
+                // Remover marcador temporário após 5 segundos
+                setTimeout(() => {
+                    map.removeLayer(tempMarker);
+                }, 5000);
+                
+                debugLog(`✅ Cidade ${cityName} destacada com coordenadas estimadas`, 'success');
+                return;
+            }
+            
+            debugLog(`⚠️ Não foi possível localizar a cidade ${cityName}`, 'warning');
+        }
+        
+        // NOVA: Função para estimar coordenadas das cidades
+        function estimateCityCoordinates(cityName, uf) {
+            const cityBaseName = cityName.split(' - ')[0].toLowerCase();
+            
+            // Base de coordenadas aproximadas das principais cidades por UF
+            const cityCoordinates = {
+                'SC': {
+                    'florianópolis': [-27.5954, -48.5480],
+                    'joinville': [-26.3044, -48.8462],
+                    'blumenau': [-26.9186, -49.0661],
+                    'são josé': [-27.5969, -48.6194],
+                    'palhoça': [-27.6386, -48.6755],
+                    'biguaçu': [-27.4945, -48.6558],
+                    'chapecó': [-27.1009, -52.6156],
+                    'criciúma': [-28.6783, -49.3692],
+                    'itajaí': [-26.9077, -48.6658],
+                    'lages': [-27.8167, -50.3264],
+                    'balneário camboriú': [-26.9908, -48.6350],
+                    'tubarão': [-28.4669, -49.0057]
+                },
+                'SP': {
+                    'são paulo': [-23.5505, -46.6333],
+                    'campinas': [-22.9099, -47.0626],
+                    'santos': [-23.9618, -46.3322],
+                    'guarulhos': [-23.4538, -46.5333],
+                    'são bernardo do campo': [-23.6914, -46.5646],
+                    'santo andré': [-23.6532, -46.5308],
+                    'osasco': [-23.5329, -46.7918]
+                },
+                'RJ': {
+                    'rio de janeiro': [-22.9068, -43.1729],
+                    'niterói': [-22.8833, -43.1035],
+                    'duque de caxias': [-22.7858, -43.3114],
+                    'nova iguaçu': [-22.7595, -43.4511],
+                    'são gonçalo': [-22.8268, -43.0540]
+                }
+                // Adicione mais estados conforme necessário
+            };
+            
+            if (cityCoordinates[uf] && cityCoordinates[uf][cityBaseName]) {
+                return cityCoordinates[uf][cityBaseName];
+            }
+            
+            // Se não encontrar coordenadas específicas, usar coordenadas da rádio como aproximação
+            if (radioData.latitude && radioData.longitude) {
+                // Adicionar pequena variação para não ficar exatamente no mesmo ponto
+                const latVariation = (Math.random() - 0.5) * 0.2; // ±0.1 graus
+                const lngVariation = (Math.random() - 0.5) * 0.2;
+                return [
+                    radioData.latitude + latVariation,
+                    radioData.longitude + lngVariation
+                ];
+            }
+            
+            return null;
         }
         
         // MODIFICADO: Utilitários com logo no header
