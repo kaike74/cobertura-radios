@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste KML - Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .warning {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+        .info {
+            background: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        .results {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Teste de KML - Debug Tool</h1>
+        <p>Use esta ferramenta para testar se o arquivo KML está acessível e válido.</p>
+        
+        <div class="input-group">
+            <label for="kml-url"><strong>URL do Google Drive:</strong></label>
+            <input type="text" id="kml-url" placeholder="https://drive.google.com/file/d/.../view?usp=drivesdk" 
+                   value="https://drive.google.com/file/d/18bhHzhUZc5XKv0fclYfy8ZCLY5uR3Ne6/view?usp=drivesdk">
+        </div>
+        
+        <div>
+            <button onclick="testKMLAccess()">🧪 Testar Acesso ao KML</button>
+            <button onclick="testAllMethods()">🔄 Testar Todos os Métodos</button>
+            <button onclick="clearResults()">🗑️ Limpar Resultados</button>
+        </div>
+        
+        <div id="results">
+            <!-- Resultados aparecerão aqui -->
+        </div>
+    </div>
+
+    <script>
+        function addResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-section ${type}`;
+            div.innerHTML = `
+                <strong>[${new Date().toLocaleTimeString()}]</strong> ${message}
+            `;
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        // Extrair ID do arquivo de diferentes formatos de URL
+        function extractFileId(url) {
+            const patterns = [
+                /\/file\/d\/([a-zA-Z0-9-_]+)/,
+                /id=([a-zA-Z0-9-_]+)/,
+                /\/d\/([a-zA-Z0-9-_]+)/
+            ];
+            
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match) {
+                    return match[1];
+                }
+            }
+            
+            throw new Error('Não foi possível extrair ID do arquivo da URL');
+        }
+
+        // Converter URL do Google Drive para download direto
+        function convertGoogleDriveUrl(url) {
+            const fileId = extractFileId(url);
+            return `https://drive.google.com/uc?export=download&id=${fileId}`;
+        }
+
+        async function testKMLAccess() {
+            const url = document.getElementById('kml-url').value.trim();
+            
+            if (!url) {
+                addResult('❌ Por favor, insira uma URL', 'error');
+                return;
+            }
+
+            addResult(`🔍 Testando URL: ${url}`, 'info');
+
+            try {
+                // Extrair File ID
+                const fileId = extractFileId(url);
+                addResult(`✅ File ID extraído: ${fileId}`, 'success');
+
+                // Converter para URL de download
+                const downloadUrl = convertGoogleDriveUrl(url);
+                addResult(`🔗 URL de download: <pre>${downloadUrl}</pre>`, 'info');
+
+                // Testar acesso
+                addResult('🌐 Testando acesso ao arquivo...', 'info');
+                
+                const response = await fetch(downloadUrl, {
+                    method: 'HEAD', // Apenas verificar se existe
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (compatible; KMLTestBot/1.0)'
+                    }
+                });
+
+                addResult(`📡 Status HTTP: ${response.status} (${response.statusText})`, 
+                         response.ok ? 'success' : 'error');
+
+                if (response.ok) {
+                    const contentType = response.headers.get('Content-Type');
+                    const contentLength = response.headers.get('Content-Length');
+                    
+                    addResult(`📄 Content-Type: ${contentType || 'N/A'}`, 'info');
+                    addResult(`📏 Content-Length: ${contentLength || 'N/A'} bytes`, 'info');
+
+                    // Tentar baixar o conteúdo
+                    addResult('⬇️ Baixando conteúdo...', 'info');
+                    const contentResponse = await fetch(downloadUrl);
+                    const content = await contentResponse.text();
+                    
+                    addResult(`📦 Tamanho do conteúdo baixado: ${content.length} caracteres`, 'success');
+                    
+                    // Mostrar primeiros 500 caracteres
+                    const preview = content.substring(0, 500);
+                    addResult(`👀 Preview do conteúdo:<pre>${preview}${content.length > 500 ? '...' : ''}</pre>`, 'info');
+                    
+                    // Verificar se é KML válido
+                    if (content.includes('<kml') || content.includes('<coordinates')) {
+                        addResult('✅ Arquivo parece ser KML válido!', 'success');
+                        
+                        // Contar coordenadas
+                        const coordMatches = content.match(/<coordinates[^>]*>([\s\S]*?)<\/coordinates>/gi);
+                        if (coordMatches) {
+                            addResult(`📍 Encontradas ${coordMatches.length} seções de coordenadas`, 'success');
+                        }
+                    } else {
+                        addResult('⚠️ Arquivo não parece ser KML válido', 'warning');
+                    }
+                } else {
+                    addResult('❌ Não foi possível acessar o arquivo. Verifique se ele está público.', 'error');
+                }
+
+            } catch (error) {
+                addResult(`❌ Erro: ${error.message}`, 'error');
+                console.error('Erro completo:', error);
+            }
+        }
+
+        async function testAllMethods() {
+            const url = document.getElementById('kml-url').value.trim();
+            
+            if (!url) {
+                addResult('❌ Por favor, insira uma URL', 'error');
+                return;
+            }
+
+            addResult('🧪 Testando todos os métodos de acesso...', 'info');
+
+            const fileId = extractFileId(url);
+            
+            const methods = [
+                {
+                    name: 'Método 1: drive.google.com/uc',
+                    url: `https://drive.google.com/uc?export=download&id=${fileId}`
+                },
+                {
+                    name: 'Método 2: docs.google.com/uc',
+                    url: `https://docs.google.com/uc?export=download&id=${fileId}`
+                },
+                {
+                    name: 'Método 3: Proxy CORS',
+                    url: `https://api.allorigins.win/get?url=${encodeURIComponent(`https://drive.google.com/uc?export=download&id=${fileId}`)}`
+                }
+            ];
+
+            for (const method of methods) {
+                try {
+                    addResult(`🔄 Testando: ${method.name}`, 'info');
+                    addResult(`🔗 URL: <pre>${method.url}</pre>`, 'info');
+                    
+                    const response = await fetch(method.url, {
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (compatible; KMLTestBot/1.0)'
+                        }
+                    });
+                    
+                    addResult(`📡 ${method.name} - Status: ${response.status}`, 
+                             response.ok ? 'success' : 'error');
+                    
+                    if (response.ok) {
+                        const text = await response.text();
+                        
+                        // Para o método proxy, extrair o conteúdo
+                        let content = text;
+                        if (method.name.includes('Proxy')) {
+                            try {
+                                const data = JSON.parse(text);
+                                content = data.contents || text;
+                            } catch (e) {
+                                content = text;
+                            }
+                        }
+                        
+                        addResult(`📦 ${method.name} - Tamanho: ${content.length} caracteres`, 'info');
+                        
+                        if (content.includes('<kml') || content.includes('<coordinates')) {
+                            addResult(`✅ ${method.name} - KML válido encontrado!`, 'success');
+                        } else {
+                            addResult(`⚠️ ${method.name} - Não parece ser KML`, 'warning');
+                        }
+                    }
+                    
+                } catch (error) {
+                    addResult(`❌ ${method.name} - Erro: ${error.message}`, 'error');
+                }
+                
+                // Pequena pausa entre testes
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            addResult('🏁 Teste de todos os métodos concluído!', 'info');
+        }
+
+        // Testar automaticamente ao carregar a página
+        window.addEventListener('load', () => {
+            addResult('🚀 Ferramenta de teste KML carregada', 'success');
+            addResult('ℹ️ Insira a URL do Google Drive e clique em "Testar Acesso ao KML"', 'info');
+        });
+    </script>
+</body>
+</html>
