@@ -153,16 +153,18 @@ exports.handler = async (event, context) => {
       console.log('🗺️ Processando KML:', radioData.kmlUrl);
       try {
         const kmlData = await processKMLWithFallback(radioData.kmlUrl);
-        if (kmlData && kmlData.coordinates && kmlData.coordinates.length > 0) {
+        if (kmlData && (kmlData.coordinates.length > 0 || kmlData.placemarks.length > 0)) {
           radioData.kmlCoordinates = kmlData.coordinates;
+          radioData.kmlPlacemarks = kmlData.placemarks; // NOVO: pontos das cidades
           radioData.kmlBounds = kmlData.bounds;
           radioData.coverageType = 'kml';
           console.log('✅ KML processado com sucesso:', {
-            coordCount: kmlData.coordinates.length,
+            polygonCount: kmlData.coordinates.length,
+            placemarksCount: kmlData.placemarks.length,
             bounds: kmlData.bounds
           });
         } else {
-          console.log('⚠️ KML não contém coordenadas válidas, usando círculo padrão');
+          console.log('⚠️ KML não contém dados válidos, usando círculo padrão');
           radioData.coverageType = 'circle';
           radioData.kmlError = 'KML vazio ou inválido';
         }
@@ -197,6 +199,7 @@ exports.handler = async (event, context) => {
       coordinates: `${radioData.latitude}, ${radioData.longitude}`,
       coverageType: radioData.coverageType,
       kmlCoordinates: radioData.kmlCoordinates ? radioData.kmlCoordinates.length : 0,
+      kmlPlacemarks: radioData.kmlPlacemarks ? radioData.kmlPlacemarks.length : 0,
       cidadesCount: radioData.cidades.length,
       kmlError: radioData.kmlError || 'N/A'
     });
@@ -237,7 +240,7 @@ async function processKMLWithFallback(driveUrl) {
     try {
       console.log(`🔄 Tentativa ${i + 1} de processar KML`);
       const result = await attempts[i]();
-      if (result && result.coordinates && result.coordinates.length > 0) {
+      if (result && (result.coordinates.length > 0 || result.placemarks.length > 0)) {
         console.log(`✅ Sucesso na tentativa ${i + 1}`);
         return result;
       } else {
@@ -414,11 +417,12 @@ function convertGoogleDriveUrl(url) {
   return `https://drive.google.com/uc?export=download&id=${fileId}`;
 }
 
-// Parsear coordenadas do KML (melhorado)
+// Parsear coordenadas do KML (melhorado com suporte a Placemarks)
 function parseKMLCoordinates(kmlText) {
-  console.log('📊 Iniciando parsing do KML...');
+  console.log('📊 Iniciando parsing completo do KML...');
   
-  const coordinates = [];
+  const polygons = [];
+  const placemarks = [];
   let minLat = Infinity, maxLat = -Infinity;
   let minLng = Infinity, maxLng = -Infinity;
   
@@ -427,22 +431,24 @@ function parseKMLCoordinates(kmlText) {
     throw new Error('Arquivo não parece ser KML válido');
   }
   
-  // Remover espaços e quebras de linha desnecessárias
-  const cleanKml = kmlText.replace(/\s+/g, ' ').trim();
+  // Função para atualizar bounds
+  const updateBounds = (lat, lng) => {
+    minLat = Math.min(minLat, lat);
+    maxLat = Math.max(maxLat, lat);
+    minLng = Math.min(minLng, lng);
+    maxLng = Math.max(maxLng, lng);
+  };
   
-  // Regex melhorado para encontrar coordenadas no KML
+  // 1. PROCESSAR POLÍGONOS (áreas de cobertura)
+  console.log('🗺️ Processando polígonos...');
   const coordRegex = /<coordinates[^>]*>(.*?)<\/coordinates>/gi;
   let match;
-  let totalPoints = 0;
+  let totalPolygonPoints = 0;
   
-  while ((match = coordRegex.exec(cleanKml)) !== null) {
+  while ((match = coordRegex.exec(kmlText)) !== null) {
     const coordText = match[1].trim();
-    console.log('🎯 Bloco de coordenadas encontrado, tamanho:', coordText.length);
     
-    if (coordText.length === 0) {
-      console.log('⚠️ Bloco de coordenadas vazio, pulando...');
-      continue;
-    }
+    if (coordText.length === 0) continue;
     
     // Parsear coordenadas (formato: lng,lat,alt lng,lat,alt ...)
     const coordPairs = coordText
@@ -450,8 +456,6 @@ function parseKMLCoordinates(kmlText) {
       .trim()
       .split(/\s+/)
       .filter(pair => pair.trim() && pair.includes(','));
-    
-    console.log(`📍 Encontrados ${coordPairs.length} pares de coordenadas neste bloco`);
     
     const polygonCoords = [];
     
@@ -461,36 +465,71 @@ function parseKMLCoordinates(kmlText) {
         const lng = parseFloat(parts[0]);
         const lat = parseFloat(parts[1]);
         
-        // Validar coordenadas (Brasil: lat -35 a 5, lng -75 a -30 aproximadamente)
         if (!isNaN(lat) && !isNaN(lng) && 
             lat >= -90 && lat <= 90 && 
             lng >= -180 && lng <= 180) {
           
           polygonCoords.push([lat, lng]); // Leaflet usa [lat, lng]
-          totalPoints++;
-          
-          // Atualizar bounds
-          minLat = Math.min(minLat, lat);
-          maxLat = Math.max(maxLat, lat);
-          minLng = Math.min(minLng, lng);
-          maxLng = Math.max(maxLng, lng);
-        } else {
-          console.log(`⚠️ Coordenada inválida ignorada: ${lat}, ${lng}`);
+          totalPolygonPoints++;
+          updateBounds(lat, lng);
         }
       }
     }
     
-    if (polygonCoords.length > 2) { // Mínimo 3 pontos para um polígono válido
-      coordinates.push(polygonCoords);
+    if (polygonCoords.length > 2) {
+      polygons.push(polygonCoords);
       console.log(`✅ Polígono adicionado com ${polygonCoords.length} pontos`);
-    } else {
-      console.log(`⚠️ Polígono com poucos pontos ignorado: ${polygonCoords.length} pontos`);
     }
   }
   
-  console.log('📊 Parsing concluído:', {
-    polygonCount: coordinates.length,
-    totalPoints: totalPoints,
+  // 2. PROCESSAR PLACEMARKS (pontos individuais das cidades)
+  console.log('📍 Processando placemarks...');
+  const placemarkRegex = /<Placemark[^>]*>(.*?)<\/Placemark>/gsi;
+  let placemarkMatch;
+  
+  while ((placemarkMatch = placemarkRegex.exec(kmlText)) !== null) {
+    const placemarkContent = placemarkMatch[1];
+    
+    // Extrair nome
+    const nameMatch = placemarkContent.match(/<name[^>]*>(.*?)<\/name>/i);
+    const name = nameMatch ? nameMatch[1].trim() : 'Cidade';
+    
+    // Extrair descrição (opcional)
+    const descMatch = placemarkContent.match(/<description[^>]*>(.*?)<\/description>/i);
+    const description = descMatch ? descMatch[1].trim() : '';
+    
+    // Extrair coordenadas do Point
+    const pointMatch = placemarkContent.match(/<Point[^>]*>.*?<coordinates[^>]*>(.*?)<\/coordinates>.*?<\/Point>/si);
+    
+    if (pointMatch) {
+      const coordText = pointMatch[1].trim();
+      const parts = coordText.split(',');
+      
+      if (parts.length >= 2) {
+        const lng = parseFloat(parts[0]);
+        const lat = parseFloat(parts[1]);
+        
+        if (!isNaN(lat) && !isNaN(lng) && 
+            lat >= -90 && lat <= 90 && 
+            lng >= -180 && lng <= 180) {
+          
+          placemarks.push({
+            name: name,
+            description: description,
+            coordinates: [lat, lng]
+          });
+          
+          updateBounds(lat, lng);
+          console.log(`📍 Placemark adicionado: ${name} (${lat}, ${lng})`);
+        }
+      }
+    }
+  }
+  
+  console.log('📊 Parsing completo concluído:', {
+    polygonCount: polygons.length,
+    totalPolygonPoints: totalPolygonPoints,
+    placemarkCount: placemarks.length,
     bounds: {
       north: maxLat === -Infinity ? 0 : maxLat,
       south: minLat === Infinity ? 0 : minLat,
@@ -499,12 +538,13 @@ function parseKMLCoordinates(kmlText) {
     }
   });
   
-  if (coordinates.length === 0) {
+  if (polygons.length === 0 && placemarks.length === 0) {
     throw new Error('Nenhuma coordenada válida encontrada no KML');
   }
   
   return {
-    coordinates,
+    coordinates: polygons, // Polígonos de cobertura
+    placemarks: placemarks, // Pontos das cidades
     bounds: {
       north: maxLat === -Infinity ? 0 : maxLat,
       south: minLat === Infinity ? 0 : minLat,
