@@ -43,21 +43,23 @@
             font-size: 28px;
             font-weight: 700;
             margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        .header-logo {
+            width: 50px;
+            height: 38px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
         }
         
         .header-subtitle {
             font-size: 16px;
             opacity: 0.9;
-        }
-        
-        .coverage-type-badge {
-            display: inline-block;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 4px 12px;
-            border-radius: 16px;
-            font-size: 12px;
-            margin-left: 8px;
-            font-weight: 600;
         }
         
         /* DEBUG PANEL */
@@ -320,7 +322,8 @@
             .container { padding: 12px; }
             .info-grid { grid-template-columns: 1fr; }
             #map { height: 400px; min-height: 400px; }
-            .header-title { font-size: 22px; }
+            .header-title { font-size: 22px; flex-direction: column; gap: 8px; }
+            .header-logo { width: 40px; height: 30px; }
             .debug-toggle { top: 10px; right: 10px; }
         }
         
@@ -364,6 +367,24 @@
             background: transparent !important;
             border: none !important;
         }
+        
+        .radio-marker-image {
+            width: 50px !important;
+            height: 50px !important;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            object-fit: cover;
+        }
+        
+        .radio-marker-image {
+            width: 50px !important;
+            height: 50px !important;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            object-fit: cover;
+        }
     </style>
 </head>
 <body>
@@ -372,10 +393,12 @@
     <div class="container">
         <!-- HEADER -->
         <div class="header">
-            <h1 class="header-title" id="radio-name">📻 Carregando Rádio...</h1>
+            <h1 class="header-title" id="radio-name">
+                📻 Carregando Rádio...
+                <img class="header-logo" id="header-logo" src="" alt="Logo" style="display: none;">
+            </h1>
             <div class="header-subtitle">
                 <span id="radio-info">Mapa de Cobertura Interativo</span>
-                <span class="coverage-type-badge" id="coverage-type">🔄 Carregando...</span>
             </div>
         </div>
         
@@ -606,7 +629,7 @@
                         // Adicionar cobertura (KML ou círculo)
                         addCoverage();
                         
-                        // Ajustar zoom
+                        // Ajustar zoom MODIFICADO para mostrar toda a cobertura
                         fitMapToCoverage();
                         
                         debugLog('✅ Mapa inicializado completamente', 'success');
@@ -624,28 +647,20 @@
         function addRadioMarker() {
             debugLog('📍 Adicionando marcador da rádio...', 'info');
             
+            // MODIFICADO: Usar imagem da rádio em vez do emoji
             const radioIcon = L.divIcon({
                 html: `
-                    <div style="
-                        width: 40px; 
-                        height: 40px; 
-                        background: #dc2626; 
-                        border-radius: 50%; 
-                        display: flex; 
-                        align-items: center; 
-                        justify-content: center;
-                        color: white;
-                        font-weight: bold;
-                        font-size: 12px;
-                        border: 3px solid white;
-                        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-                    ">📻</div>
+                    <img src="${radioData.imageUrl}" 
+                         alt="${radioData.name}" 
+                         class="radio-marker-image"
+                         onerror="this.src='https://via.placeholder.com/50x50/dc2626/white?text=${encodeURIComponent(radioData.dial || 'FM')}'">
                 `,
                 className: 'radio-marker',
-                iconSize: [40, 40],
-                iconAnchor: [20, 20]
+                iconSize: [50, 50],
+                iconAnchor: [25, 25]
             });
             
+            // MODIFICADO: Card do popup removendo "Tipo:"
             const popupContent = `
                 <div class="radio-popup">
                     <img src="${radioData.imageUrl}" 
@@ -655,7 +670,6 @@
                     <h3>${radioData.name}</h3>
                     <p><strong>${radioData.dial}</strong></p>
                     <p>${radioData.praca} - ${radioData.uf}</p>
-                    <p>Tipo: ${radioData.coverageType === 'kml' ? 'Polígono KML' : 'Círculo'}</p>
                 </div>
             `;
             
@@ -690,7 +704,6 @@
             
             // Criar grupo de camadas
             const kmlGroup = L.layerGroup();
-            let totalPoints = 0;
             
             for (const polygon of radioData.kmlCoordinates) {
                 if (polygon.length > 2) { // Mínimo 3 pontos para um polígono
@@ -702,23 +715,21 @@
                         opacity: 0.8
                     });
                     
+                    // MODIFICADO: Popup simplificado
                     leafletPolygon.bindPopup(`
                         <div style="text-align: center;">
-                            <h4>Área de Cobertura KML</h4>
-                            <p>Polígono: <strong>${polygon.length} pontos</strong></p>
-                            <p>Fonte: <strong>Arquivo KML</strong></p>
+                            <h4>Projeção de Cobertura</h4>
                         </div>
                     `);
                     
                     kmlGroup.addLayer(leafletPolygon);
-                    totalPoints += polygon.length;
                 }
             }
             
             coverageLayer = kmlGroup;
             coverageLayer.addTo(map);
             
-            debugLog(`✅ Polígonos KML adicionados: ${totalPoints} pontos totais`, 'success');
+            debugLog(`✅ Polígonos KML adicionados`, 'success');
         }
         
         // Adicionar círculo tradicional (fallback)
@@ -733,12 +744,11 @@
                 weight: 2
             });
             
+            // MODIFICADO: Popup simplificado
             coverageLayer.bindPopup(`
                 <div style="text-align: center;">
-                    <h4>Área de Cobertura</h4>
+                    <h4>Projeção de Cobertura</h4>
                     <p>Raio: <strong>${(radioData.radius / 1000).toFixed(0)} km</strong></p>
-                    <p>Área: <strong>${(Math.PI * Math.pow(radioData.radius / 1000, 2)).toFixed(0)} km²</strong></p>
-                    <p>Tipo: <strong>Círculo</strong></p>
                 </div>
             `);
             
@@ -793,80 +803,45 @@
             debugLog(`✅ ${cityMarkers.length} marcadores de cidades adicionados`, 'success');
         }
         
+        // MODIFICADO: Ajustar zoom para mostrar toda a cobertura
         function fitMapToCoverage() {
-            debugLog('📏 Ajustando zoom do mapa...', 'info');
+            debugLog('📏 Ajustando zoom para mostrar toda a cobertura...', 'info');
             
             if (radioData.coverageType === 'kml' && radioData.kmlBounds) {
-                // Usar bounds do KML
+                // Usar bounds do KML com mais padding
                 const bounds = L.latLngBounds(
                     [radioData.kmlBounds.south, radioData.kmlBounds.west],
                     [radioData.kmlBounds.north, radioData.kmlBounds.east]
                 );
-                map.fitBounds(bounds, { padding: [20, 20] });
-                debugLog('📏 Zoom ajustado para bounds KML', 'success');
+                map.fitBounds(bounds, { padding: [40, 40] });
+                debugLog('📏 Zoom ajustado para bounds KML com padding expandido', 'success');
             } else if (coverageLayer && coverageLayer.getBounds) {
-                // Usar bounds da camada
-                map.fitBounds(coverageLayer.getBounds(), { padding: [20, 20] });
-                debugLog('📏 Zoom ajustado para bounds da camada', 'success');
+                // Usar bounds da camada com padding
+                map.fitBounds(coverageLayer.getBounds(), { padding: [40, 40] });
+                debugLog('📏 Zoom ajustado para bounds da camada com padding expandido', 'success');
             } else {
-                // Centralizar na rádio com zoom que mostra cidades próximas
-                const zoom = cityMarkers.length > 0 ? 9 : 10;
+                // Para círculo, calcular zoom baseado no raio
+                const radiusKm = radioData.radius / 1000;
+                let zoom = 10;
+                if (radiusKm > 100) zoom = 7;
+                else if (radiusKm > 50) zoom = 8;
+                else if (radiusKm > 25) zoom = 9;
+                
                 map.setView([radioData.latitude, radioData.longitude], zoom);
-                debugLog('📏 Zoom centralizado na rádio', 'success');
+                debugLog(`📏 Zoom ajustado para ${zoom} baseado no raio de ${radiusKm}km`, 'success');
             }
         }
         
-        // RENDERIZAR INFORMAÇÕES
+        // MODIFICADO: Renderizar informações sem campos KML
         function renderInfo() {
             debugLog('📋 Renderizando informações...', 'info');
             
             const container = document.getElementById('info-section');
             
-            // Calcular área estimada
-            let areaInfo = 'N/A';
-            if (radioData.coverageType === 'kml' && radioData.kmlBounds) {
-                // Estimativa simples baseada nos bounds
-                const latDiff = radioData.kmlBounds.north - radioData.kmlBounds.south;
-                const lngDiff = radioData.kmlBounds.east - radioData.kmlBounds.west;
-                const estimatedArea = latDiff * lngDiff * 12100; // Aproximação grosseira
-                areaInfo = `~${estimatedArea.toFixed(0)} km² (KML)`;
-            } else if (radioData.radius) {
-                const circleArea = Math.PI * Math.pow(radioData.radius / 1000, 2);
-                areaInfo = `${circleArea.toFixed(0)} km² (Círculo)`;
-            }
-            
             const pmmFormatted = radioData.pmm ? radioData.pmm.toLocaleString() : 'N/A';
             const universoFormatted = radioData.universo ? radioData.universo.toLocaleString() : 'N/A';
             
-            // Adicionar informações de debug se houver erro KML
-            let debugInfo = '';
-            if (radioData.kmlError) {
-                debugInfo = `
-                    <div class="info-item">
-                        <span class="info-label">⚠️ KML Error:</span>
-                        <span class="info-value">${radioData.kmlError}</span>
-                    </div>
-                `;
-            }
-            
-            // Informações sobre dados KML
-            let kmlInfo = '';
-            if (radioData.coverageType === 'kml') {
-                const polygonCount = radioData.kmlCoordinates ? radioData.kmlCoordinates.length : 0;
-                const placemarksCount = radioData.kmlPlacemarks ? radioData.kmlPlacemarks.length : 0;
-                
-                kmlInfo = `
-                    <div class="info-item">
-                        <span class="info-label">🗺️ Polígonos KML:</span>
-                        <span class="info-value">${polygonCount}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">📍 Cidades KML:</span>
-                        <span class="info-value">${placemarksCount}</span>
-                    </div>
-                `;
-            }
-            
+            // MODIFICADO: Remover informações sobre KML
             container.innerHTML = `
                 <!-- TÉCNICAS -->
                 <div class="info-card">
@@ -883,21 +858,11 @@
                         <span class="info-label">Região:</span>
                         <span class="info-value">${radioData.region}</span>
                     </div>
-                    <div class="info-item">
-                        <span class="info-label">Tipo Cobertura:</span>
-                        <span class="info-value">${radioData.coverageType === 'kml' ? '🗺️ KML' : '⭕ Círculo'}</span>
-                    </div>
-                    ${kmlInfo}
-                    ${debugInfo}
                 </div>
                 
                 <!-- ALCANCE -->
                 <div class="info-card">
                     <h3 class="card-title">🌐 Alcance e Cobertura</h3>
-                    <div class="info-item">
-                        <span class="info-label">Área Total:</span>
-                        <span class="info-value">${areaInfo}</span>
-                    </div>
                     <div class="info-item">
                         <span class="info-label">PMM:</span>
                         <span class="info-value">${pmmFormatted}</span>
@@ -999,34 +964,29 @@
             }
         }
         
-        // UTILITÁRIOS
+        // MODIFICADO: Utilitários com logo no header
         function hideLoading() {
             const loadingElement = document.getElementById('loading');
             const infoElement = document.getElementById('info-section');
             const mapElement = document.getElementById('map-section');
             const radioNameElement = document.getElementById('radio-name');
             const radioInfoElement = document.getElementById('radio-info');
-            const coverageTypeElement = document.getElementById('coverage-type');
+            const headerLogoElement = document.getElementById('header-logo');
             
             if (loadingElement) loadingElement.style.display = 'none';
             if (infoElement) infoElement.style.display = 'grid';
             if (mapElement) mapElement.style.display = 'block';
             
-            // Atualizar header
+            // MODIFICADO: Atualizar header com logo
             const sourceSuffix = radioData.source === 'example' ? ' (EXEMPLO)' : '';
-            if (radioNameElement) radioNameElement.textContent = radioData.name + sourceSuffix;
-            if (radioInfoElement) radioInfoElement.textContent = `${radioData.dial} • ${radioData.praca} - ${radioData.uf}`;
-            
-            // Atualizar badge do tipo de cobertura
-            if (coverageTypeElement) {
-                if (radioData.coverageType === 'kml') {
-                    coverageTypeElement.textContent = '🗺️ KML Precision';
-                    coverageTypeElement.style.background = 'rgba(34, 197, 94, 0.3)';
-                } else {
-                    coverageTypeElement.textContent = '⭕ Círculo Estimado';
-                    coverageTypeElement.style.background = 'rgba(234, 179, 8, 0.3)';
-                }
+            if (radioNameElement) {
+                radioNameElement.innerHTML = `
+                    📻 ${radioData.name}${sourceSuffix}
+                    <img class="header-logo" src="${radioData.imageUrl}" alt="Logo ${radioData.name}" 
+                         onerror="this.style.display='none';">
+                `;
             }
+            if (radioInfoElement) radioInfoElement.textContent = `${radioData.dial} • ${radioData.praca} - ${radioData.uf}`;
         }
         
         function showError(message, details = null) {
