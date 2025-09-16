@@ -15,6 +15,9 @@
     3. Tipografia Space Grotesk (Google Fonts)
     4. Exportação Excel (.xlsx) com SheetJS
     5. Colunas separadas: Cidade e Distância (m) - km convertido para metros
+    6. Cards compactos e responsivos
+    7. Logo da rádio acima do nome
+    8. Contador de cidades com melhor contraste
     
     🎨 PALETA DE CORES E-MÍDIAS:
     - Azul Escuro: #06055B (principal)
@@ -123,24 +126,26 @@
         }
         
         .header-title {
-            font-size: 32px;
+            font-size: 28px; /* Reduzido um pouco */
             font-weight: var(--font-weight-bold);
             margin-bottom: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 16px;
+            gap: 0px; /* Sem gap já que vai ser vertical */
             position: relative;
             z-index: 1;
+            flex-direction: column; /* Logo acima do texto */
         }
         
         .header-logo {
-            width: 120px;
-            height: 90px;
+            width: 150px; /* Aumentado de 120px */
+            height: 120px; /* Aumentado de 90px */
             object-fit: contain;
             border-radius: 12px;
             box-shadow: var(--shadow-md);
             transition: transform 0.3s ease;
+            margin-bottom: 16px; /* Espaço entre logo e nome */
         }
         
         .header-logo:hover {
@@ -160,7 +165,7 @@
            🐛 DEBUG PANEL
            ============================================================================= */
         .debug-panel {
-            background: var(--eradios-dark);
+            background: var(--emidias-dark);
             color: #E5E7EB;
             padding: 16px;
             border-radius: 12px;
@@ -169,7 +174,7 @@
             font-size: 12px;
             max-height: 300px;
             overflow-y: auto;
-            border: 2px solid var(--eradios-primary);
+            border: 2px solid var(--emidias-primary);
         }
         
         .debug-panel.hidden {
@@ -177,7 +182,7 @@
         }
         
         .debug-title {
-            color: var(--eradios-primary-light);
+            color: var(--emidias-primary);
             font-weight: var(--font-weight-bold);
             margin-bottom: 8px;
         }
@@ -191,13 +196,13 @@
         .debug-log.success {
             background: rgba(16, 185, 129, 0.15);
             color: #86EFAC;
-            border-left: 3px solid var(--eradios-success);
+            border-left: 3px solid var(--emidias-success);
         }
         
         .debug-log.error {
             background: rgba(255, 107, 53, 0.15);
             color: #FCA5A5;
-            border-left: 3px solid var(--eradios-secondary);
+            border-left: 3px solid var(--emidias-magenta);
         }
         
         .debug-log.warning {
@@ -207,17 +212,17 @@
         }
         
         .debug-log.info {
-            background: rgba(0, 102, 204, 0.15);
-            color: var(--eradios-primary-light);
-            border-left: 3px solid var(--eradios-primary);
+            background: rgba(6, 5, 91, 0.15);
+            color: var(--emidias-primary);
+            border-left: 3px solid var(--emidias-primary);
         }
         
         .debug-toggle {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: var(--eradios-dark);
-            color: var(--eradios-white);
+            background: var(--emidias-dark);
+            color: var(--emidias-white);
             border: none;
             padding: 10px 16px;
             border-radius: 8px;
@@ -230,7 +235,7 @@
         }
         
         .debug-toggle:hover {
-            background: var(--eradios-primary);
+            background: var(--emidias-primary);
             transform: translateY(-2px);
         }
         
@@ -252,7 +257,7 @@
         }
         
         .brand-logo-header {
-            height: 50px;
+            height: 70px; /* Aumentado de 50px */
             width: auto;
             object-fit: contain;
             transition: all 0.3s ease;
@@ -263,22 +268,23 @@
             transform: scale(1.05);
             opacity: 1;
         }
+        
         /* =============================================================================
            📋 CARDS DE INFORMAÇÃO E-MÍDIAS (COMPACTOS)
            ============================================================================= */
         .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 16px;
             margin-bottom: 20px;
-            max-width: 800px;
+            max-width: 600px; /* Reduzido para ser mais compacto */
             margin-left: auto;
             margin-right: auto;
         }
         
         .info-card {
             background: var(--emidias-white);
-            padding: 20px;
+            padding: 16px; /* Reduzido de 20px para 16px */
             border-radius: 12px;
             box-shadow: var(--shadow-md);
             border-left: 4px solid var(--emidias-primary);
@@ -308,20 +314,20 @@
         }
         
         .card-title {
-            font-size: 20px;
+            font-size: 18px; /* Reduzido de 20px */
             font-weight: var(--font-weight-bold);
             color: var(--emidias-primary);
-            margin-bottom: 18px;
+            margin-bottom: 14px; /* Reduzido de 18px */
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px; /* Reduzido de 10px */
         }
         
         .info-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 0;
+            padding: 10px 0; /* Reduzido de 12px */
             border-bottom: 1px solid var(--emidias-light-gray);
             transition: all 0.2s ease;
         }
@@ -348,20 +354,20 @@
         }
         
         /* =============================================================================
-           🗺️ MAPA CONTAINER eRADIOS
+           🗺️ MAPA CONTAINER E-MÍDIAS
            ============================================================================= */
         .map-container {
-            background: var(--eradios-white);
+            background: var(--emidias-white);
             border-radius: 16px;
             overflow: hidden;
             box-shadow: var(--shadow-lg);
             margin-bottom: 24px;
             transition: all 0.3s ease;
-            border: 1px solid var(--eradios-light-gray);
+            border: 1px solid var(--emidias-light-gray);
         }
         
         .map-container:hover {
-            box-shadow: 0 12px 35px rgba(0, 102, 204, 0.2);
+            box-shadow: 0 12px 35px rgba(6, 5, 91, 0.2);
             transform: translateY(-2px);
         }
         
@@ -373,14 +379,14 @@
         }
         
         /* =============================================================================
-           🌍 SEÇÃO CIDADES eRADIOS
+           🌍 SEÇÃO CIDADES E-MÍDIAS
            ============================================================================= */
         .cidades-container {
-            background: var(--eradios-white);
+            background: var(--emidias-white);
             border-radius: 16px;
             padding: 28px;
             box-shadow: var(--shadow-md);
-            border-left: 4px solid var(--eradios-primary);
+            border-left: 4px solid var(--emidias-primary);
             position: relative;
             overflow: hidden;
         }
@@ -407,7 +413,7 @@
         .cidades-title {
             font-size: 22px;
             font-weight: var(--font-weight-bold);
-            color: var(--eradios-primary);
+            color: var(--emidias-primary);
             display: flex;
             align-items: center;
             gap: 10px;
@@ -421,19 +427,21 @@
         
         .cidades-count {
             background: var(--gradient-primary);
-            color: var(--eradios-white);
+            color: var(--emidias-white); /* Texto branco para contraste */
             padding: 8px 16px;
             border-radius: 20px;
             font-size: 14px;
-            font-weight: var(--font-weight-semibold);
+            font-weight: var(--font-weight-bold); /* Mais bold para destacar */
             box-shadow: var(--shadow-sm);
             min-width: 40px;
             text-align: center;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); /* Sombra no texto para melhor contraste */
+            border: 2px solid var(--emidias-white); /* Borda branca para destacar mais */
         }
         
         .excel-export-btn {
             background: var(--gradient-success);
-            color: var(--eradios-white);
+            color: var(--emidias-white);
             border: none;
             padding: 10px 20px;
             border-radius: 12px;
@@ -463,42 +471,42 @@
         .search-input {
             width: 100%;
             padding: 16px 20px;
-            border: 2px solid var(--eradios-light-gray);
+            border: 2px solid var(--emidias-light-gray);
             border-radius: 12px;
             font-size: 16px;
             font-family: var(--font-primary);
             font-weight: var(--font-weight-normal);
             transition: all 0.3s ease;
-            background: var(--eradios-white);
+            background: var(--emidias-white);
         }
         
         .search-input:focus {
             outline: none;
-            border-color: var(--eradios-primary);
-            box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.1);
-            background: rgba(0, 102, 204, 0.01);
+            border-color: var(--emidias-primary);
+            box-shadow: 0 0 0 4px rgba(6, 5, 91, 0.1);
+            background: rgba(6, 5, 91, 0.01);
         }
         
         .cidades-list {
             max-height: 350px;
             overflow-y: auto;
-            border: 1px solid var(--eradios-light-gray);
+            border: 1px solid var(--emidias-light-gray);
             border-radius: 12px;
-            background: var(--eradios-white);
+            background: var(--emidias-white);
         }
         
         .cidade-item {
             padding: 16px 20px;
-            border-bottom: 1px solid var(--eradios-light-gray);
+            border-bottom: 1px solid var(--emidias-light-gray);
             transition: all 0.3s ease;
             cursor: pointer;
             position: relative;
         }
         
         .cidade-item:hover {
-            background: linear-gradient(90deg, rgba(0, 102, 204, 0.03) 0%, var(--eradios-white) 100%);
+            background: linear-gradient(90deg, rgba(6, 5, 91, 0.03) 0%, var(--emidias-white) 100%);
             transform: translateX(8px);
-            border-left: 4px solid var(--eradios-primary);
+            border-left: 4px solid var(--emidias-primary);
             padding-left: 16px;
         }
         
@@ -508,31 +516,31 @@
         
         .cidade-name {
             font-weight: var(--font-weight-medium);
-            color: var(--eradios-dark);
+            color: var(--emidias-dark);
             font-size: 15px;
         }
         
         .cidade-uf {
             font-size: 13px;
-            color: var(--eradios-gray);
+            color: var(--emidias-gray);
             margin-left: 8px;
             font-weight: var(--font-weight-normal);
         }
         
         /* =============================================================================
-           ⏳ LOADING eRADIOS
+           ⏳ LOADING E-MÍDIAS
            ============================================================================= */
         .loading {
             text-align: center;
             padding: 60px 20px;
-            color: var(--eradios-gray);
+            color: var(--emidias-gray);
         }
         
         .loading-spinner {
             width: 48px;
             height: 48px;
-            border: 4px solid var(--eradios-light-gray);
-            border-top: 4px solid var(--eradios-primary);
+            border: 4px solid var(--emidias-light-gray);
+            border-top: 4px solid var(--emidias-primary);
             border-radius: 50%;
             animation: spin 1.2s linear infinite;
             margin: 0 auto 20px;
@@ -544,12 +552,12 @@
         }
         
         /* =============================================================================
-           ❌ ERROR eRADIOS
+           ❌ ERROR E-MÍDIAS
            ============================================================================= */
         .error {
             background: linear-gradient(135deg, #FEF2F2 0%, #FFFFFF 100%);
             border: 1px solid #FECACA;
-            color: var(--eradios-secondary);
+            color: var(--emidias-magenta);
             padding: 24px;
             border-radius: 12px;
             text-align: center;
@@ -569,14 +577,14 @@
         }
         
         /* =============================================================================
-           🦶 RODAPÉ eRADIOS
+           🦶 RODAPÉ E-MÍDIAS
            ============================================================================= */
         .footer {
             text-align: center;
             padding: 40px 20px;
             margin-top: 40px;
-            border-top: 2px solid var(--eradios-light-gray);
-            background: linear-gradient(135deg, #FAFBFC 0%, var(--eradios-white) 100%);
+            border-top: 2px solid var(--emidias-light-gray);
+            background: linear-gradient(135deg, #FAFBFC 0%, var(--emidias-white) 100%);
             border-radius: 16px 16px 0 0;
         }
         
@@ -597,41 +605,47 @@
         
         .footer-text {
             font-size: 14px;
-            color: var(--eradios-gray);
+            color: var(--emidias-gray);
             margin: 0;
             font-weight: var(--font-weight-medium);
         }
         
         /* =============================================================================
-           📱 RESPONSIVIDADE eRADIOS
+           📱 RESPONSIVIDADE E-MÍDIAS
            ============================================================================= */
-            @media (max-width: 768px) {
-                .header-content {
-                    flex-direction: column;
-                    gap: 16px;
-                }
-                
-                .brand-logo-header {
-                    height: 40px;
-                    order: -1;
-                }
-                
-                .header-main {
-                    order: 0;
-                }
-                
-                .info-grid { 
-                    grid-template-columns: 1fr; 
-                    gap: 16px;
-                }
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 16px;
             }
-            .container { 
-                padding: 16px; 
+            
+            .brand-logo-header {
+                height: 50px; /* Ajustado para mobile */
+                order: -1;
+            }
+            
+            .header-main {
+                order: 0;
             }
             
             .info-grid { 
                 grid-template-columns: 1fr; 
-                gap: 20px;
+                gap: 14px; /* Ajustado */
+                max-width: 100%; /* Full width no mobile */
+            }
+            
+            .header-logo { 
+                width: 100px; /* Ajustado para mobile */
+                height: 80px; 
+                margin-bottom: 12px;
+            }
+            
+            .header-title { 
+                font-size: 20px; 
+            }
+            
+            .container { 
+                padding: 16px; 
             }
             
             #map { 
@@ -642,17 +656,6 @@
             .header {
                 padding: 24px 20px;
                 margin-bottom: 20px;
-            }
-            
-            .header-title { 
-                font-size: 24px; 
-                flex-direction: column; 
-                gap: 12px; 
-            }
-            
-            .header-logo { 
-                width: 70px; 
-                height: 52px; 
             }
             
             .debug-toggle { 
@@ -679,7 +682,21 @@
         
         @media (max-width: 480px) {
             .header-title {
-                font-size: 20px;
+                font-size: 18px; /* Ajustado */
+            }
+            
+            .header-logo { 
+                width: 80px; /* Menor ainda para telas muito pequenas */
+                height: 60px; 
+                margin-bottom: 8px;
+            }
+            
+            .brand-logo-header {
+                height: 40px; /* Menor no mobile muito pequeno */
+            }
+            
+            .info-card {
+                padding: 12px; /* Ainda menor para mobile pequeno */
             }
             
             .cidades-container {
@@ -757,7 +774,7 @@
         }
         
         /* =============================================================================
-           🎨 ANIMAÇÕES eRADIOS
+           🎨 ANIMAÇÕES E-MÍDIAS
            ============================================================================= */
         @keyframes fadeInUp {
             from {
@@ -812,7 +829,7 @@
                     </div>
                 </div>
                 
-                <div style="width: 50px;"></div> <!-- Spacer para centralizar -->
+                <div style="width: 70px;"></div> <!-- Spacer ajustado para nova logo maior -->
             </div>
         </div>
         
@@ -1209,7 +1226,7 @@
         function addRadioMarker() {
             debugLog('📍 Adicionando marcador da rádio...', 'info');
             
-            // Usar imagem da rádio com tema eRadios
+            // Usar imagem da rádio com tema E-MÍDIAS
             const radioIcon = L.divIcon({
                 html: `
                     <img src="${radioData.imageUrl}" 
@@ -1222,7 +1239,7 @@
                 iconAnchor: [28, 28]
             });
             
-            // Popup com tema eRadios
+            // Popup com tema E-MÍDIAS
             const popupContent = `
                 <div class="radio-popup">
                     <img src="${radioData.imageUrl}" 
@@ -1258,7 +1275,7 @@
             }
         }
         
-        // Adicionar polígonos do KML com cores eRadios
+        // Adicionar polígonos do KML com cores E-MÍDIAS
         function addKMLPolygons() {
             debugLog(`🗺️ Adicionando polígonos KML: ${radioData.kmlCoordinates.length} polígonos`, 'info');
             
@@ -1291,7 +1308,7 @@
             debugLog(`✅ Polígonos KML adicionados`, 'success');
         }
         
-        // Adicionar círculo tradicional com cores eRadios
+        // Adicionar círculo tradicional com cores E-MÍDIAS
         function addCoverageCircle() {
             debugLog(`⭕ Adicionando círculo de cobertura: ${radioData.radius / 1000} km`, 'info');
             
@@ -1653,13 +1670,13 @@
             if (infoElement) infoElement.style.display = 'grid';
             if (mapElement) mapElement.style.display = 'block';
             
-            // Atualizar header com logo
+            // Atualizar header com logo acima do nome
             const sourceSuffix = radioData.source === 'example' ? ' (EXEMPLO)' : '';
             if (radioNameElement) {
                 radioNameElement.innerHTML = `
-                    ${radioData.name}${sourceSuffix}
                     <img class="header-logo" src="${radioData.imageUrl}" alt="Logo ${radioData.name}" 
                          onerror="this.style.display='none';">
+                    ${radioData.name}${sourceSuffix}
                 `;
             }
             if (radioInfoElement) radioInfoElement.textContent = `${radioData.dial} • ${radioData.praca} - ${radioData.uf}`;
