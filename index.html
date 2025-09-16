@@ -60,6 +60,70 @@
             font-weight: 600;
         }
         
+        /* DEBUG PANEL */
+        .debug-panel {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 2px solid #374151;
+        }
+        
+        .debug-panel.hidden {
+            display: none;
+        }
+        
+        .debug-title {
+            color: #60a5fa;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .debug-log {
+            margin: 4px 0;
+            padding: 4px;
+            border-radius: 4px;
+        }
+        
+        .debug-log.success {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+        }
+        
+        .debug-log.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+        
+        .debug-log.warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fcd34d;
+        }
+        
+        .debug-log.info {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+        }
+        
+        .debug-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #1f2937;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            z-index: 1000;
+        }
+        
         /* CARDS DE INFORMAÇÃO */
         .info-grid {
             display: grid;
@@ -240,12 +304,24 @@
             margin: 20px 0;
         }
         
+        .error-details {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #991b1b;
+            font-family: 'Courier New', monospace;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 8px;
+            border-radius: 4px;
+            text-align: left;
+        }
+        
         /* RESPONSIVIDADE */
         @media (max-width: 768px) {
             .container { padding: 12px; }
             .info-grid { grid-template-columns: 1fr; }
             #map { height: 400px; min-height: 400px; }
             .header-title { font-size: 22px; }
+            .debug-toggle { top: 10px; right: 10px; }
         }
         
         /* POPUP CUSTOMIZADO */
@@ -280,6 +356,8 @@
     </style>
 </head>
 <body>
+    <button class="debug-toggle" onclick="toggleDebug()">🐛 Debug</button>
+    
     <div class="container">
         <!-- HEADER -->
         <div class="header">
@@ -290,6 +368,12 @@
             </div>
         </div>
         
+        <!-- DEBUG PANEL -->
+        <div id="debug-panel" class="debug-panel hidden">
+            <div class="debug-title">📋 Debug Log</div>
+            <div id="debug-logs"></div>
+        </div>
+        
         <!-- LOADING -->
         <div id="loading" class="loading">
             <div class="loading-spinner"></div>
@@ -297,7 +381,10 @@
         </div>
         
         <!-- ERROR -->
-        <div id="error" class="error" style="display: none;"></div>
+        <div id="error" class="error" style="display: none;">
+            <div id="error-message"></div>
+            <div id="error-details" class="error-details" style="display: none;"></div>
+        </div>
         
         <!-- INFORMAÇÕES -->
         <div id="info-section" class="info-grid" style="display: none;">
@@ -344,20 +431,46 @@
         let coverageLayer; // Polígono ou círculo
         let allCities = [];
         let filteredCities = [];
+        let debugVisible = false;
+        
+        // SISTEMA DE DEBUG
+        function debugLog(message, type = 'info') {
+            console.log(`[${type.toUpperCase()}] ${message}`);
+            
+            const debugLogs = document.getElementById('debug-logs');
+            if (debugLogs) {
+                const logElement = document.createElement('div');
+                logElement.className = `debug-log ${type}`;
+                logElement.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                debugLogs.appendChild(logElement);
+                debugLogs.scrollTop = debugLogs.scrollHeight;
+            }
+        }
+        
+        function toggleDebug() {
+            debugVisible = !debugVisible;
+            const panel = document.getElementById('debug-panel');
+            if (debugVisible) {
+                panel.classList.remove('hidden');
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
         
         // INICIALIZAÇÃO
         document.addEventListener('DOMContentLoaded', async () => {
-            console.log('🚀 Iniciando sistema de cobertura...');
+            debugLog('🚀 Iniciando sistema de cobertura...', 'info');
             try {
                 await loadRadioData();
                 renderInfo();
-                initializeMap();
+                await initializeMap();
                 renderCidades();
                 hideLoading();
-                console.log('✅ Sistema carregado com sucesso!');
+                debugLog('✅ Sistema carregado com sucesso!', 'success');
             } catch (error) {
-                console.error('❌ Erro ao carregar:', error);
-                showError(error.message);
+                debugLog(`❌ Erro ao carregar: ${error.message}`, 'error');
+                console.error('Erro completo:', error);
+                showError(error.message, error.stack);
             }
         });
         
@@ -367,17 +480,28 @@
             const notionId = params.get('id');
             
             if (notionId && /^[0-9a-f]{32}$/i.test(notionId)) {
-                console.log('📡 Carregando do Notion:', notionId);
+                debugLog(`📡 Carregando do Notion: ${notionId}`, 'info');
                 try {
                     radioData = await fetchRadioFromNotion(notionId);
-                    console.log('✅ Dados carregados do Notion:', radioData);
+                    debugLog('✅ Dados carregados do Notion com sucesso', 'success');
+                    
+                    // Log adicional sobre KML
+                    if (radioData.kmlUrl) {
+                        debugLog(`🗺️ URL KML encontrada: ${radioData.kmlUrl}`, 'info');
+                        debugLog(`🎯 Tipo de cobertura: ${radioData.coverageType}`, 'info');
+                        if (radioData.kmlError) {
+                            debugLog(`⚠️ Erro no KML: ${radioData.kmlError}`, 'warning');
+                        }
+                    } else {
+                        debugLog('⚠️ Nenhuma URL KML fornecida', 'warning');
+                    }
                 } catch (error) {
-                    console.error('❌ Erro ao carregar do Notion:', error);
+                    debugLog(`❌ Erro ao carregar do Notion: ${error.message}`, 'error');
                     throw new Error(`Erro ao carregar dados: ${error.message}`);
                 }
             } else {
                 // Dados de exemplo para desenvolvimento/teste
-                console.log('🎭 Usando dados de exemplo');
+                debugLog('🎭 Usando dados de exemplo (modo desenvolvimento)', 'warning');
                 radioData = {
                     name: 'RÁDIO EXEMPLO FM',
                     dial: '107.3',
@@ -397,58 +521,91 @@
                     source: 'example'
                 };
             }
+            
+            debugLog(`📊 Coordenadas: ${radioData.latitude}, ${radioData.longitude}`, 'info');
+            debugLog(`📡 ${radioData.name} - ${radioData.dial}`, 'info');
         }
         
         // BUSCAR DADOS DO NOTION VIA NETLIFY FUNCTION
         async function fetchRadioFromNotion(notionId) {
+            debugLog('🌐 Fazendo requisição para Netlify Function...', 'info');
+            
             const response = await fetch(`/.netlify/functions/radio-data?id=${notionId}`);
+            
+            debugLog(`📡 Status da resposta: ${response.status}`, 'info');
             
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
+                debugLog(`❌ Erro da API: ${JSON.stringify(errorData)}`, 'error');
                 throw new Error(errorData.error || `Erro HTTP ${response.status}`);
             }
             
-            return await response.json();
+            const data = await response.json();
+            debugLog('✅ Dados recebidos da API', 'success');
+            return data;
         }
         
         // INICIALIZAR MAPA
-        function initializeMap() {
-            console.log('🗺️ Inicializando mapa...');
+        async function initializeMap() {
+            debugLog('🗺️ Inicializando mapa...', 'info');
             
-            setTimeout(() => {
-                try {
-                    // Criar mapa
-                    map = L.map('map');
-                    
-                    // Adicionar tiles do OpenStreetMap
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '© OpenStreetMap contributors',
-                        maxZoom: 18
-                    }).addTo(map);
-                    
-                    // Forçar recalculo do tamanho do mapa
-                    setTimeout(() => {
-                        map.invalidateSize();
-                        console.log('🔧 Mapa redimensionado');
-                    }, 100);
-                    
-                    // Adicionar marker da rádio
-                    addRadioMarker();
-                    
-                    // Adicionar cobertura (KML ou círculo)
-                    addCoverage();
-                    
-                    // Ajustar zoom
-                    fitMapToCoverage();
-                    
-                } catch (error) {
-                    console.error('❌ Erro ao inicializar mapa:', error);
-                    showError('Erro ao carregar o mapa. Tente recarregar a página.');
-                }
-            }, 50);
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    try {
+                        // Verificar se Leaflet está carregado
+                        if (typeof L === 'undefined') {
+                            throw new Error('Leaflet não foi carregado corretamente');
+                        }
+                        
+                        debugLog('📦 Leaflet carregado com sucesso', 'success');
+                        
+                        // Criar mapa
+                        const mapElement = document.getElementById('map');
+                        if (!mapElement) {
+                            throw new Error('Elemento do mapa não encontrado');
+                        }
+                        
+                        map = L.map('map');
+                        debugLog('🗺️ Objeto do mapa criado', 'success');
+                        
+                        // Adicionar tiles do OpenStreetMap
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© OpenStreetMap contributors',
+                            maxZoom: 18
+                        }).addTo(map);
+                        
+                        debugLog('🌍 Tiles do OpenStreetMap adicionados', 'success');
+                        
+                        // Forçar recalculo do tamanho do mapa
+                        setTimeout(() => {
+                            map.invalidateSize();
+                            debugLog('🔧 Mapa redimensionado', 'success');
+                        }, 100);
+                        
+                        // Adicionar marker da rádio
+                        addRadioMarker();
+                        
+                        // Adicionar cobertura (KML ou círculo)
+                        addCoverage();
+                        
+                        // Ajustar zoom
+                        fitMapToCoverage();
+                        
+                        debugLog('✅ Mapa inicializado completamente', 'success');
+                        resolve();
+                        
+                    } catch (error) {
+                        debugLog(`❌ Erro ao inicializar mapa: ${error.message}`, 'error');
+                        console.error('Erro detalhado do mapa:', error);
+                        reject(error);
+                    }
+                }, 50);
+            });
         }
         
         function addRadioMarker() {
+            debugLog('📍 Adicionando marcador da rádio...', 'info');
+            
             const radioIcon = L.divIcon({
                 html: `
                     <div style="
@@ -487,11 +644,13 @@
             radioMarker = L.marker([radioData.latitude, radioData.longitude], { icon: radioIcon })
                 .bindPopup(popupContent)
                 .addTo(map);
+                
+            debugLog('✅ Marcador da rádio adicionado', 'success');
         }
         
-        // NOVA FUNÇÃO: Adicionar cobertura (KML ou círculo)
+        // ADICIONAR COBERTURA
         function addCoverage() {
-            console.log('🎯 Adicionando cobertura, tipo:', radioData.coverageType);
+            debugLog(`🎯 Adicionando cobertura, tipo: ${radioData.coverageType}`, 'info');
             
             if (radioData.coverageType === 'kml' && radioData.kmlCoordinates) {
                 // Usar polígonos do KML
@@ -504,10 +663,11 @@
         
         // Adicionar polígonos do KML
         function addKMLPolygons() {
-            console.log('🗺️ Adicionando polígonos KML:', radioData.kmlCoordinates.length);
+            debugLog(`🗺️ Adicionando polígonos KML: ${radioData.kmlCoordinates.length} polígonos`, 'info');
             
             // Criar grupo de camadas
             const kmlGroup = L.layerGroup();
+            let totalPoints = 0;
             
             for (const polygon of radioData.kmlCoordinates) {
                 if (polygon.length > 2) { // Mínimo 3 pontos para um polígono
@@ -528,18 +688,19 @@
                     `);
                     
                     kmlGroup.addLayer(leafletPolygon);
+                    totalPoints += polygon.length;
                 }
             }
             
             coverageLayer = kmlGroup;
             coverageLayer.addTo(map);
             
-            console.log('✅ Polígonos KML adicionados');
+            debugLog(`✅ Polígonos KML adicionados: ${totalPoints} pontos totais`, 'success');
         }
         
         // Adicionar círculo tradicional (fallback)
         function addCoverageCircle() {
-            console.log('⭕ Adicionando círculo de cobertura:', radioData.radius / 1000, 'km');
+            debugLog(`⭕ Adicionando círculo de cobertura: ${radioData.radius / 1000} km`, 'info');
             
             coverageLayer = L.circle([radioData.latitude, radioData.longitude], {
                 color: '#dc2626',
@@ -559,9 +720,12 @@
             `);
             
             coverageLayer.addTo(map);
+            debugLog('✅ Círculo de cobertura adicionado', 'success');
         }
         
         function fitMapToCoverage() {
+            debugLog('📏 Ajustando zoom do mapa...', 'info');
+            
             if (radioData.coverageType === 'kml' && radioData.kmlBounds) {
                 // Usar bounds do KML
                 const bounds = L.latLngBounds(
@@ -569,20 +733,22 @@
                     [radioData.kmlBounds.north, radioData.kmlBounds.east]
                 );
                 map.fitBounds(bounds, { padding: [20, 20] });
-                console.log('📏 Zoom ajustado para bounds KML');
+                debugLog('📏 Zoom ajustado para bounds KML', 'success');
             } else if (coverageLayer && coverageLayer.getBounds) {
                 // Usar bounds da camada
                 map.fitBounds(coverageLayer.getBounds(), { padding: [20, 20] });
-                console.log('📏 Zoom ajustado para bounds da camada');
+                debugLog('📏 Zoom ajustado para bounds da camada', 'success');
             } else {
                 // Centralizar na rádio
                 map.setView([radioData.latitude, radioData.longitude], 10);
-                console.log('📏 Zoom centralizado na rádio');
+                debugLog('📏 Zoom centralizado na rádio', 'success');
             }
         }
         
         // RENDERIZAR INFORMAÇÕES
         function renderInfo() {
+            debugLog('📋 Renderizando informações...', 'info');
+            
             const container = document.getElementById('info-section');
             
             // Calcular área estimada
@@ -600,6 +766,17 @@
             
             const pmmFormatted = radioData.pmm ? radioData.pmm.toLocaleString() : 'N/A';
             const universoFormatted = radioData.universo ? radioData.universo.toLocaleString() : 'N/A';
+            
+            // Adicionar informações de debug se houver erro KML
+            let debugInfo = '';
+            if (radioData.kmlError) {
+                debugInfo = `
+                    <div class="info-item">
+                        <span class="info-label">⚠️ KML Error:</span>
+                        <span class="info-value">${radioData.kmlError}</span>
+                    </div>
+                `;
+            }
             
             container.innerHTML = `
                 <!-- TÉCNICAS -->
@@ -621,6 +798,7 @@
                         <span class="info-label">Tipo Cobertura:</span>
                         <span class="info-value">${radioData.coverageType === 'kml' ? '🗺️ KML' : '⭕ Círculo'}</span>
                     </div>
+                    ${debugInfo}
                 </div>
                 
                 <!-- ALCANCE -->
@@ -646,10 +824,13 @@
             `;
             
             container.style.display = 'grid';
+            debugLog('✅ Informações renderizadas', 'success');
         }
         
         // RENDERIZAR CIDADES
         function renderCidades() {
+            debugLog('🏙️ Renderizando lista de cidades...', 'info');
+            
             allCities = radioData.cidades || [];
             filteredCities = [...allCities];
             
@@ -657,6 +838,7 @@
             setupCitySearch();
             
             document.getElementById('cidades-section').style.display = 'block';
+            debugLog(`✅ ${allCities.length} cidades renderizadas`, 'success');
         }
         
         function updateCidadesList() {
@@ -699,7 +881,7 @@
         }
         
         function highlightCity(cityName) {
-            console.log(`🎯 Destacando cidade: ${cityName}`);
+            debugLog(`🎯 Destacando cidade: ${cityName}`, 'info');
             // Futuro: destacar cidade no mapa
         }
         
@@ -725,11 +907,30 @@
             }
         }
         
-        function showError(message) {
+        function showError(message, details = null) {
+            debugLog(`❌ Exibindo erro: ${message}`, 'error');
+            
             document.getElementById('loading').style.display = 'none';
-            document.getElementById('error').textContent = message;
+            document.getElementById('error-message').textContent = message;
+            
+            if (details) {
+                document.getElementById('error-details').textContent = details;
+                document.getElementById('error-details').style.display = 'block';
+            }
+            
             document.getElementById('error').style.display = 'block';
         }
+        
+        // Handler de erro global
+        window.addEventListener('error', (e) => {
+            debugLog(`🚨 Erro JavaScript: ${e.message}`, 'error');
+            console.error('Erro capturado:', e.error);
+        });
+        
+        window.addEventListener('unhandledrejection', (e) => {
+            debugLog(`🚨 Promise rejeitada: ${e.reason}`, 'error');
+            console.error('Promise rejeitada:', e.reason);
+        });
     </script>
 </body>
 </html>
