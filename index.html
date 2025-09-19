@@ -7,14 +7,16 @@
     
     <!-- 
     ============================================================================
-    🎨 IDENTIDADE VISUAL E-MÍDIAS APLICADA
+    🎨 IDENTIDADE VISUAL E-MÍDIAS APLICADA - VERSÃO MELHORADA
     ============================================================================
-    ✅ NOVO: Suporte a Múltiplas Rádios (Modo Proposta)
-    1. Detecta ?proposta=DATABASE_ID vs ?id=RADIO_ID
-    2. Múltiplas rádios no mesmo mapa
-    3. Stats agregadas (universo total, PMM total)
-    4. Lista unificada de cidades
-    5. Mantém compatibilidade com modo individual
+    ✅ IMPLEMENTADO: Melhorias baseadas no feedback:
+    1. Cabeçalho uniforme (logo E-MÍDIAS sempre)
+    2. Remoção do card "Resumo da Proposta"
+    3. Impactos totais + universo único por cidade
+    4. Checkboxes para mostrar/ocultar rádios
+    5. Reposicionamento de marcadores sobrepostos
+    6. Lista de cidades sem nome de rádio + logos interativas
+    7. Export Excel com coluna "Rádios"
     
     🎨 PALETA DE CORES E-MÍDIAS:
     - Azul Escuro: #06055B (principal)
@@ -90,7 +92,7 @@
         }
         
         /* =============================================================================
-           🎨 HEADER COM IDENTIDADE E-MÍDIAS
+           🎨 HEADER COM IDENTIDADE E-MÍDIAS (UNIFORME)
            ============================================================================= */
         .header {
             background: var(--emidias-white);
@@ -159,42 +161,6 @@
         }
         
         /* =============================================================================
-           🎨 HEADER COM LOGO E-MÍDIAS INTEGRADA
-           ============================================================================= */
-        .header-content {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .header-main {
-            flex: 1;
-            text-align: center;
-        }
-        
-        /* =============================================================================
-           🏢 MARCA D'ÁGUA E-MÍDIAS INSTITUCIONAL
-           ============================================================================= */
-        .brand-watermark {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            height: 120px;
-            width: auto;
-            opacity: 0.15;
-            pointer-events: none;
-            z-index: 999;
-            transition: opacity 0.3s ease;
-        }
-        
-        .brand-watermark:hover {
-            opacity: 0.3;
-        }
-        
-        /* =============================================================================
            🎯 INDICADOR DE TIPO (INDIVIDUAL VS PROPOSTA)
            ============================================================================= */
         .type-indicator {
@@ -219,7 +185,26 @@
         }
         
         /* =============================================================================
-           📋 CARDS DE INFORMAÇÃO E-MÍDIAS (COMPACTOS + PROPOSTA)
+           🏢 MARCA D'ÁGUA E-MÍDIAS INSTITUCIONAL
+           ============================================================================= */
+        .brand-watermark {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            height: 120px;
+            width: auto;
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 999;
+            transition: opacity 0.3s ease;
+        }
+        
+        .brand-watermark:hover {
+            opacity: 0.3;
+        }
+        
+        /* =============================================================================
+           📋 CARDS DE INFORMAÇÃO E-MÍDIAS (MELHORADOS)
            ============================================================================= */
         .info-grid {
             display: grid;
@@ -231,9 +216,9 @@
             margin-right: auto;
         }
         
-        /* Grid especial para proposta (3 colunas no desktop) */
+        /* Grid especial para proposta (2 colunas: Alcance Total + Rádios) */
         .info-grid.proposta {
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
         
@@ -276,6 +261,23 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            position: relative;
+        }
+        
+        .radio-count-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--gradient-accent);
+            color: var(--emidias-white);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: var(--font-weight-bold);
         }
         
         .info-item {
@@ -317,7 +319,7 @@
         }
         
         /* =============================================================================
-           📊 LISTA DE RÁDIOS NA PROPOSTA
+           📊 LISTA DE RÁDIOS NA PROPOSTA (COM CHECKBOXES)
            ============================================================================= */
         .radios-list {
             max-height: 200px;
@@ -338,7 +340,6 @@
         
         .radio-item:hover {
             background: rgba(6, 5, 91, 0.05);
-            transform: translateX(4px);
         }
         
         .radio-item:last-child {
@@ -355,6 +356,7 @@
         
         .radio-item-info {
             flex: 1;
+            margin-right: 8px;
         }
         
         .radio-item-name {
@@ -366,6 +368,37 @@
         .radio-item-details {
             font-size: 12px;
             color: var(--emidias-gray);
+        }
+        
+        .radio-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--emidias-primary);
+            border-radius: 4px;
+            background: var(--emidias-white);
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        .radio-checkbox.checked {
+            background: var(--emidias-primary);
+            border-color: var(--emidias-primary);
+        }
+        
+        .radio-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--emidias-white);
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .radio-item.disabled {
+            opacity: 0.5;
         }
         
         /* =============================================================================
@@ -394,7 +427,7 @@
         }
         
         /* =============================================================================
-           🌍 SEÇÃO CIDADES E-MÍDIAS
+           🌍 SEÇÃO CIDADES E-MÍDIAS (MELHORADA)
            ============================================================================= */
         .cidades-container {
             background: var(--emidias-white);
@@ -506,6 +539,9 @@
         }
         
         .cidade-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             padding: 16px 20px;
             border-bottom: 1px solid var(--emidias-light-gray);
             transition: all 0.3s ease;
@@ -524,6 +560,10 @@
             border-bottom: none;
         }
         
+        .cidade-info {
+            flex: 1;
+        }
+        
         .cidade-name {
             font-weight: var(--font-weight-medium);
             color: var(--emidias-dark);
@@ -535,6 +575,81 @@
             color: var(--emidias-gray);
             margin-left: 8px;
             font-weight: var(--font-weight-normal);
+        }
+        
+        /* =============================================================================
+           📻 LOGOS DAS RÁDIOS NAS CIDADES (INTERATIVAS)
+           ============================================================================= */
+        .cidade-radios {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .radio-logo {
+            width: 32px;
+            height: 24px;
+            border-radius: 4px;
+            object-fit: cover;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .radio-logo:hover {
+            border-color: var(--emidias-primary);
+            transform: scale(1.1);
+        }
+        
+        /* Estado expandido da rádio */
+        .radio-expanded {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(6, 5, 91, 0.05);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-left: 8px;
+            animation: fadeInRight 0.3s ease;
+        }
+        
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .radio-expanded-logo {
+            width: 24px;
+            height: 18px;
+            border-radius: 3px;
+            object-fit: cover;
+        }
+        
+        .radio-expanded-info {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+        
+        .radio-expanded-name {
+            font-weight: var(--font-weight-semibold);
+            color: var(--emidias-primary);
+        }
+        
+        .radio-expanded-dial {
+            font-weight: var(--font-weight-bold);
+            color: var(--emidias-magenta);
+        }
+        
+        .radio-expanded-cidade {
+            color: var(--emidias-gray);
         }
         
         /* =============================================================================
@@ -598,21 +713,6 @@
             border-radius: 16px 16px 0 0;
         }
         
-        .footer-logo {
-            width: 160px;
-            height: auto;
-            opacity: 0.8;
-            margin-bottom: 12px;
-            transition: all 0.3s ease;
-            filter: grayscale(20%);
-        }
-        
-        .footer-logo:hover {
-            opacity: 1;
-            transform: scale(1.05);
-            filter: grayscale(0%);
-        }
-        
         .footer-text {
             font-size: 14px;
             color: var(--emidias-gray);
@@ -624,19 +724,11 @@
            📱 RESPONSIVIDADE E-MÍDIAS
            ============================================================================= */
         @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 16px;
-            }
-            
-            .info-grid { 
+            .info-grid,
+            .info-grid.proposta { 
                 grid-template-columns: 1fr; 
                 gap: 14px;
                 max-width: 100%;
-            }
-            
-            .info-grid.proposta {
-                grid-template-columns: 1fr;
             }
             
             .header-logo { 
@@ -687,6 +779,16 @@
                 margin-left: 0;
                 margin-top: 8px;
                 display: block;
+            }
+            
+            .radio-expanded {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+            
+            .cidade-radios {
+                flex-wrap: wrap;
             }
         }
         
@@ -845,13 +947,13 @@
          onerror="this.src='./assets/logo E-MIDIAS png fundo branco HORIZONTAL.png'; this.onerror=function(){this.style.display='none'};">
     
     <div class="container">
-        <!-- HEADER E-MÍDIAS COM LOGO INTEGRADA -->
+        <!-- HEADER E-MÍDIAS COM LOGO UNIFORME -->
         <div class="header">
             <div class="header-content">
                 <div class="header-main">
                     <h1 class="header-title" id="radio-name">
                         Carregando...
-                        <img class="header-logo" id="header-logo" src="" alt="Logo" style="display: none;">
+                        <img class="header-logo" id="header-logo" src="./assets/logo E-MIDIAS png fundo branco.png" alt="E-MÍDIAS">
                     </h1>
                     <div class="header-subtitle">
                         <span id="radio-info">Mapa de Cobertura Interativo</span>
@@ -936,7 +1038,9 @@
         let cityMarkers = [];
         let allCities = [];
         let filteredCities = [];
+        let cityRadioMap = new Map(); // Mapa cidade -> [rádios que a cobrem]
         let isPropostaMode = false; // Flag para detectar modo
+        let radioVisibility = new Map(); // Controla visibilidade das rádios
         
         // Mapeamento entre nomes de cidades e índices dos marcadores
         window.cityPlacemarkMap = {};
@@ -952,14 +1056,14 @@
         ];
         
         // =========================================================================
-        // 📊 FUNÇÃO EXPORT EXCEL (.XLSX) - E-MÍDIAS (MELHORADA PARA PROPOSTA)
+        // 📊 FUNÇÃO EXPORT EXCEL (.XLSX) - E-MÍDIAS (COM COLUNA RÁDIOS)
         // =========================================================================
         function exportToExcel() {
             let citiesToExport = [];
             
             if (isPropostaMode) {
-                // Modo proposta: usar allCidades diretamente
-                citiesToExport = radioData.allCidades || [];
+                // Modo proposta: usar allCidades com informações das rádios
+                citiesToExport = filteredCities || allCities || [];
             } else {
                 // Modo individual: usar radioData.cidades
                 citiesToExport = radioData.cidades || [];
@@ -976,7 +1080,7 @@
                 
                 // Cabeçalho
                 if (isPropostaMode) {
-                    excelData.push(['Proposta', 'Total de Rádios', 'Cidade', 'UF']);
+                    excelData.push(['Região', 'UF', 'Rádios', 'Cidade', 'Distância (m)']);
                 } else {
                     excelData.push(['Região', 'UF', 'Cidade', 'Distância (m)']);
                 }
@@ -985,6 +1089,7 @@
                 citiesToExport.forEach(cidadeOriginal => {
                     let nomeCidade = cidadeOriginal;
                     let uf = '';
+                    let distanciaMetros = 0;
                     
                     // Separar UF se houver " - UF"
                     if (cidadeOriginal.includes(' - ')) {
@@ -993,29 +1098,36 @@
                         uf = parts[1];
                     }
                     
+                    // Extrair distância se houver parênteses (modo individual)
+                    if (nomeCidade.includes('(') && nomeCidade.includes('km')) {
+                        const regex = /^(.*?)\s*\((\d+\.?\d*)\s*km\)$/;
+                        const match = nomeCidade.match(regex);
+                        
+                        if (match) {
+                            nomeCidade = match[1].trim();
+                            const distanciaKm = parseFloat(match[2]);
+                            distanciaMetros = Math.round(distanciaKm * 1000);
+                        }
+                    }
+                    
                     if (isPropostaMode) {
+                        // Obter rádios que cobrem esta cidade
+                        const radiosQueCobrerm = cityRadioMap.get(nomeCidade) || [];
+                        const radiosNomes = radiosQueCobrerm.map(radio => `${radio.name} ${radio.dial}`).join(', ');
+                        
+                        // Usar região da primeira rádio que cobre a cidade
+                        const primeiraRadio = radiosQueCobrerm[0];
+                        const regiao = primeiraRadio ? primeiraRadio.region : 'N/A';
+                        
                         excelData.push([
-                            `Proposta ${radioData.databaseId || 'N/A'}`,
-                            radioData.totalRadios || 0,
+                            regiao,
+                            uf || 'N/A',
+                            radiosNomes || 'N/A',
                             nomeCidade,
-                            uf
+                            0 // Distância não aplicável no modo proposta
                         ]);
                     } else {
                         // Modo individual (lógica original)
-                        let distanciaMetros = 0;
-                        
-                        // Extrair distância se houver parênteses
-                        if (nomeCidade.includes('(') && nomeCidade.includes('km')) {
-                            const regex = /^(.*?)\s*\((\d+\.?\d*)\s*km\)$/;
-                            const match = nomeCidade.match(regex);
-                            
-                            if (match) {
-                                nomeCidade = match[1].trim();
-                                const distanciaKm = parseFloat(match[2]);
-                                distanciaMetros = Math.round(distanciaKm * 1000);
-                            }
-                        }
-                        
                         excelData.push([
                             radioData.region || 'N/A',
                             uf || radioData.uf,
@@ -1032,10 +1144,11 @@
                 // Configurar largura das colunas
                 if (isPropostaMode) {
                     ws['!cols'] = [
-                        { width: 20 }, // Proposta
-                        { width: 15 }, // Total de Rádios
+                        { width: 15 }, // Região
+                        { width: 8 },  // UF
+                        { width: 40 }, // Rádios
                         { width: 30 }, // Cidade
-                        { width: 8 }   // UF
+                        { width: 15 }  // Distância (m)
                     ];
                 } else {
                     ws['!cols'] = [
@@ -1490,13 +1603,39 @@
         }
         
         // =========================================================================
-        // 🎯 MODO PROPOSTA (NOVO)
+        // 🎯 MODO PROPOSTA (NOVO E MELHORADO)
         // =========================================================================
         async function initializePropostaMode() {
             console.log('🏢 Modo Proposta ativado');
+            
+            // Inicializar controle de visibilidade
+            radioData.radios.forEach((radio, index) => {
+                radioVisibility.set(index, true); // Todos visíveis por padrão
+            });
+            
+            processarCidadesComRadios(); // Processar mapeamento cidade -> rádios
             renderInfoProposta();
             await initializeMapProposta();
             renderCidadesProposta();
+        }
+        
+        // NOVO: Processar mapeamento de cidades com rádios que as cobrem
+        function processarCidadesComRadios() {
+            cityRadioMap.clear();
+            
+            radioData.radios.forEach(radio => {
+                if (radio.cidades && radio.cidades.length > 0) {
+                    radio.cidades.forEach(cidade => {
+                        const nomeCidade = cidade.split(' - ')[0]; // Remove UF
+                        
+                        if (!cityRadioMap.has(nomeCidade)) {
+                            cityRadioMap.set(nomeCidade, []);
+                        }
+                        
+                        cityRadioMap.get(nomeCidade).push(radio);
+                    });
+                }
+            });
         }
         
         async function initializeMapProposta() {
@@ -1542,24 +1681,35 @@
                 return;
             }
             
-            radioData.radios.forEach((radio, index) => {
-                const colorIndex = index % RADIO_COLORS.length;
+            // Ordenar rádios por cobertura (maior primeiro para ficar embaixo)
+            const radiosOrdenadas = [...radioData.radios].sort((a, b) => {
+                const areaA = a.kmlCoordinates ? a.kmlCoordinates.length : a.radius;
+                const areaB = b.kmlCoordinates ? b.kmlCoordinates.length : b.radius;
+                return areaB - areaA; // Maior primeiro
+            });
+            
+            radiosOrdenadas.forEach((radio, index) => {
+                const originalIndex = radioData.radios.indexOf(radio);
+                const colorIndex = originalIndex % RADIO_COLORS.length;
                 const color = RADIO_COLORS[colorIndex];
                 
-                // Adicionar marcador da rádio
-                addRadioMarkerProposta(radio, index, color);
+                // Adicionar cobertura primeiro (embaixo)
+                addCoverageProposta(radio, originalIndex, color);
                 
-                // Adicionar cobertura da rádio
-                addCoverageProposta(radio, index, color);
+                // Adicionar marcador depois (em cima)
+                addRadioMarkerProposta(radio, originalIndex, color);
                 
                 // Adicionar marcadores de cidades (se houver KML)
                 if (radio.kmlPlacemarks && radio.kmlPlacemarks.length > 0) {
-                    addCityMarkersProposta(radio, index, color);
+                    addCityMarkersProposta(radio, originalIndex, color);
                 }
             });
         }
         
         function addRadioMarkerProposta(radio, index, color) {
+            // Calcular offset para rádios na mesma cidade
+            const offset = calculateMarkerOffset(radio, index);
+            
             const radioIcon = L.divIcon({
                 html: `
                     <img src="${radio.imageUrl}" 
@@ -1585,14 +1735,48 @@
                 </div>
             `;
             
-            const radioMarker = L.marker([radio.latitude, radio.longitude], { icon: radioIcon })
+            const lat = radio.latitude + offset.lat;
+            const lng = radio.longitude + offset.lng;
+            
+            const radioMarker = L.marker([lat, lng], { icon: radioIcon })
                 .bindPopup(popupContent)
                 .addTo(map);
                 
             radioMarkers.push(radioMarker);
         }
         
+        // NOVO: Calcular offset para evitar sobreposição de marcadores
+        function calculateMarkerOffset(radio, index) {
+            // Verificar se há outras rádios muito próximas
+            let offset = { lat: 0, lng: 0 };
+            const threshold = 0.01; // ~1km
+            
+            for (let i = 0; i < index; i++) {
+                const otherRadio = radioData.radios[i];
+                if (!radioVisibility.get(i)) continue;
+                
+                const distance = Math.sqrt(
+                    Math.pow(radio.latitude - otherRadio.latitude, 2) +
+                    Math.pow(radio.longitude - otherRadio.longitude, 2)
+                );
+                
+                if (distance < threshold) {
+                    // Calcular offset em espiral
+                    const angle = (index * 60) * (Math.PI / 180); // 60 graus por rádio
+                    const offsetDistance = 0.005; // ~500m
+                    
+                    offset.lat = Math.sin(angle) * offsetDistance;
+                    offset.lng = Math.cos(angle) * offsetDistance;
+                    break;
+                }
+            }
+            
+            return offset;
+        }
+        
         function addCoverageProposta(radio, index, color) {
+            if (!radioVisibility.get(index)) return; // Não adicionar se não visível
+            
             if (radio.coverageType === 'kml' && radio.kmlCoordinates && radio.kmlCoordinates.length > 0) {
                 // Cobertura KML
                 const kmlGroup = L.layerGroup();
@@ -1602,9 +1786,9 @@
                         const leafletPolygon = L.polygon(polygon, {
                             color: color,
                             fillColor: color,
-                            fillOpacity: 0.1,
+                            fillOpacity: 0.08, // Menos opaco para melhor sobreposição
                             weight: 2,
-                            opacity: 0.6
+                            opacity: 0.5
                         });
                         
                         leafletPolygon.bindPopup(`
@@ -1619,16 +1803,16 @@
                 }
                 
                 kmlGroup.addTo(map);
-                coverageLayers.push(kmlGroup);
+                coverageLayers[index] = kmlGroup;
             } else {
                 // Cobertura circular
                 const coverageLayer = L.circle([radio.latitude, radio.longitude], {
                     color: color,
                     fillColor: color,
-                    fillOpacity: 0.08,
+                    fillOpacity: 0.06, // Menos opaco para melhor sobreposição
                     radius: radio.radius,
                     weight: 2,
-                    opacity: 0.6
+                    opacity: 0.5
                 });
                 
                 coverageLayer.bindPopup(`
@@ -1639,7 +1823,7 @@
                 `);
                 
                 coverageLayer.addTo(map);
-                coverageLayers.push(coverageLayer);
+                coverageLayers[index] = coverageLayer;
             }
         }
         
@@ -1713,29 +1897,20 @@
             }
             
             try {
-                // Criar grupo com todos os marcadores e coberturas
-                const allLayers = [...radioMarkers, ...coverageLayers, ...cityMarkers];
-                
-                if (allLayers.length === 0) {
-                    console.warn('Nenhuma camada para ajustar o zoom');
-                    return;
-                }
-                
-                // Calcular bounds manualmente se necessário
                 let bounds = L.latLngBounds();
                 let boundsCreated = false;
                 
-                // Adicionar coordenadas dos marcadores de rádio
-                radioData.radios.forEach(radio => {
-                    if (radio.latitude && radio.longitude) {
+                // Adicionar coordenadas dos marcadores de rádio visíveis
+                radioData.radios.forEach((radio, index) => {
+                    if (radioVisibility.get(index) && radio.latitude && radio.longitude) {
                         bounds.extend([radio.latitude, radio.longitude]);
                         boundsCreated = true;
                     }
                 });
                 
-                // Adicionar bounds das coberturas KML
-                radioData.radios.forEach(radio => {
-                    if (radio.kmlBounds) {
+                // Adicionar bounds das coberturas KML visíveis
+                radioData.radios.forEach((radio, index) => {
+                    if (radioVisibility.get(index) && radio.kmlBounds) {
                         bounds.extend([radio.kmlBounds.south, radio.kmlBounds.west]);
                         bounds.extend([radio.kmlBounds.north, radio.kmlBounds.east]);
                         boundsCreated = true;
@@ -1745,9 +1920,11 @@
                 if (boundsCreated) {
                     map.fitBounds(bounds, { padding: [50, 50] });
                 } else {
-                    // Fallback: centralizar na primeira rádio
-                    const firstRadio = radioData.radios[0];
-                    map.setView([firstRadio.latitude, firstRadio.longitude], 8);
+                    // Fallback: centralizar na primeira rádio visível
+                    const firstVisibleRadio = radioData.radios.find((radio, index) => radioVisibility.get(index));
+                    if (firstVisibleRadio) {
+                        map.setView([firstVisibleRadio.latitude, firstVisibleRadio.longitude], 8);
+                    }
                 }
                 
             } catch (error) {
@@ -1760,15 +1937,33 @@
         
         function renderInfoProposta() {
             const container = document.getElementById('info-section');
-            container.className = 'info-grid proposta'; // Adicionar classe especial
+            container.className = 'info-grid proposta'; // Usar classe especial
             
-            const totalPmmFormatted = radioData.stats?.totalPMM ? radioData.stats.totalPMM.toLocaleString() : 'N/A';
-            const totalUniversoFormatted = radioData.stats?.totalUniverso ? radioData.stats.totalUniverso.toLocaleString() : 'N/A';
+            // Calcular impactos totais (soma do campo "impactos" de todas as rádios)
+            const totalImpactos = radioData.radios.reduce((sum, radio) => {
+                return sum + (radio.impactos || radio.pmm || 0); // Fallback para PMM se "impactos" não existir
+            }, 0);
+            
+            // Calcular universo único por cidade (maior valor por cidade)
+            const universoUnicoPorCidade = new Map();
+            radioData.radios.forEach(radio => {
+                const cidade = radio.praca;
+                const universo = radio.universo || 0;
+                
+                if (!universoUnicoPorCidade.has(cidade) || universoUnicoPorCidade.get(cidade) < universo) {
+                    universoUnicoPorCidade.set(cidade, universo);
+                }
+            });
+            
+            const totalUniversoUnico = Array.from(universoUnicoPorCidade.values()).reduce((sum, universo) => sum + universo, 0);
+            
+            const totalImpactosFormatted = totalImpactos.toLocaleString();
+            const totalUniversoFormatted = totalUniversoUnico.toLocaleString();
             const totalCidades = radioData.stats?.totalCidades || 0;
             
-            // Lista de rádios para o card
+            // Lista de rádios com checkboxes
             const radiosListHtml = radioData.radios.map((radio, index) => `
-                <div class="radio-item" onclick="focusOnRadio(${index})">
+                <div class="radio-item ${radioVisibility.get(index) ? '' : 'disabled'}" onclick="focusOnRadio(${index})">
                     <img src="${radio.imageUrl}" 
                          alt="${radio.name}"
                          onerror="this.src='https://via.placeholder.com/32x24/${RADIO_COLORS[index % RADIO_COLORS.length].replace('#', '')}/white?text=FM'">
@@ -1776,33 +1971,18 @@
                         <div class="radio-item-name">${radio.name}</div>
                         <div class="radio-item-details">${radio.dial} • ${radio.praca} - ${radio.uf}</div>
                     </div>
+                    <div class="radio-checkbox ${radioVisibility.get(index) ? 'checked' : ''}" 
+                         onclick="toggleRadioVisibility(${index}, event)"></div>
                 </div>
             `).join('');
             
             container.innerHTML = `
-                <!-- RESUMO DA PROPOSTA -->
-                <div class="info-card">
-                    <h3 class="card-title">📊 Resumo da Proposta</h3>
-                    <div class="info-item">
-                        <span class="info-label">Total de Rádios:</span>
-                        <span class="info-value highlight">${radioData.totalRadios}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Regiões:</span>
-                        <span class="info-value">${radioData.stats?.regions?.join(', ') || 'N/A'}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Estados:</span>
-                        <span class="info-value">${radioData.stats?.ufs?.join(', ') || 'N/A'}</span>
-                    </div>
-                </div>
-                
-                <!-- ALCANCE TOTAL -->
+                <!-- ALCANCE TOTAL (MELHORADO) -->
                 <div class="info-card">
                     <h3 class="card-title">🌐 Alcance Total</h3>
                     <div class="info-item">
-                        <span class="info-label">PMM Total:</span>
-                        <span class="info-value highlight">${totalPmmFormatted}</span>
+                        <span class="info-label">Impactos Totais:</span>
+                        <span class="info-value highlight">${totalImpactosFormatted}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Universo Total:</span>
@@ -1814,9 +1994,12 @@
                     </div>
                 </div>
                 
-                <!-- LISTA DE RÁDIOS -->
+                <!-- RÁDIOS DA PROPOSTA (COM CONTADOR) -->
                 <div class="info-card">
-                    <h3 class="card-title">📻 Rádios da Proposta</h3>
+                    <h3 class="card-title">
+                        📻 Rádios da Proposta
+                        <span class="radio-count-badge">${radioData.totalRadios}</span>
+                    </h3>
                     <div class="radios-list">
                         ${radiosListHtml}
                     </div>
@@ -1826,12 +2009,71 @@
             container.style.display = 'grid';
         }
         
+        // NOVO: Função para alternar visibilidade das rádios
+        function toggleRadioVisibility(radioIndex, event) {
+            event.stopPropagation(); // Evitar trigger do focusOnRadio
+            
+            const isVisible = radioVisibility.get(radioIndex);
+            radioVisibility.set(radioIndex, !isVisible);
+            
+            // Atualizar checkbox visual
+            const checkbox = event.target;
+            checkbox.classList.toggle('checked');
+            
+            // Atualizar item visual
+            const radioItem = checkbox.closest('.radio-item');
+            radioItem.classList.toggle('disabled');
+            
+            // Remover/adicionar do mapa
+            if (!isVisible) {
+                // Mostrar rádio
+                const radio = radioData.radios[radioIndex];
+                const color = RADIO_COLORS[radioIndex % RADIO_COLORS.length];
+                
+                addRadioMarkerProposta(radio, radioIndex, color);
+                addCoverageProposta(radio, radioIndex, color);
+                
+            } else {
+                // Esconder rádio
+                if (radioMarkers[radioIndex]) {
+                    map.removeLayer(radioMarkers[radioIndex]);
+                    radioMarkers[radioIndex] = null;
+                }
+                
+                if (coverageLayers[radioIndex]) {
+                    map.removeLayer(coverageLayers[radioIndex]);
+                    coverageLayers[radioIndex] = null;
+                }
+            }
+            
+            // Reajustar zoom
+            setTimeout(() => {
+                fitMapToMultipleCoverage();
+            }, 100);
+        }
+        
         function renderCidadesProposta() {
-            // Usar lista unificada de cidades da proposta
+            // Usar lista unificada de cidades da proposta (sem nomes de rádio)
             allCities = radioData.allCidades || [];
+            
+            // Filtrar nomes de rádios das cidades
+            allCities = allCities.filter(cidade => {
+                const cityName = cidade.toLowerCase();
+                
+                // Verificar se contém nome de alguma rádio
+                for (const radio of radioData.radios) {
+                    const radioName = radio.name.toLowerCase().replace('rádio', '').replace('fm', '').trim();
+                    if (cityName.includes(radioName)) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
             filteredCities = [...allCities];
             
-            updateCidadesList();
+            updateCidadesListProposta();
             setupCitySearch();
             
             // Atualizar contador
@@ -1839,11 +2081,137 @@
             document.getElementById('cidades-section').style.display = 'block';
         }
         
+        // NOVO: Lista de cidades melhorada para proposta
+        function updateCidadesListProposta() {
+            const container = document.getElementById('cidades-list');
+            
+            if (filteredCities.length === 0) {
+                container.innerHTML = '<div class="cidade-item">❌ Nenhuma cidade encontrada</div>';
+                return;
+            }
+            
+            container.innerHTML = filteredCities.map(cidade => {
+                const parts = cidade.split(' - ');
+                const nomeCidade = parts[0];
+                const uf = parts[1] || 'N/A';
+                
+                // Obter rádios que cobrem esta cidade
+                const radiosQueCobrerm = cityRadioMap.get(nomeCidade) || [];
+                
+                if (radiosQueCobrerm.length === 1) {
+                    // Uma rádio: mostrar logo + nome + dial + cidade
+                    const radio = radiosQueCobrerm[0];
+                    return `
+                        <div class="cidade-item" onclick="highlightCity('${cidade}')">
+                            <div class="cidade-info">
+                                <span class="cidade-name">${nomeCidade}</span>
+                                <span class="cidade-uf">${uf}</span>
+                            </div>
+                            <div class="cidade-radios">
+                                <div class="radio-expanded">
+                                    <img src="${radio.imageUrl}" 
+                                         alt="${radio.name}" 
+                                         class="radio-expanded-logo"
+                                         onerror="this.src='https://via.placeholder.com/24x18/06055B/white?text=FM'">
+                                    <div class="radio-expanded-info">
+                                        <span class="radio-expanded-name">${radio.name}</span>
+                                        <span class="radio-expanded-dial">${radio.dial}</span>
+                                        <span class="radio-expanded-cidade">${radio.praca}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (radiosQueCobrerm.length > 1) {
+                    // Múltiplas rádios: mostrar apenas logos lado a lado
+                    const logosHtml = radiosQueCobrerm.map((radio, index) => `
+                        <img src="${radio.imageUrl}" 
+                             alt="${radio.name}" 
+                             class="radio-logo"
+                             data-radio-info='${JSON.stringify(radio)}'
+                             onmouseover="expandRadioInfo(this, '${nomeCidade}')"
+                             onmouseout="collapseRadioInfo('${nomeCidade}')"
+                             onerror="this.src='https://via.placeholder.com/32x24/06055B/white?text=FM'">
+                    `).join('');
+                    
+                    return `
+                        <div class="cidade-item" onclick="highlightCity('${cidade}')">
+                            <div class="cidade-info">
+                                <span class="cidade-name">${nomeCidade}</span>
+                                <span class="cidade-uf">${uf}</span>
+                            </div>
+                            <div class="cidade-radios" id="radios-${nomeCidade.replace(/\s+/g, '-')}">
+                                ${logosHtml}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Nenhuma rádio (não deveria acontecer)
+                    return `
+                        <div class="cidade-item" onclick="highlightCity('${cidade}')">
+                            <div class="cidade-info">
+                                <span class="cidade-name">${nomeCidade}</span>
+                                <span class="cidade-uf">${uf}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+        
+        // NOVO: Expandir informações da rádio ao hover
+        function expandRadioInfo(logoElement, nomeCidade) {
+            const radioInfo = JSON.parse(logoElement.getAttribute('data-radio-info'));
+            const containerId = `radios-${nomeCidade.replace(/\s+/g, '-')}`;
+            const container = document.getElementById(containerId);
+            
+            if (container) {
+                // Esconder todas as logos
+                const logos = container.querySelectorAll('.radio-logo');
+                logos.forEach(logo => logo.style.display = 'none');
+                
+                // Mostrar informação expandida
+                const expandedHtml = `
+                    <div class="radio-expanded" id="expanded-${nomeCidade.replace(/\s+/g, '-')}">
+                        <img src="${radioInfo.imageUrl}" 
+                             alt="${radioInfo.name}" 
+                             class="radio-expanded-logo"
+                             onerror="this.src='https://via.placeholder.com/24x18/06055B/white?text=FM'">
+                        <div class="radio-expanded-info">
+                            <span class="radio-expanded-name">${radioInfo.name}</span>
+                            <span class="radio-expanded-dial">${radioInfo.dial}</span>
+                            <span class="radio-expanded-cidade">${radioInfo.praca}</span>
+                        </div>
+                    </div>
+                `;
+                
+                container.insertAdjacentHTML('beforeend', expandedHtml);
+            }
+        }
+        
+        // NOVO: Recolher informações da rádio
+        function collapseRadioInfo(nomeCidade) {
+            const containerId = `radios-${nomeCidade.replace(/\s+/g, '-')}`;
+            const container = document.getElementById(containerId);
+            
+            if (container) {
+                // Remover informação expandida
+                const expanded = container.querySelector(`#expanded-${nomeCidade.replace(/\s+/g, '-')}`);
+                if (expanded) {
+                    expanded.remove();
+                }
+                
+                // Mostrar todas as logos novamente
+                const logos = container.querySelectorAll('.radio-logo');
+                logos.forEach(logo => logo.style.display = 'block');
+            }
+        }
+        
         // =========================================================================
         // 🎯 FUNÇÕES AUXILIARES PARA PROPOSTA
         // =========================================================================
         function focusOnRadio(radioIndex) {
-            if (!radioData.radios || radioIndex >= radioData.radios.length) {
+            if (!radioData.radios || radioIndex >= radioData.radios.length || !radioVisibility.get(radioIndex)) {
                 return;
             }
             
@@ -1862,6 +2230,12 @@
         // 🎨 FUNÇÕES COMUNS (USADAS POR AMBOS OS MODOS)
         // =========================================================================
         function updateCidadesList() {
+            if (isPropostaMode) {
+                updateCidadesListProposta();
+                return;
+            }
+            
+            // Modo individual (lógica original)
             const container = document.getElementById('cidades-list');
             
             if (filteredCities.length === 0) {
@@ -1872,12 +2246,14 @@
             container.innerHTML = filteredCities.map(cidade => {
                 const parts = cidade.split(' - ');
                 const nome = parts[0];
-                const uf = parts[1] || (isPropostaMode ? 'N/A' : radioData.uf);
+                const uf = parts[1] || radioData.uf;
                 
                 return `
                     <div class="cidade-item" onclick="highlightCity('${cidade}')">
-                        <span class="cidade-name">${nome}</span>
-                        <span class="cidade-uf">${uf}</span>
+                        <div class="cidade-info">
+                            <span class="cidade-name">${nome}</span>
+                            <span class="cidade-uf">${uf}</span>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -1957,10 +2333,12 @@
                     }
                 }
                 
-                // Se não encontrou, centralizar na primeira rádio
-                if (!cityFound && radioData.radios.length > 0) {
-                    const firstRadio = radioData.radios[0];
-                    map.setView([firstRadio.latitude, firstRadio.longitude], 8);
+                // Se não encontrou, centralizar na primeira rádio visível
+                if (!cityFound) {
+                    const firstVisibleRadio = radioData.radios.find((radio, index) => radioVisibility.get(index));
+                    if (firstVisibleRadio) {
+                        map.setView([firstVisibleRadio.latitude, firstVisibleRadio.longitude], 8);
+                    }
                 }
             }
         }
@@ -1976,12 +2354,14 @@
             if (infoElement) infoElement.style.display = 'grid';
             if (mapElement) mapElement.style.display = 'block';
             
-            // Atualizar header baseado no modo
+            // Atualizar header baseado no modo (SEMPRE COM LOGO E-MÍDIAS)
             if (isPropostaMode) {
                 // Modo Proposta
                 const sourceSuffix = radioData.source === 'example' ? ' (EXEMPLO)' : '';
                 if (radioNameElement) {
                     radioNameElement.innerHTML = `
+                        <img class="header-logo" src="./assets/logo E-MIDIAS png fundo branco.png" alt="E-MÍDIAS" 
+                             onerror="this.src='./assets/logo E-MIDIAS png fundo branco HORIZONTAL.png';">
                         Proposta de Cobertura${sourceSuffix}
                         <span class="type-indicator type-proposta">Proposta</span>
                     `;
@@ -1990,12 +2370,12 @@
                     radioInfoElement.textContent = `${radioData.totalRadios} rádios • ${radioData.stats?.ufs?.join(', ') || 'Múltiplos estados'}`;
                 }
             } else {
-                // Modo Individual
+                // Modo Individual (TAMBÉM COM LOGO E-MÍDIAS)
                 const sourceSuffix = radioData.source === 'example' ? ' (EXEMPLO)' : '';
                 if (radioNameElement) {
                     radioNameElement.innerHTML = `
-                        <img class="header-logo" src="${radioData.imageUrl}" alt="Logo ${radioData.name}" 
-                             onerror="this.style.display='none';">
+                        <img class="header-logo" src="./assets/logo E-MIDIAS png fundo branco.png" alt="E-MÍDIAS" 
+                             onerror="this.src='./assets/logo E-MIDIAS png fundo branco HORIZONTAL.png';">
                         ${radioData.name}${sourceSuffix}
                         <span class="type-indicator type-individual">Individual</span>
                     `;
@@ -2020,6 +2400,18 @@
             
             if (errorElement) errorElement.style.display = 'block';
         }
+        
+        // =========================================================================
+        // 🔧 FUNÇÕES GLOBAIS PARA INTERAÇÃO COM HTML
+        // =========================================================================
+        
+        // Tornar funções globais para uso no HTML
+        window.exportToExcel = exportToExcel;
+        window.focusOnRadio = focusOnRadio;
+        window.toggleRadioVisibility = toggleRadioVisibility;
+        window.expandRadioInfo = expandRadioInfo;
+        window.collapseRadioInfo = collapseRadioInfo;
+        window.highlightCity = highlightCity;
     </script>
 </body>
 </html>
