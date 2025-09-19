@@ -1289,6 +1289,8 @@
         
         // NOVA: BUSCAR DADOS DE PROPOSTA DO NOTION VIA NETLIFY FUNCTION
         async function fetchPropostaFromNotion(databaseId) {
+            console.log('🔍 Buscando proposta:', databaseId);
+            
             const response = await fetch(`/.netlify/functions/radio-data?proposta=${databaseId}`);
             
             if (!response.ok) {
@@ -1297,6 +1299,27 @@
             }
             
             const data = await response.json();
+            console.log('📡 Dados recebidos da API:', data);
+            
+            // Verificar estrutura dos dados
+            if (data.type !== 'proposta') {
+                console.warn('⚠️ Tipo de dados inesperado:', data.type);
+            }
+            
+            if (!data.radios || data.radios.length === 0) {
+                console.warn('⚠️ Nenhuma rádio encontrada nos dados');
+            } else {
+                console.log('📻 Rádios encontradas:', data.radios.length);
+                data.radios.forEach((radio, i) => {
+                    console.log(`📻 Rádio ${i + 1}:`, {
+                        name: radio.name,
+                        dial: radio.dial,
+                        coords: [radio.latitude, radio.longitude],
+                        notionId: radio.notionId
+                    });
+                });
+            }
+            
             return data;
         }
         
@@ -1609,6 +1632,37 @@
         // =========================================================================
         async function initializePropostaMode() {
             console.log('🏢 Modo Proposta ativado');
+            
+            // Validar dados básicos
+            if (!radioData.radios || radioData.radios.length === 0) {
+                throw new Error('Nenhuma rádio encontrada na proposta');
+            }
+            
+            // Garantir que todos os rádios tenham propriedades necessárias
+            radioData.radios = radioData.radios.map((radio, index) => ({
+                name: radio.name || 'Rádio Desconhecida',
+                dial: radio.dial || 'N/A',
+                latitude: radio.latitude || -23.5505,
+                longitude: radio.longitude || -46.6333,
+                radius: radio.radius || 50000,
+                region: radio.region || 'N/A',
+                uf: radio.uf || 'N/A',
+                praca: radio.praca || 'N/A',
+                universo: radio.universo || 0,
+                pmm: radio.pmm || 0,
+                impactos: radio.impactos || radio.pmm || 0,
+                imageUrl: radio.imageUrl || `https://via.placeholder.com/56x56/06055B/white?text=${encodeURIComponent(radio.dial || 'FM')}`,
+                coverageType: radio.coverageType || 'circle',
+                kmlCoordinates: radio.kmlCoordinates || [],
+                kmlPlacemarks: radio.kmlPlacemarks || [],
+                kmlBounds: radio.kmlBounds || null,
+                cidades: radio.cidades || [],
+                notionId: radio.notionId || `radio-${index}`,
+                ...radio
+            }));
+            
+            console.log('📊 Rádios validadas:', radioData.radios.length);
+            
             renderInfoProposta();
             await initializeMapProposta();
             renderCidadesProposta();
@@ -2047,9 +2101,6 @@
             `;
             
             container.style.display = 'grid';
-            
-            // Construir mapeamento cidade -> rádios
-            buildCityRadioMapping();
         }
         
         function renderCidadesProposta() {
