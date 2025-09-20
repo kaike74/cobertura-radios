@@ -309,7 +309,7 @@
         }
         
         .info-value.highlight {
-            background: var(--gradient-accent);
+            background: var(--gradient-primary);
             color: var(--emidias-white);
             padding: 4px 8px;
             border-radius: 6px;
@@ -346,8 +346,8 @@
         }
         
         .radio-item img {
-            width: 32px;
-            height: 24px;
+            width: 36px;
+            height: 27px;
             border-radius: 4px;
             margin-right: 8px;
             object-fit: cover;
@@ -580,36 +580,52 @@
         
         .cidade-radios-container {
             position: relative;
+            display: flex;
+            align-items: center;
         }
         
         .radios-collapsed {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
+            transition: all 0.3s ease;
         }
         
         .radios-expanded {
-            display: none;
-            flex-direction: column;
-            gap: 4px;
-            background: var(--emidias-white);
-            border: 1px solid var(--emidias-light-gray);
-            border-radius: 8px;
-            padding: 8px;
-            box-shadow: var(--shadow-md);
             position: absolute;
             right: 0;
-            top: 0;
-            min-width: 200px;
-            z-index: 10;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--emidias-white);
+            border: 2px solid var(--emidias-primary);
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: var(--shadow-lg);
+            z-index: 100;
+            min-width: 280px;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            animation: slideInLeft 0.2s ease-out;
+        }
+        
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateY(-50%) translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(-50%) translateX(0);
+            }
         }
         
         .radio-logo-mini {
-            width: 28px;
-            height: 21px;
-            border-radius: 4px;
+            width: 36px;
+            height: 27px;
+            border-radius: 6px;
             object-fit: cover;
-            border: 1px solid var(--emidias-light-gray);
+            border: 2px solid var(--emidias-light-gray);
             transition: all 0.3s ease;
             cursor: pointer;
         }
@@ -624,47 +640,53 @@
             background: var(--emidias-gray);
             color: var(--emidias-white);
             border-radius: 50%;
-            width: 24px;
-            height: 21px;
+            width: 30px;
+            height: 27px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
+            font-size: 11px;
             font-weight: var(--font-weight-bold);
         }
         
         .radio-expanded {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 4px 8px;
+            gap: 12px;
+            padding: 8px 12px;
             background: rgba(6, 5, 91, 0.05);
-            border-radius: 6px;
-            margin: 2px 0;
+            border-radius: 8px;
             transition: all 0.3s ease;
         }
         
+        .radio-expanded:hover {
+            background: rgba(6, 5, 91, 0.08);
+            transform: translateX(4px);
+        }
+        
         .radio-expanded img {
-            width: 28px;
-            height: 21px;
-            border-radius: 4px;
+            width: 36px;
+            height: 27px;
+            border-radius: 6px;
             object-fit: cover;
+            border: 1px solid var(--emidias-light-gray);
         }
         
         .radio-expanded-info {
             display: flex;
             flex-direction: column;
+            flex: 1;
         }
         
         .radio-expanded-name {
-            font-size: 12px;
+            font-size: 14px;
             font-weight: var(--font-weight-semibold);
             color: var(--emidias-dark);
             line-height: 1.2;
         }
         
         .radio-expanded-details {
-            font-size: 11px;
+            font-size: 12px;
             color: var(--emidias-gray);
             line-height: 1.2;
         }
@@ -820,6 +842,11 @@
                 margin-top: 8px;
                 display: block;
             }
+            
+            .radios-expanded {
+                min-width: 240px;
+                font-size: 12px;
+            }
         }
         
         @media (max-width: 480px) {
@@ -848,6 +875,11 @@
             
             .brand-watermark {
                 height: 60px;
+            }
+            
+            .radios-expanded {
+                min-width: 200px;
+                font-size: 11px;
             }
         }
         
@@ -1092,8 +1124,8 @@
             let citiesToExport = [];
             
             if (isPropostaMode) {
-                // Modo proposta: usar allCities diretamente
-                citiesToExport = allCities || [];
+                // Modo proposta: usar apenas cidades únicas (sem nomes de rádios)
+                citiesToExport = getUniqueCitiesOnly() || [];
             } else {
                 // Modo individual: usar radioData.cidades
                 citiesToExport = radioData.cidades || [];
@@ -1226,6 +1258,56 @@
                 console.error('Erro detalhado:', error);
                 alert('❌ Erro ao exportar arquivo. Tente novamente.');
             }
+        }
+        
+        // =========================================================================
+        // 🏙️ FUNÇÃO PARA OBTER APENAS CIDADES ÚNICAS (SEM NOMES DE RÁDIOS)
+        // =========================================================================
+        function getUniqueCitiesOnly() {
+            const uniqueCities = new Set();
+            
+            // Coletar cidades de todas as rádios ativas
+            activeRadios.forEach((radio, index) => {
+                if (radio.active && radioData.radios[index]) {
+                    const cities = radioData.radios[index].cidades || [];
+                    cities.forEach(cidade => {
+                        // Verificar se é realmente uma cidade (não nome de rádio)
+                        if (isRealCity(cidade)) {
+                            uniqueCities.add(cidade);
+                        }
+                    });
+                }
+            });
+            
+            return Array.from(uniqueCities).sort();
+        }
+        
+        // =========================================================================
+        // 🔍 FUNÇÃO PARA VERIFICAR SE É UMA CIDADE REAL (NÃO NOME DE RÁDIO)
+        // =========================================================================
+        function isRealCity(cityName) {
+            const lowerCityName = cityName.toLowerCase();
+            
+            // Lista de palavras que indicam que é nome de rádio, não cidade
+            const radioIndicators = [
+                'rádio', 'radio', 'fm', 'am', 'mhz', 'khz',
+                'emissora', 'transmissora', 'antena', 'torre'
+            ];
+            
+            // Verificar se contém indicadores de rádio
+            for (const indicator of radioIndicators) {
+                if (lowerCityName.includes(indicator)) {
+                    return false;
+                }
+            }
+            
+            // Verificar se é apenas números (frequência)
+            if (/^\d+[\.,]?\d*$/.test(cityName.trim())) {
+                return false;
+            }
+            
+            // Se chegou até aqui, provavelmente é uma cidade
+            return true;
         }
         
         // Função auxiliar para calcular distância entre coordenadas (Haversine)
@@ -1764,18 +1846,61 @@
                 addCoverageProposta(radio, originalIndex, color);
             });
             
-            // Adicionar marcadores com reposicionamento
+            // Adicionar marcadores com reposicionamento para evitar sobreposição
             radioData.radios.forEach((radio, index) => {
                 const colorIndex = index % RADIO_COLORS.length;
                 const color = RADIO_COLORS[colorIndex];
                 
-                addRadioMarkerProposta(radio, index, color);
+                // Calcular offset para evitar sobreposição
+                const adjustedPosition = calculateRadioOffset(radio, index, radioData.radios);
+                
+                addRadioMarkerProposta(radio, index, color, adjustedPosition);
                 
                 // Adicionar marcadores de cidades (se houver KML)
                 if (radio.kmlPlacemarks && radio.kmlPlacemarks.length > 0) {
                     addCityMarkersProposta(radio, index, color);
                 }
             });
+        }
+        
+        // =========================================================================
+        // 📍 FUNÇÃO PARA CALCULAR OFFSET DE RÁDIOS (EVITAR SOBREPOSIÇÃO)
+        // =========================================================================
+        function calculateRadioOffset(currentRadio, currentIndex, allRadios) {
+            const proximityThreshold = 0.005; // ~500 metros
+            const offsetDistance = 0.003; // ~300 metros
+            
+            let adjustedLat = currentRadio.latitude;
+            let adjustedLng = currentRadio.longitude;
+            
+            // Verificar se há outras rádios muito próximas
+            const nearbyRadios = allRadios.filter((radio, index) => {
+                if (index >= currentIndex) return false; // Só verificar rádios já processadas
+                
+                const distance = Math.sqrt(
+                    Math.pow(radio.latitude - currentRadio.latitude, 2) + 
+                    Math.pow(radio.longitude - currentRadio.longitude, 2)
+                );
+                
+                return distance < proximityThreshold;
+            });
+            
+            if (nearbyRadios.length > 0) {
+                // Calcular offset baseado no índice para criar padrão circular
+                const angle = (currentIndex % 8) * (Math.PI / 4); // 8 posições ao redor
+                const radius = offsetDistance * (Math.floor(currentIndex / 8) + 1);
+                
+                adjustedLat += Math.sin(angle) * radius;
+                adjustedLng += Math.cos(angle) * radius;
+                
+                console.log(`📍 Rádio ${currentIndex} reposicionada para evitar sobreposição:`, {
+                    original: [currentRadio.latitude, currentRadio.longitude],
+                    adjusted: [adjustedLat, adjustedLng],
+                    nearbyCount: nearbyRadios.length
+                });
+            }
+            
+            return [adjustedLat, adjustedLng];
         }
         
         function groupRadiosByProximity(radios) {
@@ -1794,7 +1919,10 @@
             return groups;
         }
         
-        function addRadioMarkerProposta(radio, index, color) {
+        function addRadioMarkerProposta(radio, index, color, adjustedPosition = null) {
+            // Usar posição ajustada se fornecida, senão usar posição original
+            const [lat, lng] = adjustedPosition || [radio.latitude, radio.longitude];
+            
             const radioIcon = L.divIcon({
                 html: `
                     <img src="${radio.imageUrl}" 
@@ -1820,7 +1948,7 @@
                 </div>
             `;
             
-            const radioMarker = L.marker([radio.latitude, radio.longitude], { icon: radioIcon })
+            const radioMarker = L.marker([lat, lng], { icon: radioIcon })
                 .bindPopup(popupContent)
                 .addTo(map);
                 
@@ -2030,7 +2158,7 @@
                 <div class="radio-item" id="radio-item-${index}">
                     <img src="${radio.imageUrl}" 
                          alt="${radio.name}"
-                         onerror="this.src='https://via.placeholder.com/32x24/${RADIO_COLORS[index % RADIO_COLORS.length].replace('#', '')}/white?text=FM'">
+                         onerror="this.src='https://via.placeholder.com/36x27/${RADIO_COLORS[index % RADIO_COLORS.length].replace('#', '')}/white?text=FM'">
                     <div class="radio-item-info" onclick="focusOnRadio(${index})">
                         <div class="radio-item-name">${radio.name}</div>
                         <div class="radio-item-details">${radio.dial} • ${radio.praca} - ${radio.uf}</div>
@@ -2049,15 +2177,15 @@
                     <h3 class="card-title">🌐 Alcance Total</h3>
                     <div class="info-item">
                         <span class="info-label">Impactos Totais:</span>
-                        <span class="info-value highlight">${totalImpactosFormatted}</span>
+                        <span class="info-value">${totalImpactosFormatted}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Universo Único:</span>
-                        <span class="info-value highlight">${universoUnicoFormatted}</span>
+                        <span class="info-value">${universoUnicoFormatted}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Cidades Únicas:</span>
-                        <span class="info-value highlight">${totalCidades}</span>
+                        <span class="info-value">${totalCidades}</span>
                     </div>
                 </div>
                 
@@ -2075,11 +2203,23 @@
         }
         
         function renderCidadesProposta() {
-            // Usar lista unificada de cidades da proposta
-            allCities = radioData.allCidades || [];
+            // Usar apenas cidades únicas (filtrar nomes de rádios)
+            const allRealCities = new Set();
+            
+            // Coletar cidades de todas as rádios, filtrando nomes de rádios
+            radioData.radios.forEach(radio => {
+                const cities = radio.cidades || [];
+                cities.forEach(cidade => {
+                    if (isRealCity(cidade)) {
+                        allRealCities.add(cidade);
+                    }
+                });
+            });
+            
+            allCities = Array.from(allRealCities).sort();
             filteredCities = [...allCities];
             
-            // CONSTRUIR MAPEAMENTO CIDADE -> RÁDIOS
+            // CONSTRUIR MAPEAMENTO CIDADE -> RÁDIOS (apenas para cidades reais)
             buildCityRadioMapping();
             
             updateCidadesList();
@@ -2103,6 +2243,9 @@
                 const cities = radio.cidades || [];
                 
                 cities.forEach(cidade => {
+                    // Filtrar apenas cidades reais (não nomes de rádios)
+                    if (!isRealCity(cidade)) return;
+                    
                     const cityName = cidade.split(' - ')[0]; // Remover UF para o nome base
                     
                     if (!cityRadioMapping[cityName]) {
@@ -2129,7 +2272,7 @@
             
             if (collapsed && expanded) {
                 collapsed.style.display = 'none';
-                expanded.style.display = 'block';
+                expanded.style.display = 'flex';
             }
         }
         
@@ -2244,7 +2387,12 @@
             activeRadios.forEach((radio, index) => {
                 if (radio.active && radioData.radios[index]) {
                     const cities = radioData.radios[index].cidades || [];
-                    cities.forEach(cidade => activeCities.add(cidade));
+                    cities.forEach(cidade => {
+                        // Filtrar apenas cidades reais
+                        if (isRealCity(cidade)) {
+                            activeCities.add(cidade);
+                        }
+                    });
                 }
             });
             
@@ -2273,6 +2421,9 @@
                 const cities = radioData_single.cidades || [];
                 
                 cities.forEach(cidade => {
+                    // Filtrar apenas cidades reais
+                    if (!isRealCity(cidade)) return;
+                    
                     const cityName = cidade.split(' - ')[0];
                     
                     if (!cityRadioMapping[cityName]) {
@@ -2369,7 +2520,7 @@
                         <div class="radio-expanded">
                             <img src="${radio.imageUrl}" 
                                  alt="${radio.name}"
-                                 onerror="this.src='https://via.placeholder.com/28x21/${RADIO_COLORS[radio.originalIndex % RADIO_COLORS.length].replace('#', '')}/white?text=FM'">
+                                 onerror="this.src='https://via.placeholder.com/36x27/${RADIO_COLORS[radio.originalIndex % RADIO_COLORS.length].replace('#', '')}/white?text=FM'">
                             <div class="radio-expanded-info">
                                 <div class="radio-expanded-name">${radio.name}</div>
                                 <div class="radio-expanded-details">${radio.dial} • ${radio.praca}</div>
@@ -2388,7 +2539,7 @@
                                          src="${radio.imageUrl}" 
                                          alt="${radio.name}"
                                          title="${radio.name} ${radio.dial}"
-                                         onerror="this.src='https://via.placeholder.com/28x21/${RADIO_COLORS[radio.originalIndex % RADIO_COLORS.length].replace('#', '')}/white?text=FM'">
+                                         onerror="this.src='https://via.placeholder.com/36x27/${RADIO_COLORS[radio.originalIndex % RADIO_COLORS.length].replace('#', '')}/white?text=FM'">
                                 `).join('')}
                                 ${radiosQueCobrema.length > 3 ? `<span class="radio-count-extra">+${radiosQueCobrema.length - 3}</span>` : ''}
                             </div>
@@ -2397,7 +2548,7 @@
                                     <div class="radio-expanded">
                                         <img src="${radio.imageUrl}" 
                                              alt="${radio.name}"
-                                             onerror="this.src='https://via.placeholder.com/28x21/${RADIO_COLORS[radio.originalIndex % RADIO_COLORS.length].replace('#', '')}/white?text=FM'">
+                                             onerror="this.src='https://via.placeholder.com/36x27/${RADIO_COLORS[radio.originalIndex % RADIO_COLORS.length].replace('#', '')}/white?text=FM'">
                                         <div class="radio-expanded-info">
                                             <div class="radio-expanded-name">${radio.name}</div>
                                             <div class="radio-expanded-details">${radio.dial} • ${radio.praca}</div>
@@ -2529,7 +2680,7 @@
                     `;
                 }
                 if (radioInfoElement) {
-                    radioInfoElement.textContent = `Mapeamento Interativo de Múltiplas Rádios`;
+                    radioInfoElement.textContent = `Mapa de Cobertura Interativo`;
                 }
             } else {
                 // Modo Individual: manter comportamento original
