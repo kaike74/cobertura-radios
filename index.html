@@ -430,7 +430,7 @@
             box-shadow: var(--shadow-md);
             border-left: 4px solid var(--emidias-primary);
             position: relative;
-            overflow: hidden;
+            overflow: visible; /* Mudança para não cortar tooltips */
         }
         
         .cidades-container::before {
@@ -530,6 +530,7 @@
             border: 1px solid var(--emidias-light-gray);
             border-radius: 12px;
             background: var(--emidias-white);
+            overflow-x: visible; /* Para não cortar tooltips laterais */
         }
         
         .cidade-item {
@@ -594,29 +595,48 @@
         .radios-expanded {
             position: absolute;
             right: 0;
-            top: 50%;
-            transform: translateY(-50%);
             background: var(--emidias-white);
             border: 2px solid var(--emidias-primary);
             border-radius: 12px;
             padding: 12px;
             box-shadow: var(--shadow-lg);
-            z-index: 100;
+            z-index: 1000;
             min-width: 280px;
             display: none;
             flex-direction: column;
             gap: 8px;
             animation: slideInLeft 0.2s ease-out;
+            /* Posicionamento dinâmico para evitar corte */
+            top: auto;
+            bottom: auto;
+        }
+        
+        /* Tooltip posicionado acima quando está nos primeiros itens */
+        .cidade-item:nth-child(-n+3) .radios-expanded {
+            top: 100%;
+            margin-top: 8px;
+        }
+        
+        /* Tooltip posicionado abaixo quando está nos últimos itens */  
+        .cidade-item:nth-last-child(-n+3) .radios-expanded {
+            bottom: 100%;
+            margin-bottom: 8px;
+        }
+        
+        /* Posicionamento padrão (centralizado) para itens do meio */
+        .cidade-item:not(:nth-child(-n+3)):not(:nth-last-child(-n+3)) .radios-expanded {
+            top: 50%;
+            transform: translateY(-50%);
         }
         
         @keyframes slideInLeft {
             from {
                 opacity: 0;
-                transform: translateY(-50%) translateX(20px);
+                transform: translateX(20px);
             }
             to {
                 opacity: 1;
-                transform: translateY(-50%) translateX(0);
+                transform: translateX(0);
             }
         }
         
@@ -1142,7 +1162,7 @@
                 
                 // Cabeçalho
                 if (isPropostaMode) {
-                    excelData.push(['Cidade', 'UF', 'Rádios', 'Impactos', 'Universo']);
+                    excelData.push(['UF', 'Cidade', 'Rádios']);
                 } else {
                     excelData.push(['Cidade', 'UF', 'Região', 'Distância (km)']);
                 }
@@ -1166,18 +1186,10 @@
                             `${radio.name} ${radio.dial}`
                         ).join(', ');
                         
-                        // Calcular impactos e universo desta cidade
-                        const totalImpactos = radiosQueCobrema.reduce((sum, radio) => 
-                            sum + (radio.impactos || radio.pmm || 0), 0);
-                        const maxUniverso = Math.max(...radiosQueCobrema.map(radio => 
-                            radio.universo || 0), 0);
-                        
                         excelData.push([
-                            nomeCidade,
                             uf,
-                            radiosTexto,
-                            totalImpactos.toLocaleString(),
-                            maxUniverso.toLocaleString()
+                            nomeCidade,
+                            radiosTexto
                         ]);
                     } else {
                         // Modo individual (lógica original)
@@ -1210,11 +1222,9 @@
                 // Configurar largura das colunas
                 if (isPropostaMode) {
                     ws['!cols'] = [
-                        { width: 30 }, // Cidade
                         { width: 8 },  // UF
-                        { width: 50 }, // Rádios
-                        { width: 15 }, // Impactos
-                        { width: 15 }  // Universo
+                        { width: 30 }, // Cidade
+                        { width: 50 }  // Rádios
                     ];
                 } else {
                     ws['!cols'] = [
@@ -1283,15 +1293,25 @@
         }
         
         // =========================================================================
-        // 🔍 FUNÇÃO PARA VERIFICAR SE É UMA CIDADE REAL (NÃO NOME DE RÁDIO)
+        // 🔍 FUNÇÃO MELHORADA PARA VERIFICAR SE É UMA CIDADE REAL (NÃO NOME DE RÁDIO)
         // =========================================================================
         function isRealCity(cityName) {
-            const lowerCityName = cityName.toLowerCase();
+            if (!cityName || typeof cityName !== 'string') return false;
             
-            // Lista de palavras que indicam que é nome de rádio, não cidade
+            const lowerCityName = cityName.toLowerCase().trim();
+            
+            // Lista expandida de palavras que indicam que é nome de rádio, não cidade
             const radioIndicators = [
-                'rádio', 'radio', 'fm', 'am', 'mhz', 'khz',
-                'emissora', 'transmissora', 'antena', 'torre'
+                'rádio', 'radio', 'fm', 'am', 'mhz', 'khz', 
+                'emissora', 'transmissora', 'antena', 'torre',
+                'broadcasting', 'stereo', 'hits', 'mix', 'pop',
+                'rock', 'news', 'jovem', 'pan', 'sat', 'digital',
+                'online', 'web', 'net', 'com', 'br', '.com', '.br',
+                'comunicação', 'comunicacao', 'media', 'midia',
+                'grupo', 'rede', 'sistema', 'canal', 'tv',
+                'televisão', 'televisao', 'banda', 'frequência',
+                'frequencia', 'ondas', 'som', 'audio', 'música',
+                'musica', 'show', 'programa', 'live', 'ao vivo'
             ];
             
             // Verificar se contém indicadores de rádio
@@ -1306,8 +1326,51 @@
                 return false;
             }
             
+            // Verificar se contém apenas números e pontos (frequências como 107.3)
+            if (/^[\d\.,\s]+$/.test(cityName.trim())) {
+                return false;
+            }
+            
+            // Verificar se é muito curto (provavelmente siglas ou códigos)
+            if (cityName.trim().length < 3) {
+                return false;
+            }
+            
+            // Verificar padrões de URL ou email
+            if (lowerCityName.includes('@') || lowerCityName.includes('http') || lowerCityName.includes('www.')) {
+                return false;
+            }
+            
+            // Verificar se contém muitos números (provavelmente código ou frequência)
+            const numberCount = (cityName.match(/\d/g) || []).length;
+            if (numberCount > cityName.length / 2) {
+                return false;
+            }
+            
             // Se chegou até aqui, provavelmente é uma cidade
             return true;
+        }
+        
+        // =========================================================================
+        // 🏙️ FUNÇÃO PARA CONTAR APENAS CIDADES REAIS (SEM RÁDIOS)
+        // =========================================================================
+        function countUniqueCities() {
+            if (!radioData.radios) return 0;
+            
+            const uniqueCities = new Set();
+            
+            radioData.radios.forEach(radio => {
+                const cities = radio.cidades || [];
+                cities.forEach(cidade => {
+                    if (isRealCity(cidade)) {
+                        // Usar apenas o nome da cidade sem UF para evitar duplicatas
+                        const cityName = cidade.split(' - ')[0];
+                        uniqueCities.add(cityName);
+                    }
+                });
+            });
+            
+            return uniqueCities.size;
         }
         
         // Função auxiliar para calcular distância entre coordenadas (Haversine)
@@ -1727,10 +1790,7 @@
         
         function renderCidadesIndividual() {
             allCities = (radioData.cidades || []).filter(cidade => {
-                const cityName = cidade.toLowerCase();
-                const radioName = radioData.name.toLowerCase();
-                
-                return !cityName.includes(radioName.replace('rádio', '').replace('fm', '').trim());
+                return isRealCity(cidade);
             });
             
             filteredCities = [...allCities];
@@ -2144,7 +2204,9 @@
             
             const totalImpactosFormatted = totalImpactos ? totalImpactos.toLocaleString() : 'N/A';
             const universoUnicoFormatted = universoUnicoTotal ? universoUnicoTotal.toLocaleString() : 'N/A';
-            const totalCidades = radioData.stats?.totalCidades || 0;
+            
+            // Contar apenas cidades reais (usar função específica)
+            const totalCidadesReais = countUniqueCities();
             
             // Inicializar array de rádios ativas (todas marcadas por padrão)
             activeRadios = radioData.radios.map((radio, index) => ({
@@ -2185,7 +2247,7 @@
                     </div>
                     <div class="info-item">
                         <span class="info-label">Cidades Únicas:</span>
-                        <span class="info-value">${totalCidades}</span>
+                        <span class="info-value">${totalCidadesReais}</span>
                     </div>
                 </div>
                 
