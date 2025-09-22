@@ -1300,114 +1300,53 @@
         }
         
         // =========================================================================
-        // 🔍 FUNÇÃO MELHORADA PARA VERIFICAR SE É UMA CIDADE REAL (NÃO NOME DE RÁDIO)
+        // 🔍 FUNÇÃO PRECISA PARA VERIFICAR SE É UMA CIDADE REAL (BASEADA EM DISTÂNCIA KM)
         // =========================================================================
         function isRealCity(cityName) {
             if (!cityName || typeof cityName !== 'string') return false;
             
-            const lowerCityName = cityName.toLowerCase().trim();
+            const cityNameTrim = cityName.trim();
             
-            // ✅ FIX: Lista MUITO mais rigorosa de palavras que indicam rádio, não cidade
-            const radioIndicators = [
-                // Palavras óbvias de rádio/mídia
-                'rádio', 'radio', 'fm', 'am', 'mhz', 'khz', 'dial',
-                'emissora', 'transmissora', 'antena', 'torre', 'frequência', 'frequencia',
-                'broadcasting', 'broadcast', 'stereo', 'mono', 'digital',
-                
-                // Gêneros musicais que aparecem em nomes de rádio
-                'hits', 'mix', 'pop', 'rock', 'sertaneja', 'country', 'gospel',
-                'jovem', 'teen', 'adult', 'contemporary', 'clássica', 'classica',
-                'reggae', 'funk', 'rap', 'hip hop', 'eletrônica', 'eletronica',
-                'bossa nova', 'samba', 'pagode', 'forró', 'forro', 'axé', 'axe',
-                
-                // Palavras comuns em nomes de rádio
-                'news', 'notícias', 'noticias', 'jornalismo', 'informação', 'informacao',
-                'música', 'musica', 'som', 'audio', 'sound', 'voice', 'voz',
-                'show', 'programa', 'live', 'ao vivo', 'online', 'web', 'net',
-                'cidade', 'capital', 'metropolitana', 'regional', 'nacional',
-                'brasil', 'brazil', 'br', 'com', '.com', '.br', 'www',
-                
-                // Empresas e grupos de comunicação
-                'comunicação', 'comunicacao', 'media', 'mídia', 'midia',
-                'grupo', 'rede', 'sistema', 'canal', 'tv', 'televisão', 'televisao',
-                'sat', 'satélite', 'satelite', 'cabo', 'digital',
-                
-                // Palavras técnicas
-                'banda', 'ondas', 'hertz', 'watts', 'potência', 'potencia',
-                'cobertura', 'alcance', 'sinal', 'transmissão', 'transmissao',
-                
-                // Indicadores de horário/programação
-                'manhã', 'manha', 'tarde', 'noite', 'madrugada', '24h', '24 horas',
-                'programação', 'programacao', 'playlist', 'top', 'best',
-                
-                // Palavras em inglês comuns em rádios
-                'station', 'channel', 'network', 'group', 'media', 'entertainment',
-                'music', 'news', 'talk', 'sports', 'culture', 'classic',
-                
-                // Sufixos/prefixos comuns de rádio
-                'super', 'mega', 'ultra', 'maxi', 'mini', 'micro',
-                'new', 'nova', 'novo', 'primeira', 'segunda', 'única', 'unica',
-                'mais', 'melhor', 'grande', 'pequena', 'local', 'comunitária', 'comunitaria'
-            ];
+            // ✅ FIX: LÓGICA CORRETA - Se tem distância em km, é cidade real
+            // Padrões: "Cidade (10.0 km)", "Cidade (15,5 km)", "Cidade (3km)"
+            const hasDistancePattern = /\(\s*\d+[\.,]?\d*\s*km?\s*\)/i.test(cityNameTrim);
             
-            // ✅ FIX: Verificação mais rigorosa
-            for (const indicator of radioIndicators) {
-                if (lowerCityName.includes(indicator)) {
-                    return false;
-                }
+            if (hasDistancePattern) {
+                console.log(`✅ CIDADE REAL (tem distância): "${cityName}"`);
+                return true; // TEM distância = cidade real
             }
             
-            // ✅ FIX: Verificar padrões específicos de frequência
-            if (/\d+[\.,]\d+/.test(cityName.trim())) { // ex: 107.3, 90,5
+            // ✅ FIX: Verificações adicionais para casos óbvios de rádio
+            const lowerCityName = cityNameTrim.toLowerCase();
+            
+            // Padrões óbvios de frequência: 107.3, 90.5, etc.
+            if (/^\d+[\.,]\d+$/.test(cityNameTrim)) {
+                console.log(`❌ FREQUÊNCIA DE RÁDIO: "${cityName}"`);
                 return false;
             }
             
-            // ✅ FIX: Verificar se é apenas números (frequência sem ponto)
-            if (/^\d+$/.test(cityName.trim()) && cityName.trim().length <= 4) {
+            // URLs e domínios
+            if (lowerCityName.includes('www.') || lowerCityName.includes('.com') || 
+                lowerCityName.includes('http') || lowerCityName.includes('@')) {
+                console.log(`❌ URL/EMAIL: "${cityName}"`);
                 return false;
             }
             
-            // ✅ FIX: Verificar se começa com números (frequências)
-            if (/^\d/.test(cityName.trim())) {
+            // Muito curto (siglas de rádio)
+            if (cityNameTrim.length < 3) {
+                console.log(`❌ MUITO CURTO: "${cityName}"`);
                 return false;
             }
             
-            // ✅ FIX: Verificar se contém @ ou URLs
-            if (lowerCityName.includes('@') || lowerCityName.includes('http') || 
-                lowerCityName.includes('www.') || lowerCityName.includes('.com') || 
-                lowerCityName.includes('.br')) {
+            // Muito longo (descrições)
+            if (cityNameTrim.length > 50) {
+                console.log(`❌ MUITO LONGO: "${cityName}"`);
                 return false;
             }
             
-            // ✅ FIX: Muito curto (provavelmente siglas)
-            if (cityName.trim().length < 3) {
-                return false;
-            }
-            
-            // ✅ FIX: Muito longo (provavelmente descrição de rádio)
-            if (cityName.trim().length > 50) {
-                return false;
-            }
-            
-            // ✅ FIX: Contém muitos números (códigos ou frequências)
-            const numberCount = (cityName.match(/\d/g) || []).length;
-            if (numberCount > cityName.length / 3) { // Mais de 1/3 são números
-                return false;
-            }
-            
-            // ✅ FIX: Verificar padrões suspeitos
-            if (cityName.includes('(') && cityName.includes(')') && !cityName.includes(' - ')) {
-                // Parênteses sem formato "Cidade - UF" são suspeitos
-                return false;
-            }
-            
-            // ✅ FIX: Verificar se contém apenas caracteres especiais estranhos
-            if (/^[^a-zA-ZÀ-ÿ\s\-]+$/.test(cityName)) {
-                return false;
-            }
-            
-            // Se chegou até aqui, provavelmente é uma cidade
-            return true;
+            // ✅ FIX: SEM DISTÂNCIA = Nome de rádio (rejeitado)
+            console.log(`❌ SEM DISTÂNCIA (nome de rádio): "${cityName}"`);
+            return false;
         }
         
         // =========================================================================
@@ -1886,33 +1825,56 @@
         async function initializePropostaMode() {
             console.log('🏢 Modo Proposta ativado');
             
+            // ✅ FIX: Debug detalhado dos dados da proposta
+            console.log('📡 DEBUG - Dados brutos da proposta:', radioData);
+            
             // Validar dados básicos
             if (!radioData.radios || radioData.radios.length === 0) {
                 throw new Error('Nenhuma rádio encontrada na proposta');
             }
             
+            console.log('📊 DEBUG - Estrutura dos dados das rádios ANTES da validação:', radioData.radios.map(radio => ({
+                name: radio.name,
+                pmm: radio.pmm,
+                impactos: radio.impactos,
+                cidades: radio.cidades ? radio.cidades.length : 0,
+                cidadesAmostra: radio.cidades ? radio.cidades.slice(0, 3) : []
+            })));
+            
             // Garantir que todos os rádios tenham propriedades necessárias
-            radioData.radios = radioData.radios.map((radio, index) => ({
-                name: radio.name || 'Rádio Desconhecida',
-                dial: radio.dial || 'N/A',
-                latitude: radio.latitude || -23.5505,
-                longitude: radio.longitude || -46.6333,
-                radius: radio.radius || 50000,
-                region: radio.region || 'N/A',
-                uf: radio.uf || 'N/A',
-                praca: radio.praca || 'N/A',
-                universo: radio.universo || 0,
-                pmm: radio.pmm || 0,
-                impactos: radio.impactos || radio.pmm || 0, // ✅ FIX: Garantir que impactos existe
-                imageUrl: radio.imageUrl || `https://via.placeholder.com/56x56/06055B/white?text=${encodeURIComponent(radio.dial || 'FM')}`,
-                coverageType: radio.coverageType || 'circle',
-                kmlCoordinates: radio.kmlCoordinates || [],
-                kmlPlacemarks: radio.kmlPlacemarks || [],
-                kmlBounds: radio.kmlBounds || null,
-                cidades: radio.cidades || [],
-                notionId: radio.notionId || `radio-${index}`,
-                ...radio
-            }));
+            radioData.radios = radioData.radios.map((radio, index) => {
+                console.log(`🔧 DEBUG - Processando rádio ${index}: ${radio.name || 'Sem nome'}`);
+                
+                return {
+                    name: radio.name || 'Rádio Desconhecida',
+                    dial: radio.dial || 'N/A',
+                    latitude: radio.latitude || -23.5505,
+                    longitude: radio.longitude || -46.6333,
+                    radius: radio.radius || 50000,
+                    region: radio.region || 'N/A',
+                    uf: radio.uf || 'N/A',
+                    praca: radio.praca || 'N/A',
+                    universo: radio.universo || 0,
+                    pmm: radio.pmm || 0,
+                    impactos: radio.impactos || 0, // ✅ FIX: Preservar valor original de impactos
+                    imageUrl: radio.imageUrl || `https://via.placeholder.com/56x56/06055B/white?text=${encodeURIComponent(radio.dial || 'FM')}`,
+                    coverageType: radio.coverageType || 'circle',
+                    kmlCoordinates: radio.kmlCoordinates || [],
+                    kmlPlacemarks: radio.kmlPlacemarks || [],
+                    kmlBounds: radio.kmlBounds || null,
+                    cidades: radio.cidades || [],
+                    notionId: radio.notionId || `radio-${index}`,
+                    ...radio // ✅ FIX: Manter todos os campos originais
+                };
+            });
+            
+            console.log('✅ DEBUG - Dados das rádios APÓS validação:', radioData.radios.map(radio => ({
+                name: radio.name,
+                pmm: radio.pmm,
+                impactos: radio.impactos,
+                cidades: radio.cidades ? radio.cidades.length : 0,
+                cidadesAmostra: radio.cidades ? radio.cidades.slice(0, 3) : []
+            })));
             
             console.log('📊 Rádios validadas:', radioData.radios.length);
             
@@ -2262,10 +2224,37 @@
             const container = document.getElementById('info-section');
             container.className = 'info-grid proposta'; // Adicionar classe especial
             
-            // ✅ FIX: Calcular Impactos totais usando campo correto (radio.impactos ao invés de radio.pmm)
-            const totalImpactos = radioData.radios.reduce((sum, radio) => {
-                return sum + (radio.impactos || 0); // Usar sempre impactos
-            }, 0);
+            // ✅ FIX: Debug dos dados e cálculo correto de impactos
+            console.log('🔍 DEBUG - Dados das rádios para cálculo:', radioData.radios.map(radio => ({
+                name: radio.name,
+                pmm: radio.pmm,
+                impactos: radio.impactos,
+                hasImpactos: radio.hasOwnProperty('impactos'),
+                impactosType: typeof radio.impactos
+            })));
+            
+            // ✅ FIX: Verificar se campo impactos existe, senão usar PMM com aviso
+            let totalImpactos = 0;
+            let usandoPMM = false;
+            
+            radioData.radios.forEach(radio => {
+                if (radio.impactos !== undefined && radio.impactos !== null && radio.impactos !== 0) {
+                    // Usar campo impactos do Notion
+                    totalImpactos += radio.impactos;
+                    console.log(`✅ Usando IMPACTOS para ${radio.name}: ${radio.impactos}`);
+                } else {
+                    // Fallback para PMM se impactos não existir ou for 0
+                    totalImpactos += (radio.pmm || 0);
+                    usandoPMM = true;
+                    console.log(`⚠️ Usando PMM para ${radio.name}: ${radio.pmm} (impactos não disponível)`);
+                }
+            });
+            
+            console.log('📊 TOTAL CALCULADO:', {
+                totalImpactos,
+                usandoPMM,
+                fonte: usandoPMM ? 'PMM (fallback)' : 'IMPACTOS (correto)'
+            });
             
             // Calcular universo único por cidade
             const universosPorCidade = {};
@@ -2284,6 +2273,12 @@
             
             // ✅ FIX: Contar apenas cidades reais (usar função específica para proposta)
             const totalCidadesReais = countUniqueCities();
+            
+            console.log('🏙️ DEBUG - Contagem de cidades:', {
+                totalCidadesReais,
+                allCitiesLength: allCities.length,
+                sampleCities: allCities.slice(0, 5)
+            });
             
             // Inicializar array de rádios ativas (todas marcadas por padrão)
             activeRadios = radioData.radios.map((radio, index) => ({
@@ -2310,14 +2305,19 @@
                 </div>
             `).join('');
             
+            // ✅ FIX: Adicionar indicador se está usando PMM como fallback
+            const impactosLabel = usandoPMM ? 'Impactos Totais*:' : 'Impactos Totais:';
+            const impactosNote = usandoPMM ? '<small style="color: #FF6B6B;">*Usando PMM (campo Impactos não encontrado)</small>' : '';
+            
             container.innerHTML = `
                 <!-- ALCANCE TOTAL -->
                 <div class="info-card">
                     <h3 class="card-title">🌐 Alcance Total</h3>
                     <div class="info-item">
-                        <span class="info-label">Impactos Totais:</span>
+                        <span class="info-label">${impactosLabel}</span>
                         <span class="info-value">${totalImpactosFormatted}</span>
                     </div>
+                    ${impactosNote}
                     <div class="info-item">
                         <span class="info-label">Universo Único:</span>
                         <span class="info-value">${universoUnicoFormatted}</span>
@@ -2342,21 +2342,35 @@
         }
         
         function renderCidadesProposta() {
-            // Usar apenas cidades únicas (filtrar nomes de rádios)
+            // ✅ FIX: Adicionar debug detalhado do processo de filtragem
+            console.log('🏙️ DEBUG - Iniciando renderização de cidades proposta');
+            console.log('📊 DEBUG - Quantidade de rádios:', radioData.radios.length);
+            
             const allRealCities = new Set();
             
             // Coletar cidades de todas as rádios, filtrando nomes de rádios
-            radioData.radios.forEach(radio => {
+            radioData.radios.forEach((radio, radioIndex) => {
+                console.log(`📻 DEBUG - Rádio ${radioIndex}: ${radio.name}`);
+                console.log(`📍 DEBUG - Cidades da rádio:`, radio.cidades);
+                
                 const cities = radio.cidades || [];
-                cities.forEach(cidade => {
-                    if (isRealCity(cidade)) {
+                cities.forEach((cidade, cityIndex) => {
+                    const isReal = isRealCity(cidade);
+                    console.log(`   🏙️ DEBUG - Cidade ${cityIndex}: "${cidade}" -> ${isReal ? '✅ ACEITA' : '❌ REJEITADA'}`);
+                    
+                    if (isReal) {
                         allRealCities.add(cidade);
                     }
                 });
             });
             
+            console.log('🎯 DEBUG - Cidades únicas encontradas:', Array.from(allRealCities));
+            
             allCities = Array.from(allRealCities).sort();
             filteredCities = [...allCities];
+            
+            console.log('📋 DEBUG - allCities final:', allCities);
+            console.log('🔢 DEBUG - Total de cidades após filtro:', allCities.length);
             
             // CONSTRUIR MAPEAMENTO CIDADE -> RÁDIOS (apenas para cidades reais)
             buildCityRadioMapping();
