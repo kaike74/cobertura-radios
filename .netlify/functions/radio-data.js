@@ -91,6 +91,7 @@ async function handlePropostaMode(databaseId, notionToken, headers) {
     const processedRadios = [];
     let totalUniverso = 0;
     let totalPMM = 0;
+    let totalImpactos = 0; // ✅ FIX: Adicionar totalImpactos
     const allCidades = new Set();
     const regions = new Set();
     const ufs = new Set();
@@ -104,6 +105,7 @@ async function handlePropostaMode(databaseId, notionToken, headers) {
           // Agregar estatísticas
           totalUniverso += radioData.universo || 0;
           totalPMM += radioData.pmm || 0;
+          totalImpactos += radioData.impactos || 0; // ✅ FIX: Somar impactos
           
           // Coletar cidades únicas
           if (radioData.cidades) {
@@ -128,6 +130,7 @@ async function handlePropostaMode(databaseId, notionToken, headers) {
       stats: {
         totalUniverso: totalUniverso,
         totalPMM: totalPMM,
+        totalImpactos: totalImpactos, // ✅ FIX: Adicionar totalImpactos às stats
         totalCidades: allCidades.size,
         regions: Array.from(regions),
         ufs: Array.from(ufs)
@@ -142,6 +145,7 @@ async function handlePropostaMode(databaseId, notionToken, headers) {
       radios: propostaData.totalRadios,
       universo: propostaData.stats.totalUniverso.toLocaleString(),
       pmm: propostaData.stats.totalPMM.toLocaleString(),
+      impactos: propostaData.stats.totalImpactos.toLocaleString(), // ✅ FIX: Log dos impactos
       cidades: propostaData.stats.totalCidades
     });
 
@@ -272,11 +276,34 @@ async function processRadioData(notionData, notionToken) {
   // Mapear propriedades do Notion
   const properties = notionData.properties || {};
   
+  // ✅ FIX: Debug detalhado das propriedades para identificar o nome correto
+  console.log('🔍 DEBUG - Propriedades disponíveis:', Object.keys(properties));
+  console.log('🔍 DEBUG - Buscando propriedade Impactos...');
+  
+  // Buscar variações possíveis de "Impactos"
+  const impactosProperty = properties['Impactos'] || 
+                          properties['impactos'] || 
+                          properties['IMPACTOS'] || 
+                          properties['Impacto'] || 
+                          properties['impacto'] ||
+                          properties['IMPACTO'];
+  
+  if (impactosProperty) {
+    console.log('✅ DEBUG - Propriedade Impactos encontrada:', impactosProperty);
+  } else {
+    console.log('❌ DEBUG - Propriedade Impactos NÃO encontrada. Propriedades disponíveis:', Object.keys(properties));
+  }
+  
   // Função helper para extrair valores
   const extractValue = (prop, defaultValue = '', propName = '') => {
     if (!prop) {
+      if (propName) {
+        console.log(`⚠️ Propriedade '${propName}' não encontrada`);
+      }
       return defaultValue;
     }
+    
+    console.log(`✅ Extraindo valor de '${propName}':`, prop.type, prop);
     
     switch (prop.type) {
       case 'number':
@@ -294,6 +321,7 @@ async function processRadioData(notionData, notionToken) {
       case 'url':
         return prop.url || defaultValue;
       default:
+        console.log(`⚠️ Tipo de propriedade desconhecido: ${prop.type} para '${propName}'`);
         return defaultValue;
     }
   };
@@ -323,6 +351,9 @@ async function processRadioData(notionData, notionToken) {
     universo: parseInt(extractValue(properties['Universo'] || properties['universo'], 0, 'Universo')),
     pmm: parseInt(extractValue(properties['PMM'] || properties['pmm'], 1000, 'PMM')),
     
+    // ✅ FIX: Adicionar mapeamento correto para Impactos
+    impactos: parseInt(extractValue(impactosProperty, 0, 'Impactos')),
+    
     // URLs e mídias
     imageUrl: extractValue(properties['Imagem'] || properties['imagem'], 'https://via.placeholder.com/100x75/dc2626/white?text=FM', 'Imagem'),
     
@@ -331,6 +362,16 @@ async function processRadioData(notionData, notionToken) {
     notionId: notionData.id,
     lastUpdate: new Date().toISOString()
   };
+
+  // ✅ FIX: Log detalhado dos valores extraídos
+  console.log('📊 DEBUG - Valores extraídos:', {
+    name: radioData.name,
+    dial: radioData.dial,
+    universo: radioData.universo,
+    pmm: radioData.pmm,
+    impactos: radioData.impactos,
+    hasImpactosProperty: !!impactosProperty
+  });
 
   // PROCESSAR KML SE DISPONÍVEL
   if (radioData.kmlUrl && radioData.kmlUrl.trim()) {
@@ -363,6 +404,12 @@ async function processRadioData(notionData, notionToken) {
 
   // BUSCAR CIDADES
   radioData.cidades = await fetchCitiesFromMultipleSources(radioData, notionToken);
+
+  // ✅ FIX: Log das cidades encontradas
+  console.log('🏙️ DEBUG - Cidades encontradas:', {
+    total: radioData.cidades ? radioData.cidades.length : 0,
+    amostra: radioData.cidades ? radioData.cidades.slice(0, 5) : []
+  });
 
   // Validações básicas
   if (isNaN(radioData.latitude) || isNaN(radioData.longitude)) {
