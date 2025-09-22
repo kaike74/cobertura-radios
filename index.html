@@ -1288,8 +1288,8 @@
                 if (radio.active && radioData.radios[index]) {
                     const cities = radioData.radios[index].cidades || [];
                     cities.forEach(cidade => {
-                        // Verificar se é realmente uma cidade (não nome de rádio)
-                        if (isRealCity(cidade)) {
+                        // ✅ FIX: Usar a nova função menos restritiva
+                        if (isValidCity(cidade)) {
                             uniqueCities.add(cidade);
                         }
                     });
@@ -1300,57 +1300,72 @@
         }
         
         // =========================================================================
-        // 🔍 FUNÇÃO PRECISA PARA VERIFICAR SE É UMA CIDADE REAL (BASEADA EM DISTÂNCIA KM)
+        // 🔍 NOVA FUNÇÃO MENOS RESTRITIVA PARA VERIFICAR CIDADES VÁLIDAS
         // =========================================================================
-        function isRealCity(cityName) {
+        function isValidCity(cityName) {
             if (!cityName || typeof cityName !== 'string') return false;
             
             const cityNameTrim = cityName.trim();
             
-            // ✅ FIX: LÓGICA CORRETA - Se tem distância em km, é cidade real
-            // Padrões: "Cidade (10.0 km)", "Cidade (15,5 km)", "Cidade (3km)"
-            const hasDistancePattern = /\(\s*\d+[\.,]?\d*\s*km?\s*\)/i.test(cityNameTrim);
-            
-            if (hasDistancePattern) {
-                console.log(`✅ CIDADE REAL (tem distância): "${cityName}"`);
-                return true; // TEM distância = cidade real
+            // Muito curto (menos de 2 caracteres)
+            if (cityNameTrim.length < 2) {
+                console.log(`❌ MUITO CURTO: "${cityName}"`);
+                return false;
             }
             
-            // ✅ FIX: Verificações adicionais para casos óbvios de rádio
+            // Muito longo (mais de 50 caracteres - provavelmente descrição)
+            if (cityNameTrim.length > 50) {
+                console.log(`❌ MUITO LONGO: "${cityName}"`);
+                return false;
+            }
+            
             const lowerCityName = cityNameTrim.toLowerCase();
             
-            // Padrões óbvios de frequência: 107.3, 90.5, etc.
+            // ❌ Padrões óbvios de frequência: 107.3, 90.5, etc.
             if (/^\d+[\.,]\d+$/.test(cityNameTrim)) {
                 console.log(`❌ FREQUÊNCIA DE RÁDIO: "${cityName}"`);
                 return false;
             }
             
-            // URLs e domínios
+            // ❌ URLs e domínios
             if (lowerCityName.includes('www.') || lowerCityName.includes('.com') || 
                 lowerCityName.includes('http') || lowerCityName.includes('@')) {
                 console.log(`❌ URL/EMAIL: "${cityName}"`);
                 return false;
             }
             
-            // Muito curto (siglas de rádio)
-            if (cityNameTrim.length < 3) {
-                console.log(`❌ MUITO CURTO: "${cityName}"`);
+            // ❌ Palavras óbvias de rádio/mídia
+            const radioKeywords = ['fm', 'am', 'rádio', 'radio', 'stereo', 'mix', 'hits', 'music', 'station'];
+            const hasRadioKeyword = radioKeywords.some(keyword => {
+                return lowerCityName.includes(keyword) && cityNameTrim.length < 15; // Só rejeitar se for curto e tiver palavra de rádio
+            });
+            
+            if (hasRadioKeyword) {
+                console.log(`❌ PALAVRA DE RÁDIO: "${cityName}"`);
                 return false;
             }
             
-            // Muito longo (descrições)
-            if (cityNameTrim.length > 50) {
-                console.log(`❌ MUITO LONGO: "${cityName}"`);
+            // ❌ Apenas números
+            if (/^\d+$/.test(cityNameTrim)) {
+                console.log(`❌ APENAS NÚMEROS: "${cityName}"`);
                 return false;
             }
             
-            // ✅ FIX: SEM DISTÂNCIA = Nome de rádio (rejeitado)
-            console.log(`❌ SEM DISTÂNCIA (nome de rádio): "${cityName}"`);
-            return false;
+            // ✅ Passou em todos os filtros - é uma cidade válida
+            console.log(`✅ CIDADE VÁLIDA: "${cityName}"`);
+            return true;
         }
         
         // =========================================================================
-        // 🏙️ FUNÇÃO PARA CONTAR APENAS CIDADES REAIS (SEM RÁDIOS)
+        // 🔍 FUNÇÃO ANTIGA MANTIDA PARA COMPATIBILIDADE (MAS NÃO USADA)
+        // =========================================================================
+        function isRealCity(cityName) {
+            // ✅ FIX: Usar a nova função menos restritiva
+            return isValidCity(cityName);
+        }
+        
+        // =========================================================================
+        // 🏙️ FUNÇÃO PARA CONTAR APENAS CIDADES REAIS (SEM RÁDIOS) - CORRIGIDA
         // =========================================================================
         function countUniqueCities() {
             if (isPropostaMode) {
@@ -1361,7 +1376,8 @@
                     if (radio.active && radioData.radios[index]) {
                         const cities = radioData.radios[index].cidades || [];
                         cities.forEach(cidade => {
-                            if (isRealCity(cidade)) {
+                            // ✅ FIX: Usar a nova função menos restritiva
+                            if (isValidCity(cidade)) {
                                 // Usar apenas o nome da cidade sem UF para evitar duplicatas
                                 const cityName = cidade.split(' - ')[0];
                                 uniqueCities.add(cityName);
@@ -1370,21 +1386,27 @@
                     }
                 });
                 
+                console.log('🏙️ DEBUG - Cidades únicas no modo proposta:', uniqueCities.size, Array.from(uniqueCities));
                 return uniqueCities.size;
             } else {
                 // Modo individual
-                if (!radioData.cidades) return 0;
+                if (!radioData.cidades) {
+                    console.log('🏙️ DEBUG - Modo individual: radioData.cidades não existe');
+                    return 0;
+                }
                 
                 const uniqueCities = new Set();
                 
                 radioData.cidades.forEach(cidade => {
-                    if (isRealCity(cidade)) {
+                    // ✅ FIX: Usar a nova função menos restritiva
+                    if (isValidCity(cidade)) {
                         // Usar apenas o nome da cidade sem UF para evitar duplicatas
                         const cityName = cidade.split(' - ')[0];
                         uniqueCities.add(cityName);
                     }
                 });
                 
+                console.log('🏙️ DEBUG - Cidades únicas no modo individual:', uniqueCities.size, Array.from(uniqueCities));
                 return uniqueCities.size;
             }
         }
@@ -1510,6 +1532,7 @@
                         name: radio.name,
                         dial: radio.dial,
                         coords: [radio.latitude, radio.longitude],
+                        impactos: radio.impactos, // ✅ FIX: Log dos impactos
                         notionId: radio.notionId
                     });
                 });
@@ -1805,8 +1828,9 @@
         }
         
         function renderCidadesIndividual() {
+            // ✅ FIX: Usar a nova função menos restritiva
             allCities = (radioData.cidades || []).filter(cidade => {
-                return isRealCity(cidade);
+                return isValidCity(cidade);
             });
             
             filteredCities = [...allCities];
@@ -2224,31 +2248,29 @@
             const container = document.getElementById('info-section');
             container.className = 'info-grid proposta'; // Adicionar classe especial
             
-            // ✅ FIX: Debug dos dados e cálculo correto de impactos
-            console.log('🔍 DEBUG - Dados das rádios para cálculo:', radioData.radios.map(radio => ({
-                name: radio.name,
-                pmm: radio.pmm,
-                impactos: radio.impactos,
-                hasImpactos: radio.hasOwnProperty('impactos'),
-                impactosType: typeof radio.impactos
-            })));
-            
-            // ✅ FIX: Verificar se campo impactos existe, senão usar PMM com aviso
+            // ✅ FIX: Usar dados de impactos corretamente da API
             let totalImpactos = 0;
             let usandoPMM = false;
             
-            radioData.radios.forEach(radio => {
-                if (radio.impactos !== undefined && radio.impactos !== null && radio.impactos !== 0) {
-                    // Usar campo impactos do Notion
-                    totalImpactos += radio.impactos;
-                    console.log(`✅ Usando IMPACTOS para ${radio.name}: ${radio.impactos}`);
-                } else {
-                    // Fallback para PMM se impactos não existir ou for 0
-                    totalImpactos += (radio.pmm || 0);
-                    usandoPMM = true;
-                    console.log(`⚠️ Usando PMM para ${radio.name}: ${radio.pmm} (impactos não disponível)`);
-                }
-            });
+            // ✅ FIX: Priorizar dados agregados da API se disponível
+            if (radioData.stats && radioData.stats.totalImpactos > 0) {
+                totalImpactos = radioData.stats.totalImpactos;
+                console.log('✅ Usando totalImpactos da API (stats):', totalImpactos);
+            } else {
+                // Fallback: calcular manualmente
+                radioData.radios.forEach(radio => {
+                    if (radio.impactos !== undefined && radio.impactos !== null && radio.impactos !== 0) {
+                        // Usar campo impactos do Notion
+                        totalImpactos += radio.impactos;
+                        console.log(`✅ Usando IMPACTOS para ${radio.name}: ${radio.impactos}`);
+                    } else {
+                        // Fallback para PMM se impactos não existir ou for 0
+                        totalImpactos += (radio.pmm || 0);
+                        usandoPMM = true;
+                        console.log(`⚠️ Usando PMM para ${radio.name}: ${radio.pmm} (impactos não disponível)`);
+                    }
+                });
+            }
             
             console.log('📊 TOTAL CALCULADO:', {
                 totalImpactos,
@@ -2270,15 +2292,6 @@
             
             const totalImpactosFormatted = totalImpactos ? totalImpactos.toLocaleString() : 'N/A';
             const universoUnicoFormatted = universoUnicoTotal ? universoUnicoTotal.toLocaleString() : 'N/A';
-            
-            // ✅ FIX: Contar apenas cidades reais (usar função específica para proposta)
-            const totalCidadesReais = countUniqueCities();
-            
-            console.log('🏙️ DEBUG - Contagem de cidades:', {
-                totalCidadesReais,
-                allCitiesLength: allCities.length,
-                sampleCities: allCities.slice(0, 5)
-            });
             
             // Inicializar array de rádios ativas (todas marcadas por padrão)
             activeRadios = radioData.radios.map((radio, index) => ({
@@ -2324,7 +2337,7 @@
                     </div>
                     <div class="info-item">
                         <span class="info-label">Cidades Únicas:</span>
-                        <span class="info-value">${totalCidadesReais}</span>
+                        <span class="info-value" id="cidades-unicas-count">0</span>
                     </div>
                 </div>
                 
@@ -2337,6 +2350,13 @@
                     </div>
                 </div>
             `;
+            
+            // ✅ FIX: Calcular e mostrar contador de cidades únicas correto imediatamente
+            setTimeout(() => {
+                const cidadesUnicasCount = countUniqueCities();
+                document.getElementById('cidades-unicas-count').textContent = cidadesUnicasCount;
+                console.log('🏙️ DEBUG - Contador de cidades únicas atualizado:', cidadesUnicasCount);
+            }, 100);
             
             container.style.display = 'grid';
         }
@@ -2355,10 +2375,11 @@
                 
                 const cities = radio.cidades || [];
                 cities.forEach((cidade, cityIndex) => {
-                    const isReal = isRealCity(cidade);
-                    console.log(`   🏙️ DEBUG - Cidade ${cityIndex}: "${cidade}" -> ${isReal ? '✅ ACEITA' : '❌ REJEITADA'}`);
+                    // ✅ FIX: Usar a nova função menos restritiva
+                    const isValid = isValidCity(cidade);
+                    console.log(`   🏙️ DEBUG - Cidade ${cityIndex}: "${cidade}" -> ${isValid ? '✅ ACEITA' : '❌ REJEITADA'}`);
                     
-                    if (isReal) {
+                    if (isValid) {
                         allRealCities.add(cidade);
                     }
                 });
@@ -2378,9 +2399,12 @@
             updateCidadesList();
             setupCitySearch();
             
-            // Atualizar contador
-            document.getElementById('cidade-count').textContent = allCities.length;
+            // ✅ FIX: Atualizar contador corretamente
+            const cidadesUnicasCount = countUniqueCities();
+            document.getElementById('cidade-count').textContent = cidadesUnicasCount;
             document.getElementById('cidades-section').style.display = 'block';
+            
+            console.log('🎯 DEBUG - Contador final de cidades:', cidadesUnicasCount);
         }
         
         // =========================================================================
@@ -2396,8 +2420,8 @@
                 const cities = radio.cidades || [];
                 
                 cities.forEach(cidade => {
-                    // Filtrar apenas cidades reais (não nomes de rádios)
-                    if (!isRealCity(cidade)) return;
+                    // ✅ FIX: Usar a nova função menos restritiva
+                    if (!isValidCity(cidade)) return;
                     
                     const cityName = cidade.split(' - ')[0]; // Remover UF para o nome base
                     
@@ -2468,7 +2492,15 @@
             // Atualizar contador
             updateRadioCount();
             
+            // ✅ FIX: Atualizar contador de cidades únicas
+            const cidadesUnicasCount = countUniqueCities();
+            const cidadesUnicasElement = document.getElementById('cidades-unicas-count');
+            if (cidadesUnicasElement) {
+                cidadesUnicasElement.textContent = cidadesUnicasCount;
+            }
+            
             console.log(`📻 Rádio ${radioIndex} (${radioData.radios[radioIndex].name}): ${isActive ? 'Ativada' : 'Desativada'}`);
+            console.log(`🏙️ Cidades únicas atualizadas: ${cidadesUnicasCount}`);
         }
         
         // =========================================================================
@@ -2518,8 +2550,8 @@
                 if (radio.active && radioData.radios[index]) {
                     const cities = radioData.radios[index].cidades || [];
                     cities.forEach(cidade => {
-                        // Filtrar apenas cidades reais
-                        if (isRealCity(cidade)) {
+                        // ✅ FIX: Usar a nova função menos restritiva
+                        if (isValidCity(cidade)) {
                             activeCities.add(cidade);
                         }
                     });
@@ -2535,7 +2567,10 @@
             
             // Atualizar visual
             updateCidadesList();
-            document.getElementById('cidade-count').textContent = allCities.length;
+            
+            // ✅ FIX: Atualizar contador corretamente
+            const cidadesUnicasCount = countUniqueCities();
+            document.getElementById('cidade-count').textContent = cidadesUnicasCount;
         }
         
         // =========================================================================
@@ -2551,8 +2586,8 @@
                 const cities = radioData_single.cidades || [];
                 
                 cities.forEach(cidade => {
-                    // Filtrar apenas cidades reais
-                    if (!isRealCity(cidade)) return;
+                    // ✅ FIX: Usar a nova função menos restritiva
+                    if (!isValidCity(cidade)) return;
                     
                     const cityName = cidade.split(' - ')[0];
                     
