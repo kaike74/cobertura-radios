@@ -430,7 +430,7 @@
             box-shadow: var(--shadow-md);
             border-left: 4px solid var(--emidias-primary);
             position: relative;
-            overflow: visible; /* Mudança para não cortar tooltips */
+            overflow: hidden; /* ✅ FIX: Corrigido para não cortar tooltips mas evitar scroll */
         }
         
         .cidades-container::before {
@@ -530,7 +530,7 @@
             border: 1px solid var(--emidias-light-gray);
             border-radius: 12px;
             background: var(--emidias-white);
-            overflow-x: visible; /* Para não cortar tooltips laterais */
+            /* ✅ FIX: Removido overflow-x para evitar scroll horizontal */
         }
         
         .cidade-item {
@@ -542,6 +542,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            /* ✅ FIX: Evita quebras de linha que causam scroll horizontal */
+            min-width: 0;
+            word-wrap: break-word;
         }
         
         .cidade-item:hover {
@@ -557,6 +560,7 @@
         
         .cidade-info {
             flex: 1;
+            min-width: 0; /* ✅ FIX: Permite que o texto seja truncado se necessário */
         }
         
         .cidade-name {
@@ -577,6 +581,7 @@
             align-items: center;
             gap: 4px;
             margin-left: 16px;
+            flex-shrink: 0; /* ✅ FIX: Evita que as rádios sejam comprimidas */
         }
         
         .cidade-radios-container {
@@ -606,37 +611,39 @@
             flex-direction: column;
             gap: 8px;
             animation: slideInLeft 0.2s ease-out;
-            /* Posicionamento dinâmico para evitar corte */
-            top: auto;
-            bottom: auto;
+            /* ✅ FIX: Melhor posicionamento para evitar corte e piscadas */
+            top: 50%;
+            transform: translateY(-50%);
         }
         
-        /* Tooltip posicionado acima quando está nos primeiros itens */
+        /* ✅ FIX: Tooltip posicionado acima quando está nos primeiros itens */
         .cidade-item:nth-child(-n+3) .radios-expanded {
             top: 100%;
+            transform: translateY(0);
             margin-top: 8px;
         }
         
-        /* Tooltip posicionado abaixo quando está nos últimos itens */  
+        /* ✅ FIX: Tooltip posicionado abaixo quando está nos últimos itens */  
         .cidade-item:nth-last-child(-n+3) .radios-expanded {
+            top: auto;
             bottom: 100%;
+            transform: translateY(0);
             margin-bottom: 8px;
         }
         
-        /* Posicionamento padrão (centralizado) para itens do meio */
-        .cidade-item:not(:nth-child(-n+3)):not(:nth-last-child(-n+3)) .radios-expanded {
-            top: 50%;
-            transform: translateY(-50%);
+        /* ✅ FIX: Posicionamento padrão estabilizado */
+        .cidade-radios-container:hover .radios-expanded {
+            display: flex !important;
         }
         
         @keyframes slideInLeft {
             from {
                 opacity: 0;
-                transform: translateX(20px);
+                transform: translateX(20px) translateY(-50%);
             }
             to {
                 opacity: 1;
-                transform: translateX(0);
+                transform: translateX(0) translateY(-50%);
             }
         }
         
@@ -1038,7 +1045,7 @@
                         <img class="header-logo" id="header-logo" src="" alt="Logo" style="display: none;">
                     </h1>
                     <div class="header-subtitle">
-                        <span id="radio-info">Mapa de Cobertura Interativo</span>
+                        <span id="radio-info"></span>
                     </div>
                 </div>
             </div>
@@ -1300,50 +1307,102 @@
             
             const lowerCityName = cityName.toLowerCase().trim();
             
-            // Lista expandida de palavras que indicam que é nome de rádio, não cidade
+            // ✅ FIX: Lista MUITO mais rigorosa de palavras que indicam rádio, não cidade
             const radioIndicators = [
-                'rádio', 'radio', 'fm', 'am', 'mhz', 'khz', 
-                'emissora', 'transmissora', 'antena', 'torre',
-                'broadcasting', 'stereo', 'hits', 'mix', 'pop',
-                'rock', 'news', 'jovem', 'pan', 'sat', 'digital',
-                'online', 'web', 'net', 'com', 'br', '.com', '.br',
-                'comunicação', 'comunicacao', 'media', 'midia',
-                'grupo', 'rede', 'sistema', 'canal', 'tv',
-                'televisão', 'televisao', 'banda', 'frequência',
-                'frequencia', 'ondas', 'som', 'audio', 'música',
-                'musica', 'show', 'programa', 'live', 'ao vivo'
+                // Palavras óbvias de rádio/mídia
+                'rádio', 'radio', 'fm', 'am', 'mhz', 'khz', 'dial',
+                'emissora', 'transmissora', 'antena', 'torre', 'frequência', 'frequencia',
+                'broadcasting', 'broadcast', 'stereo', 'mono', 'digital',
+                
+                // Gêneros musicais que aparecem em nomes de rádio
+                'hits', 'mix', 'pop', 'rock', 'sertaneja', 'country', 'gospel',
+                'jovem', 'teen', 'adult', 'contemporary', 'clássica', 'classica',
+                'reggae', 'funk', 'rap', 'hip hop', 'eletrônica', 'eletronica',
+                'bossa nova', 'samba', 'pagode', 'forró', 'forro', 'axé', 'axe',
+                
+                // Palavras comuns em nomes de rádio
+                'news', 'notícias', 'noticias', 'jornalismo', 'informação', 'informacao',
+                'música', 'musica', 'som', 'audio', 'sound', 'voice', 'voz',
+                'show', 'programa', 'live', 'ao vivo', 'online', 'web', 'net',
+                'cidade', 'capital', 'metropolitana', 'regional', 'nacional',
+                'brasil', 'brazil', 'br', 'com', '.com', '.br', 'www',
+                
+                // Empresas e grupos de comunicação
+                'comunicação', 'comunicacao', 'media', 'mídia', 'midia',
+                'grupo', 'rede', 'sistema', 'canal', 'tv', 'televisão', 'televisao',
+                'sat', 'satélite', 'satelite', 'cabo', 'digital',
+                
+                // Palavras técnicas
+                'banda', 'ondas', 'hertz', 'watts', 'potência', 'potencia',
+                'cobertura', 'alcance', 'sinal', 'transmissão', 'transmissao',
+                
+                // Indicadores de horário/programação
+                'manhã', 'manha', 'tarde', 'noite', 'madrugada', '24h', '24 horas',
+                'programação', 'programacao', 'playlist', 'top', 'best',
+                
+                // Palavras em inglês comuns em rádios
+                'station', 'channel', 'network', 'group', 'media', 'entertainment',
+                'music', 'news', 'talk', 'sports', 'culture', 'classic',
+                
+                // Sufixos/prefixos comuns de rádio
+                'super', 'mega', 'ultra', 'maxi', 'mini', 'micro',
+                'new', 'nova', 'novo', 'primeira', 'segunda', 'única', 'unica',
+                'mais', 'melhor', 'grande', 'pequena', 'local', 'comunitária', 'comunitaria'
             ];
             
-            // Verificar se contém indicadores de rádio
+            // ✅ FIX: Verificação mais rigorosa
             for (const indicator of radioIndicators) {
                 if (lowerCityName.includes(indicator)) {
                     return false;
                 }
             }
             
-            // Verificar se é apenas números (frequência)
-            if (/^\d+[\.,]?\d*$/.test(cityName.trim())) {
+            // ✅ FIX: Verificar padrões específicos de frequência
+            if (/\d+[\.,]\d+/.test(cityName.trim())) { // ex: 107.3, 90,5
                 return false;
             }
             
-            // Verificar se contém apenas números e pontos (frequências como 107.3)
-            if (/^[\d\.,\s]+$/.test(cityName.trim())) {
+            // ✅ FIX: Verificar se é apenas números (frequência sem ponto)
+            if (/^\d+$/.test(cityName.trim()) && cityName.trim().length <= 4) {
                 return false;
             }
             
-            // Verificar se é muito curto (provavelmente siglas ou códigos)
+            // ✅ FIX: Verificar se começa com números (frequências)
+            if (/^\d/.test(cityName.trim())) {
+                return false;
+            }
+            
+            // ✅ FIX: Verificar se contém @ ou URLs
+            if (lowerCityName.includes('@') || lowerCityName.includes('http') || 
+                lowerCityName.includes('www.') || lowerCityName.includes('.com') || 
+                lowerCityName.includes('.br')) {
+                return false;
+            }
+            
+            // ✅ FIX: Muito curto (provavelmente siglas)
             if (cityName.trim().length < 3) {
                 return false;
             }
             
-            // Verificar padrões de URL ou email
-            if (lowerCityName.includes('@') || lowerCityName.includes('http') || lowerCityName.includes('www.')) {
+            // ✅ FIX: Muito longo (provavelmente descrição de rádio)
+            if (cityName.trim().length > 50) {
                 return false;
             }
             
-            // Verificar se contém muitos números (provavelmente código ou frequência)
+            // ✅ FIX: Contém muitos números (códigos ou frequências)
             const numberCount = (cityName.match(/\d/g) || []).length;
-            if (numberCount > cityName.length / 2) {
+            if (numberCount > cityName.length / 3) { // Mais de 1/3 são números
+                return false;
+            }
+            
+            // ✅ FIX: Verificar padrões suspeitos
+            if (cityName.includes('(') && cityName.includes(')') && !cityName.includes(' - ')) {
+                // Parênteses sem formato "Cidade - UF" são suspeitos
+                return false;
+            }
+            
+            // ✅ FIX: Verificar se contém apenas caracteres especiais estranhos
+            if (/^[^a-zA-ZÀ-ÿ\s\-]+$/.test(cityName)) {
                 return false;
             }
             
@@ -1355,22 +1414,40 @@
         // 🏙️ FUNÇÃO PARA CONTAR APENAS CIDADES REAIS (SEM RÁDIOS)
         // =========================================================================
         function countUniqueCities() {
-            if (!radioData.radios) return 0;
-            
-            const uniqueCities = new Set();
-            
-            radioData.radios.forEach(radio => {
-                const cities = radio.cidades || [];
-                cities.forEach(cidade => {
+            if (isPropostaMode) {
+                // ✅ FIX: Modo proposta - contar apenas cidades das rádios ativas
+                const uniqueCities = new Set();
+                
+                activeRadios.forEach((radio, index) => {
+                    if (radio.active && radioData.radios[index]) {
+                        const cities = radioData.radios[index].cidades || [];
+                        cities.forEach(cidade => {
+                            if (isRealCity(cidade)) {
+                                // Usar apenas o nome da cidade sem UF para evitar duplicatas
+                                const cityName = cidade.split(' - ')[0];
+                                uniqueCities.add(cityName);
+                            }
+                        });
+                    }
+                });
+                
+                return uniqueCities.size;
+            } else {
+                // Modo individual
+                if (!radioData.cidades) return 0;
+                
+                const uniqueCities = new Set();
+                
+                radioData.cidades.forEach(cidade => {
                     if (isRealCity(cidade)) {
                         // Usar apenas o nome da cidade sem UF para evitar duplicatas
                         const cityName = cidade.split(' - ')[0];
                         uniqueCities.add(cityName);
                     }
                 });
-            });
-            
-            return uniqueCities.size;
+                
+                return uniqueCities.size;
+            }
         }
         
         // Função auxiliar para calcular distância entre coordenadas (Haversine)
@@ -1826,7 +1903,7 @@
                 praca: radio.praca || 'N/A',
                 universo: radio.universo || 0,
                 pmm: radio.pmm || 0,
-                impactos: radio.impactos || radio.pmm || 0,
+                impactos: radio.impactos || radio.pmm || 0, // ✅ FIX: Garantir que impactos existe
                 imageUrl: radio.imageUrl || `https://via.placeholder.com/56x56/06055B/white?text=${encodeURIComponent(radio.dial || 'FM')}`,
                 coverageType: radio.coverageType || 'circle',
                 kmlCoordinates: radio.kmlCoordinates || [],
@@ -2185,9 +2262,9 @@
             const container = document.getElementById('info-section');
             container.className = 'info-grid proposta'; // Adicionar classe especial
             
-            // Calcular Impactos totais (somar campo "impactos" ao invés de PMM)
+            // ✅ FIX: Calcular Impactos totais usando campo correto (radio.impactos ao invés de radio.pmm)
             const totalImpactos = radioData.radios.reduce((sum, radio) => {
-                return sum + (radio.impactos || radio.pmm || 0); // Fallback para PMM se impactos não existir
+                return sum + (radio.impactos || 0); // Usar sempre impactos
             }, 0);
             
             // Calcular universo único por cidade
@@ -2205,7 +2282,7 @@
             const totalImpactosFormatted = totalImpactos ? totalImpactos.toLocaleString() : 'N/A';
             const universoUnicoFormatted = universoUnicoTotal ? universoUnicoTotal.toLocaleString() : 'N/A';
             
-            // Contar apenas cidades reais (usar função específica)
+            // ✅ FIX: Contar apenas cidades reais (usar função específica para proposta)
             const totalCidadesReais = countUniqueCities();
             
             // Inicializar array de rádios ativas (todas marcadas por padrão)
@@ -2323,29 +2400,6 @@
             });
             
             console.log('🗺️ Mapeamento cidade->rádios construído:', Object.keys(cityRadioMapping).length, 'cidades');
-        }
-        
-        // =========================================================================
-        // 🎯 FUNÇÕES AUXILIARES PARA HOVER DE RÁDIOS (MODO PROPOSTA)
-        // =========================================================================
-        function expandRadiosList(element, cidadeNome) {
-            const collapsed = element.querySelector('.radios-collapsed');
-            const expanded = element.querySelector('.radios-expanded');
-            
-            if (collapsed && expanded) {
-                collapsed.style.display = 'none';
-                expanded.style.display = 'flex';
-            }
-        }
-        
-        function collapseRadiosList(element) {
-            const collapsed = element.querySelector('.radios-collapsed');
-            const expanded = element.querySelector('.radios-expanded');
-            
-            if (collapsed && expanded) {
-                collapsed.style.display = 'flex';
-                expanded.style.display = 'none';
-            }
         }
         
         // =========================================================================
@@ -2590,11 +2644,9 @@
                         </div>
                     `;
                 } else if (radiosQueCobrema.length > 1) {
-                    // Múltiplas rádios: mostrar logos lado a lado com hover
+                    // ✅ FIX: Múltiplas rádios com hover estabilizado
                     radiosHtml = `
-                        <div class="cidade-radios-container" 
-                             onmouseenter="expandRadiosList(this, '${nome}')"
-                             onmouseleave="collapseRadiosList(this)">
+                        <div class="cidade-radios-container">
                             <div class="radios-collapsed">
                                 ${radiosQueCobrema.slice(0, 3).map(radio => `
                                     <img class="radio-logo-mini" 
@@ -2605,7 +2657,7 @@
                                 `).join('')}
                                 ${radiosQueCobrema.length > 3 ? `<span class="radio-count-extra">+${radiosQueCobrema.length - 3}</span>` : ''}
                             </div>
-                            <div class="radios-expanded" style="display: none;">
+                            <div class="radios-expanded">
                                 ${radiosQueCobrema.map(radio => `
                                     <div class="radio-expanded">
                                         <img src="${radio.imageUrl}" 
@@ -2741,8 +2793,9 @@
                         <span class="type-indicator type-proposta">Proposta</span>
                     `;
                 }
+                // ✅ FIX: Remover texto desnecessário do cabeçalho
                 if (radioInfoElement) {
-                    radioInfoElement.textContent = `Mapa de Cobertura Interativo`;
+                    radioInfoElement.textContent = '';
                 }
             } else {
                 // Modo Individual: manter comportamento original
@@ -2755,6 +2808,7 @@
                         <span class="type-indicator type-individual">Individual</span>
                     `;
                 }
+                // ✅ FIX: Manter apenas informações essenciais para modo individual
                 if (radioInfoElement) radioInfoElement.textContent = `${radioData.dial} • ${radioData.praca} - ${radioData.uf}`;
             }
         }
