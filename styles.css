@@ -1,0 +1,1079 @@
+
+        /* =============================================================================
+           🎨 IDENTIDADE VISUAL E-MÍDIAS
+           ============================================================================= */
+        
+        :root {
+            /* 🎨 Paleta de Cores E-MÍDIAS */
+            --emidias-primary: #06055B;
+            --emidias-magenta: #FC1E75;
+            --emidias-rosa: #D71E97;
+            --emidias-roxo: #AA1EA5;
+            --emidias-roxo-cinza: #9E33AC;
+            --emidias-success: #10B981;
+            --emidias-gray: #64748B;
+            --emidias-light-gray: #F1F5F9;
+            --emidias-white: #FFFFFF;
+            --emidias-dark: #1E293B;
+            
+            /* 🎨 Gradientes E-MÍDIAS */
+            --gradient-primary: linear-gradient(135deg, var(--emidias-primary) 0%, var(--emidias-roxo) 100%);
+            --gradient-accent: linear-gradient(135deg, var(--emidias-magenta) 0%, var(--emidias-rosa) 100%);
+            --gradient-success: linear-gradient(135deg, var(--emidias-success) 0%, #34D399 100%);
+            
+            /* 📝 Tipografia E-MÍDIAS */
+            --font-primary: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-weight-light: 300;
+            --font-weight-normal: 400;
+            --font-weight-medium: 500;
+            --font-weight-semibold: 600;
+            --font-weight-bold: 700;
+            
+            /* 🎨 Sombras E-MÍDIAS */
+            --shadow-sm: 0 1px 3px rgba(6, 5, 91, 0.05);
+            --shadow-md: 0 4px 12px rgba(6, 5, 91, 0.1);
+            --shadow-lg: 0 8px 25px rgba(6, 5, 91, 0.15);
+            --shadow-accent: 0 4px 15px rgba(252, 30, 117, 0.2);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-primary);
+            background: var(--emidias-white);
+            color: var(--emidias-dark);
+            line-height: 1.6;
+            font-weight: var(--font-weight-normal);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* =============================================================================
+           🎨 HEADER COM IDENTIDADE E-MÍDIAS
+           ============================================================================= */
+        .header {
+            background: var(--emidias-white);
+            color: var(--emidias-primary);
+            padding: 32px 24px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid var(--emidias-primary);
+        }
+        
+        /* Efeito de brilho sutil */
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(6, 5, 91, 0.05), transparent);
+            animation: shine 4s infinite;
+        }
+        
+        @keyframes shine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .header-title {
+            font-size: 28px;
+            font-weight: var(--font-weight-bold);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0px;
+            position: relative;
+            z-index: 1;
+            flex-direction: column;
+        }
+        
+        .header-logo {
+            width: 150px;
+            height: 120px;
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            transition: transform 0.3s ease;
+            margin-bottom: 16px;
+        }
+        
+        .header-logo:hover {
+            transform: scale(1.05);
+        }
+        
+        .header-subtitle {
+            font-size: 16px;
+            opacity: 0.8;
+            font-weight: var(--font-weight-medium);
+            position: relative;
+            z-index: 1;
+            color: var(--emidias-gray);
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header-main {
+            flex: 1;
+            text-align: center;
+        }
+        
+        /* =============================================================================
+           🏢 MARCA D'ÁGUA E-MÍDIAS INSTITUCIONAL
+           ============================================================================= */
+        .brand-watermark {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            height: 120px;
+            width: auto;
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 999;
+            transition: opacity 0.3s ease;
+        }
+        
+        .brand-watermark:hover {
+            opacity: 0.3;
+        }
+        
+        /* =============================================================================
+           🎯 INDICADOR DE TIPO (INDIVIDUAL VS PROPOSTA)
+           ============================================================================= */
+        .type-indicator {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: var(--font-weight-bold);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 12px;
+        }
+        
+        .type-individual {
+            background: var(--gradient-success);
+            color: var(--emidias-white);
+        }
+        
+        .type-proposta {
+            background: var(--gradient-accent);
+            color: var(--emidias-white);
+        }
+        
+        /* =============================================================================
+           📋 CARDS DE INFORMAÇÃO E-MÍDIAS (REMOVIDOS DO MODO INDIVIDUAL)
+           ============================================================================= */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        /* 🎯 NOVO LAYOUT PARA PROPOSTA: mapa + lista de rádios + botão expandir */
+        .proposta-layout {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+            margin-bottom: 20px;
+            transition: all 0.4s ease;
+        }
+        
+        /* 🔧 NOVO: Layout expandido para mapa */
+        .proposta-layout.map-expanded {
+            grid-template-columns: 1fr;
+        }
+        
+        .proposta-radios-section {
+            background: var(--emidias-white);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow-md);
+            border-left: 4px solid var(--emidias-primary);
+            position: relative;
+            transition: all 0.4s ease;
+        }
+        
+        /* 🔧 NOVO: Ocultar seção de rádios quando expandido */
+        .proposta-layout.map-expanded .proposta-radios-section {
+            transform: translateX(100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .info-card {
+            background: var(--emidias-white);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            border-left: 4px solid var(--emidias-primary);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: visible;
+        }
+        
+        .info-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+        }
+        
+        .info-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-left-color: var(--emidias-magenta);
+        }
+        
+        .info-card:hover::before {
+            background: var(--gradient-accent);
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: var(--font-weight-bold);
+            color: var(--emidias-primary);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--emidias-light-gray);
+            transition: all 0.2s ease;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-item:hover {
+            background: rgba(6, 5, 91, 0.02);
+            border-radius: 8px;
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+        
+        .info-label {
+            font-weight: var(--font-weight-semibold);
+            color: var(--emidias-gray);
+        }
+        
+        .info-value {
+            font-weight: var(--font-weight-medium);
+            color: var(--emidias-dark);
+        }
+        
+        .info-value.highlight {
+            background: var(--gradient-primary);
+            color: var(--emidias-white);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        /* =============================================================================
+           🔧 BOTÃO EXPANDIR MAPA (NOVO)
+           ============================================================================= */
+        .map-expand-btn {
+            background: var(--gradient-primary);
+            color: var(--emidias-white);
+            border: none;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: var(--font-weight-semibold);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .map-expand-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(6, 5, 91, 0.3);
+        }
+        
+        .map-expand-btn.expanded {
+            background: var(--gradient-accent);
+        }
+        
+        /* =============================================================================
+           📊 LISTA DE RÁDIOS NA PROPOSTA
+           ============================================================================= */
+        .radios-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--emidias-light-gray);
+            border-radius: 8px;
+            background: rgba(6, 5, 91, 0.01);
+        }
+        
+        .radio-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--emidias-light-gray);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .radio-item:hover {
+            background: rgba(6, 5, 91, 0.05);
+            transform: translateX(4px);
+        }
+        
+        .radio-item:last-child {
+            border-bottom: none;
+        }
+        
+        .radio-item img {
+            width: 36px;
+            height: 27px;
+            border-radius: 4px;
+            margin-right: 8px;
+            object-fit: cover;
+        }
+        
+        .radio-item-info {
+            flex: 1;
+        }
+        
+        .radio-item-name {
+            font-weight: var(--font-weight-semibold);
+            font-size: 14px;
+            color: var(--emidias-dark);
+        }
+        
+        .radio-item-details {
+            font-size: 12px;
+            color: var(--emidias-gray);
+        }
+        
+        .radio-item-checkbox {
+            margin-left: 12px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--emidias-primary);
+        }
+        
+        .radio-item.disabled {
+            opacity: 0.5;
+            background: rgba(0, 0, 0, 0.02);
+        }
+        
+        .radio-count-badge {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            background: var(--gradient-accent);
+            color: var(--emidias-white);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: var(--font-weight-bold);
+            min-width: 24px;
+            text-align: center;
+        }
+        
+        /* =============================================================================
+           🗺️ MAPA CONTAINER E-MÍDIAS (MELHORADO)
+           ============================================================================= */
+        .map-container {
+            background: var(--emidias-white);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 24px;
+            transition: all 0.3s ease;
+            border: 1px solid var(--emidias-light-gray);
+        }
+        
+        .map-container:hover {
+            box-shadow: 0 12px 35px rgba(6, 5, 91, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        #map {
+            height: 550px;
+            width: 100%;
+            min-height: 550px;
+            transition: filter 0.3s ease;
+        }
+        
+        /* 🔧 MODO INDIVIDUAL: Mapa maior (sem cards) */
+        .individual-layout #map {
+            height: 600px;
+            min-height: 600px;
+        }
+        
+        /* 🎯 Para layout proposta, mapa normal */
+        .proposta-layout #map {
+            height: 450px;
+            min-height: 450px;
+        }
+        
+        /* 🔧 Para layout proposta expandido, mapa ainda maior */
+        .proposta-layout.map-expanded #map {
+            height: 600px;
+            min-height: 600px;
+        }
+        
+        /* =============================================================================
+           🌍 SEÇÃO CIDADES E-MÍDIAS (TOOLTIPS MELHORADOS)
+           ============================================================================= */
+        .cidades-container {
+            background: var(--emidias-white);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: var(--shadow-md);
+            border-left: 4px solid var(--emidias-primary);
+            position: relative;
+            overflow: visible;
+        }
+        
+        .cidades-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+        }
+        
+        .cidades-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        
+        .cidades-title {
+            font-size: 22px;
+            font-weight: var(--font-weight-bold);
+            color: var(--emidias-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .cidade-count {
+            background: var(--gradient-accent);
+            color: var(--emidias-white);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: var(--font-weight-bold);
+        }
+        
+        .cidades-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .excel-export-btn {
+            background: var(--gradient-success);
+            color: var(--emidias-white);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: var(--font-weight-semibold);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .excel-export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .search-box {
+            margin-bottom: 20px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid var(--emidias-light-gray);
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: var(--font-primary);
+            font-weight: var(--font-weight-normal);
+            transition: all 0.3s ease;
+            background: var(--emidias-white);
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--emidias-primary);
+            box-shadow: 0 0 0 4px rgba(6, 5, 91, 0.1);
+            background: rgba(6, 5, 91, 0.01);
+        }
+        
+        .cidades-list {
+            max-height: 350px;
+            overflow-y: auto;
+            border: 1px solid var(--emidias-light-gray);
+            border-radius: 12px;
+            background: var(--emidias-white);
+            position: relative;
+        }
+        
+        .cidade-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--emidias-light-gray);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-width: 0;
+            word-wrap: break-word;
+        }
+        
+        .cidade-item:hover {
+            background: linear-gradient(90deg, rgba(6, 5, 91, 0.03) 0%, var(--emidias-white) 100%);
+            transform: translateX(8px);
+            border-left: 4px solid var(--emidias-primary);
+            padding-left: 16px;
+        }
+        
+        .cidade-item:last-child {
+            border-bottom: none;
+        }
+        
+        .cidade-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .cidade-name {
+            font-weight: var(--font-weight-medium);
+            color: var(--emidias-dark);
+            font-size: 15px;
+        }
+        
+        .cidade-uf {
+            font-size: 13px;
+            color: var(--emidias-gray);
+            margin-left: 8px;
+            font-weight: var(--font-weight-normal);
+        }
+        
+        .cidade-distance {
+            font-size: 12px;
+            color: var(--emidias-success);
+            font-weight: var(--font-weight-semibold);
+            margin-left: 8px;
+        }
+        
+        .cidade-radios {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 16px;
+            flex-shrink: 0;
+        }
+        
+        /* =============================================================================
+           🔧 TOOLTIPS MELHORADOS (SEM PROBLEMAS DE POSICIONAMENTO)
+           ============================================================================= */
+        .cidade-radios-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .radios-collapsed {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .radios-expanded {
+            position: absolute;
+            background: var(--emidias-white);
+            border: 2px solid var(--emidias-primary);
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            min-width: 280px;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            
+            max-width: calc(100vw - 40px);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .cidade-item:nth-child(-n+3) .radios-expanded {
+            top: 100%;
+            transform: translateY(0);
+            margin-top: 8px;
+        }
+        
+        .cidade-item:nth-last-child(-n+3) .radios-expanded {
+            top: auto;
+            bottom: 100%;
+            transform: translateY(0);
+            margin-bottom: 8px;
+        }
+        
+        @media (max-width: 768px) {
+            .radios-expanded {
+                right: auto;
+                left: 50%;
+                transform: translateX(-50%) translateY(-50%);
+                min-width: 200px;
+                max-width: calc(100vw - 20px);
+            }
+            
+            .cidade-item:nth-child(-n+3) .radios-expanded {
+                transform: translateX(-50%) translateY(0);
+            }
+            
+            .cidade-item:nth-last-child(-n+3) .radios-expanded {
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        
+        .cidade-radios-container:hover .radios-expanded {
+            display: flex !important;
+        }
+        
+        .radio-logo-mini {
+            width: 36px;
+            height: 27px;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 2px solid var(--emidias-light-gray);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .radio-logo-mini:hover {
+            transform: scale(1.1);
+            border-color: var(--emidias-primary);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .radio-count-extra {
+            background: var(--emidias-gray);
+            color: var(--emidias-white);
+            border-radius: 50%;
+            width: 30px;
+            height: 27px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: var(--font-weight-bold);
+        }
+        
+        .radio-expanded {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            background: rgba(6, 5, 91, 0.05);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .radio-expanded:hover {
+            background: rgba(6, 5, 91, 0.08);
+            transform: translateX(4px);
+        }
+        
+        .radio-expanded img {
+            width: 36px;
+            height: 27px;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 1px solid var(--emidias-light-gray);
+        }
+        
+        .radio-expanded-info {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        
+        .radio-expanded-name {
+            font-size: 14px;
+            font-weight: var(--font-weight-semibold);
+            color: var(--emidias-dark);
+            line-height: 1.2;
+        }
+        
+        .radio-expanded-details {
+            font-size: 12px;
+            color: var(--emidias-gray);
+            line-height: 1.2;
+        }
+        
+        /* =============================================================================
+           ⏳ LOADING E-MÍDIAS
+           ============================================================================= */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--emidias-gray);
+        }
+        
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--emidias-light-gray);
+            border-top: 4px solid var(--emidias-primary);
+            border-radius: 50%;
+            animation: spin 1.2s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* =============================================================================
+           ❌ ERROR E-MÍDIAS
+           ============================================================================= */
+        .error {
+            background: linear-gradient(135deg, #FEF2F2 0%, #FFFFFF 100%);
+            border: 1px solid #FECACA;
+            color: var(--emidias-magenta);
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 24px 0;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .error-details {
+            margin-top: 16px;
+            font-size: 12px;
+            color: #991B1B;
+            font-family: 'Courier New', monospace;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: left;
+        }
+        
+        /* =============================================================================
+           🦶 RODAPÉ E-MÍDIAS
+           ============================================================================= */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            margin-top: 40px;
+            border-top: 2px solid var(--emidias-light-gray);
+            background: linear-gradient(135deg, #FAFBFC 0%, var(--emidias-white) 100%);
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .footer-text {
+            font-size: 14px;
+            color: var(--emidias-gray);
+            margin: 0;
+            font-weight: var(--font-weight-medium);
+        }
+        
+        /* =============================================================================
+           📱 RESPONSIVIDADE E-MÍDIAS
+           ============================================================================= */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .info-grid { 
+                grid-template-columns: 1fr; 
+                gap: 14px;
+                max-width: 100%;
+            }
+            
+            .proposta-layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .proposta-layout.map-expanded {
+                grid-template-columns: 1fr;
+            }
+            
+            .proposta-layout.map-expanded .proposta-radios-section {
+                display: none;
+            }
+            
+            .header-logo { 
+                width: 100px;
+                height: 80px; 
+                margin-bottom: 12px;
+            }
+            
+            .header-title { 
+                font-size: 20px; 
+            }
+            
+            .container { 
+                padding: 16px; 
+            }
+            
+            #map { 
+                height: 450px; 
+                min-height: 450px; 
+            }
+            
+            .individual-layout #map {
+                height: 500px; 
+                min-height: 500px; 
+            }
+            
+            .proposta-layout #map {
+                height: 400px; 
+                min-height: 400px; 
+            }
+            
+            .proposta-layout.map-expanded #map {
+                height: 500px; 
+                min-height: 500px; 
+            }
+            
+            .header {
+                padding: 24px 20px;
+                margin-bottom: 20px;
+            }
+            
+            .cidades-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .cidades-actions {
+                justify-content: center;
+            }
+            
+            .search-input {
+                padding: 14px 16px;
+                font-size: 16px;
+            }
+            
+            .brand-watermark {
+                height: 80px;
+                top: 10px;
+                right: 10px;
+            }
+            
+            .type-indicator {
+                margin-left: 0;
+                margin-top: 8px;
+                display: block;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header-title {
+                font-size: 18px;
+            }
+            
+            .header-logo { 
+                width: 80px;
+                height: 60px; 
+                margin-bottom: 8px;
+            }
+            
+            .info-card {
+                padding: 12px;
+            }
+            
+            .cidades-container {
+                padding: 20px;
+            }
+            
+            .excel-export-btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+            
+            .brand-watermark {
+                height: 60px;
+            }
+        }
+        
+        /* =============================================================================
+           🗺️ CUSTOMIZAÇÕES LEAFLET E-MÍDIAS
+           ============================================================================= */
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .leaflet-popup-tip {
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .radio-popup {
+            text-align: center;
+            min-width: 220px;
+            font-family: var(--font-primary);
+        }
+        
+        .radio-popup img {
+            width: 90px;
+            height: 68px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .radio-popup h3 {
+            margin: 0 0 8px 0;
+            color: var(--emidias-primary);
+            font-size: 18px;
+            font-weight: var(--font-weight-bold);
+        }
+        
+        .radio-popup p {
+            margin: 6px 0;
+            font-size: 14px;
+            color: var(--emidias-gray);
+            font-weight: var(--font-weight-medium);
+        }
+        
+        /* Marcadores customizados */
+        .city-marker,
+        .radio-marker,
+        .temp-city-marker {
+            background: transparent !important;
+            border: none !important;
+        }
+        
+        .radio-marker-image {
+            width: 56px !important;
+            height: 56px !important;
+            border-radius: 50%;
+            border: 3px solid var(--emidias-white);
+            box-shadow: var(--shadow-md);
+            object-fit: cover;
+            transition: all 0.3s ease;
+        }
+        
+        .radio-marker-image:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        /* Marcadores específicos para proposta (cores diferentes) */
+        .radio-marker-image.proposta-1 {
+            border-color: var(--emidias-primary);
+        }
+        
+        .radio-marker-image.proposta-2 {
+            border-color: var(--emidias-magenta);
+        }
+        
+        .radio-marker-image.proposta-3 {
+            border-color: var(--emidias-rosa);
+        }
+        
+        .radio-marker-image.proposta-4 {
+            border-color: var(--emidias-roxo);
+        }
+        
+        .radio-marker-image.proposta-5 {
+            border-color: var(--emidias-success);
+        }
+        
+        /* =============================================================================
+           🎨 ANIMAÇÕES E-MÍDIAS
+           ============================================================================= */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .info-card,
+        .map-container,
+        .cidades-container,
+        .proposta-layout {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .info-card:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+        
+        .map-container {
+            animation-delay: 0.2s;
+        }
+        
+        .cidades-container {
+            animation-delay: 0.3s;
+        }
+    
