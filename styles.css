@@ -1124,22 +1124,24 @@ CABEÇALHO SUPERIOR COM LOGO (E-MÍDIAS)
     }
 }
 
-/* =============================================================================
-    🔧 CORREÇÃO: Garantir visibilidade do mapa individual
-    ============================================================================= */
-#map-section.individual-layout {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    position: relative !important;
-    width: 100% !important;
-    min-height: 600px !important;
+/* Forçar visibilidade do mapa individual */
+#map-section {
+    display: none; /* Oculto por padrão */
 }
 
-#map-section.individual-layout #map {
+#map-section.individual-layout {
+    display: block !important;
+    width: 100% !important;
+    min-height: 600px !important;
+    background: #f8f9fa; /* Fundo visível para debug */
+    border: 1px solid #ddd; /* Borda para debug */
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+#map {
     width: 100% !important;
     height: 600px !important;
     min-height: 600px !important;
-    position: relative !important;
-    z-index: 1 !important;
+    background: #e9ecef; /* Fundo cinza claro para ver se o container está aparecendo */
 }
