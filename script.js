@@ -447,7 +447,6 @@ async function initializeIndividualMode() {
     renderCidadesIndividual();
 }
 
-// 🔧 MODIFICADO: Modo Individual
 async function initializeMapIndividual() {
     return new Promise((resolve) => {
         setTimeout(() => {
@@ -464,8 +463,13 @@ async function initializeMapIndividual() {
                 addRadioMarkerIndividual();
                 addCoverageIndividual();
                 
-                // 🔧 MODIFICADO: Usar função unificada
-                addCityMarkersIndividual();
+                // 🔧 CORRIGIDO: Adicionar bolinhas de cidades
+                if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
+                    console.log('🔧 Inicializando marcadores de cidades (modo individual)');
+                    addCityMarkersIndividual();
+                } else {
+                    console.log('⚠️ Nenhum KML placemark encontrado para criar marcadores de cidades');
+                }
                 
                 fitMapToCoverageIndividual();
                 
@@ -567,18 +571,109 @@ function addCoverageCircleIndividual() {
     coverageLayers.push(coverageLayer);
 }
 
-// 🔧 MODIFICADO: Usar função unificada
+// 🔧 CORRIGIDO: Função para modo individual
 function addCityMarkersIndividual() {
     // Limpar marcadores anteriores
-    clearAllCityMarkers();
+    cityMarkers.forEach(marker => map.removeLayer(marker));
+    cityMarkers = [];
+    window.cityPlacemarkMap = {};
     
-    // Usar função unificada para modo individual
-    if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
-        addCityMarkers(radioData, 0, '#06055B', true);
+    // Limpar também o array por rádio
+    if (cityMarkersByRadio[0]) {
+        cityMarkersByRadio[0].forEach(marker => map.removeLayer(marker));
+    }
+    cityMarkersByRadio[0] = [];
+    
+    // Verificar se temos dados KML
+    if (!radioData.kmlPlacemarks || radioData.kmlPlacemarks.length === 0) {
+        console.log('❌ Nenhum placemark KML encontrado para modo individual');
+        return;
     }
     
-    // Atualizar visibilidade
-    updateCityMarkersVisibility();
+    console.log(`📍 Adicionando ${radioData.kmlPlacemarks.length} marcadores de cidades (modo individual)`);
+    
+    const cityIcon = L.divIcon({
+        html: `
+            <div style="
+                width: 18px; 
+                height: 18px; 
+                background: #06055B; 
+                border-radius: 50%; 
+                border: 2px solid white;
+                box-shadow: 0 2px 6px rgba(6, 5, 91, 0.3);
+            "></div>
+        `,
+        className: 'city-marker',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9]
+    });
+    
+    const radioLocation = radioData.praca ? radioData.praca.toLowerCase() : '';
+    const radioName = radioData.name ? radioData.name.toLowerCase() : '';
+    
+    radioData.kmlPlacemarks.forEach((placemark, index) => {
+        const cityName = placemark.name.toLowerCase();
+        
+        // Filtrar origem/rádio para não criar marcador
+        if (
+            cityName.includes(radioLocation) || 
+            placemark.description?.includes('0.0 km') ||
+            placemark.description?.includes('0,0 km') ||
+            cityName === radioLocation ||
+            cityName.includes('origem') ||
+            cityName.includes(radioName.replace('rádio', '').replace('fm', '').trim()) ||
+            radioName.includes(cityName) ||
+            (placemark.description && placemark.description.match(/0\.[0-9]\s*km/))
+        ) {
+            console.log(`⚠️ Ignorando placemark de origem: "${placemark.name}"`);
+            return;
+        }
+        
+        const [lat, lng] = placemark.coordinates;
+        
+        const distanceFromRadio = calculateDistance(
+            radioData.latitude, radioData.longitude,
+            lat, lng
+        );
+        
+        if (distanceFromRadio < 0.5) {
+            console.log(`⚠️ Ignorando cidade muito próxima: "${placemark.name}" (${distanceFromRadio.toFixed(1)} km)`);
+            return;
+        }
+        
+        const cityMarker = L.marker([lat, lng], { icon: cityIcon })
+            .bindPopup(`
+                <div style="text-align: center; min-width: 160px; font-family: var(--font-primary);">
+                    <h4 style="margin: 0 0 8px 0; color: #06055B; font-weight: 600;">${placemark.name}</h4>
+                    ${placemark.description ? `<p style="margin: 4px 0; font-size: 12px; color: #64748B;">${placemark.description}</p>` : ''}
+                    <p style="margin: 4px 0; font-size: 11px; color: #9CA3AF;">
+                        📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}
+                    </p>
+                </div>
+            `)
+            .addTo(map);
+            
+        // Adicionar aos arrays de controle
+        const markerIndex = cityMarkers.length;
+        cityMarkers.push(cityMarker);
+        
+        // Inicializar array se não existir
+        if (!cityMarkersByRadio[0]) {
+            cityMarkersByRadio[0] = [];
+        }
+        cityMarkersByRadio[0].push(cityMarker);
+        
+        // Mapeamento para função highlightCity
+        window.cityPlacemarkMap[placemark.name.toLowerCase()] = {
+            markerIndex: markerIndex,
+            coordinates: [lat, lng],
+            placemark: placemark
+        };
+        
+        console.log(`✅ Cidade adicionada: "${placemark.name}" (${distanceFromRadio.toFixed(1)} km)`);
+    });
+    
+    console.log(`📍 Total de marcadores de cidades criados: ${cityMarkers.length}`);
 }
 
 function fitMapToCoverageIndividual() {
@@ -1542,5 +1637,30 @@ function toggleIndividualCities(show = true) {
                 }
             }
         });
+    }
+}
+
+// 🔧 NOVA: Função para toggle de cidades no modo individual
+function toggleIndividualCities(show = true) {
+    if (isPropostaMode) return;
+    
+    console.log(`🔧 Toggle cidades individuais: ${show ? 'mostrar' : 'ocultar'}`);
+    
+    if (cityMarkersByRadio[0] && cityMarkersByRadio[0].length > 0) {
+        cityMarkersByRadio[0].forEach(cityMarker => {
+            if (show) {
+                if (!map.hasLayer(cityMarker)) {
+                    map.addLayer(cityMarker);
+                }
+            } else {
+                if (map.hasLayer(cityMarker)) {
+                    map.removeLayer(cityMarker);
+                }
+            }
+        });
+        
+        console.log(`📍 ${show ? 'Mostradas' : 'Ocultadas'} ${cityMarkersByRadio[0].length} cidades`);
+    } else {
+        console.log('⚠️ Nenhum marcador de cidade encontrado para toggle');
     }
 }
