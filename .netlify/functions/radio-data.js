@@ -103,10 +103,10 @@ async function handlePropostaMode(databaseId, notionToken, headers) {
           totalPMM += radioData.pmm || 0;
           totalImpactos += radioData.impactos || 0;
           
-          // Coletar cidades únicas (filtro melhorado)
+          // Coletar cidades únicas (filtro melhorado por distância)
           if (radioData.cidades) {
             radioData.cidades.forEach(cidade => {
-              if (isValidCity(cidade)) {
+              if (isRealCityWithDistance(cidade)) {
                 allCidades.add(cidade);
               }
             });
@@ -274,7 +274,7 @@ async function processRadioData(notionData, notionToken) {
   // 🔧 BUSCA MELHORADA DO CAMPO IMPACTOS
   const impactosProperty = findImpactosProperty(properties);
   
-  // Função helper para extrair valores (simplificada)
+  // Função helper para extrair valores
   const extractValue = (prop, defaultValue = '', propName = '') => {
     if (!prop) {
       return defaultValue;
@@ -373,7 +373,7 @@ async function processRadioData(notionData, notionToken) {
     radioData.coverageType = 'circle';
   }
 
-  // BUSCAR CIDADES (filtro melhorado)
+  // BUSCAR CIDADES
   radioData.cidades = await fetchCitiesFromMultipleSources(radioData, notionToken);
 
   console.log('🏙️ Cidades encontradas:', {
@@ -428,37 +428,26 @@ function findImpactosProperty(properties) {
   return null;
 }
 
-// 🏙️ FUNÇÃO MELHORADA PARA VALIDAR CIDADES (MENOS RESTRITIVA)
-function isValidCity(cityName) {
+// 🏙️ FUNÇÃO ESTRITA PARA DETECTAR APENAS CIDADES REAIS (OBRIGATÓRIO TER DISTÂNCIA)
+function isRealCityWithDistance(cityName) {
   if (!cityName || typeof cityName !== 'string') return false;
   
   const cityNameTrim = cityName.trim();
   
-  // Filtros básicos (menos restritivos)
-  if (cityNameTrim.length < 2) return false;
-  if (cityNameTrim.length > 80) return false; // Aumentado de 50 para 80
+  // 🎯 REGRA PRINCIPAL: Só é cidade SE tiver padrão "(X.X km)"
+  const hasDistancePattern = /\(\d+\.?\d*\s*km\)$/i.test(cityNameTrim);
   
-  const lowerCityName = cityNameTrim.toLowerCase();
-  
-  // Rejeitar apenas padrões óbvios de não-cidade
-  const obviousRejects = [
-    /^\d+[\.,]\d+$/, // Frequências: 107.3, 90.5
-    /^www\.|\.com|\.br|http|@/, // URLs e emails
-    /^\d+$/, // Apenas números
-    /^(fm|am|radio|rádio|stereo|mix|hits|music|station)$/i // Palavras isoladas de rádio
-  ];
-  
-  for (const pattern of obviousRejects) {
-    if (pattern.test(cityNameTrim)) {
-      return false;
-    }
+  if (hasDistancePattern) {
+    console.log(`✅ Cidade válida com distância: "${cityName}"`);
+    return true;
   }
   
-  console.log(`✅ Cidade aceita: "${cityName}"`);
-  return true;
+  // 🚫 SE NÃO TEM "(X.X km)" = NÃO É CIDADE = REJEITAR
+  console.log(`❌ Rejeitada - sem padrão de distância: "${cityName}"`);
+  return false;
 }
 
-// FUNÇÕES DE KML MANTIDAS (sem alterações grandes)
+// FUNÇÕES DE KML MANTIDAS (sem alterações)
 async function processKMLWithFallback(driveUrl) {
   console.log('🔄 Iniciando processamento KML:', driveUrl);
   
@@ -758,12 +747,24 @@ async function fetchCitiesFromMultipleSources(radioData, notionToken) {
     const kmlCities = radioData.kmlPlacemarks
       .map(placemark => {
         const cityName = placemark.name;
+        const description = placemark.description || '';
+        
+        // Se já tem UF, manter como está
         if (cityName.includes(' - ')) {
           return cityName;
         }
+        
+        // Se tem descrição com distância, adicionar
+        if (description.includes('km')) {
+          const distanceMatch = description.match(/(\d+\.?\d*)\s*km/i);
+          if (distanceMatch) {
+            return `${cityName} (${distanceMatch[1]} km) - ${radioData.uf}`;
+          }
+        }
+        
         return `${cityName} - ${radioData.uf}`;
       })
-      .filter(cidade => isValidCity(cidade)); // Aplicar filtro melhorado
+      .filter(cidade => isRealCityWithDistance(cidade));
     
     return kmlCities;
   }
