@@ -439,24 +439,8 @@ async function fetchPropostaFromNotion(databaseId) {
 async function initializeIndividualMode() {
     console.log('🎯 === INICIANDO MODO INDIVIDUAL ===');
     
-    // Garantir que o container esteja visível primeiro
-    const mapSection = document.getElementById('map-section');
-    if (mapSection) {
-        mapSection.style.display = 'block';
-        mapSection.style.visibility = 'visible';
-        mapSection.style.opacity = '1';
-        mapSection.classList.add('individual-layout');
-        console.log('✅ Container do mapa configurado');
-    }
-    
     // Aguardar renderização completa
-    await new Promise(resolve => {
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                setTimeout(resolve, 100);
-            });
-        });
-    });
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     // Inicializar mapa
     await initializeMapIndividual();
@@ -469,72 +453,66 @@ async function initializeIndividualMode() {
 
 async function initializeMapIndividual() {
     return new Promise((resolve) => {
-        console.log('🗺️ Iniciando criação do mapa individual...');
+        console.log('🗺️ Iniciando mapa individual (versão simplificada)...');
         
-        const mapElement = document.getElementById('map');
-        const mapSection = document.getElementById('map-section');
-        
-        if (!mapElement) {
-            console.error('❌ Elemento #map não encontrado!');
-            resolve();
-            return;
-        }
-        
-        // 🔧 FORÇAR DIMENSÕES ANTES DE QUALQUER COISA
-        if (mapSection) {
-            mapSection.style.display = 'block';
-            mapSection.style.width = '100%';
-            mapSection.style.height = '600px';
-            mapSection.style.minHeight = '600px';
-            mapSection.classList.add('individual-layout');
-        }
-        
-        mapElement.style.width = '100%';
-        mapElement.style.height = '600px';
-        mapElement.style.minHeight = '600px';
-        mapElement.style.display = 'block';
-        
-        // Aguardar renderização com múltiplas verificações
+        // Aguardar um tempo para garantir que o CSS foi aplicado
         setTimeout(() => {
-            // Verificar dimensões novamente
-            let rect = mapElement.getBoundingClientRect();
-            console.log('📏 Primeira verificação de dimensões:', rect);
+            const mapElement = document.getElementById('map');
             
-            if (rect.width === 0 || rect.height === 0) {
-                console.log('🔧 Dimensões ainda zero, forçando novamente...');
-                
-                // Forçar com pixels absolutos
-                mapElement.style.width = '1000px';
-                mapElement.style.height = '600px';
-                
-                if (mapSection) {
-                    mapSection.style.width = '1000px';
-                    mapSection.style.height = '600px';
-                }
-                
-                // Forçar reflow
-                mapElement.offsetHeight;
-                
-                // Verificar novamente
-                rect = mapElement.getBoundingClientRect();
-                console.log('📏 Segunda verificação de dimensões:', rect);
+            if (!mapElement) {
+                console.error('❌ Elemento #map não encontrado!');
+                resolve();
+                return;
             }
             
-            if (rect.width > 0 && rect.height > 0) {
-                console.log('✅ Dimensões OK, criando mapa...');
+            // Verificar dimensões finais
+            const rect = mapElement.getBoundingClientRect();
+            console.log('📏 Dimensões finais do container:', {
+                width: rect.width,
+                height: rect.height,
+                top: rect.top,
+                left: rect.left,
+                display: window.getComputedStyle(mapElement).display,
+                visibility: window.getComputedStyle(mapElement).visibility
+            });
+            
+            if (rect.width === 0 || rect.height === 0) {
+                console.error('❌ AINDA com dimensões zero! Algo está errado no CSS.');
                 
-                try {
-                    // Limpeza segura
-                    if (typeof map !== 'undefined' && map !== null) {
-                        try {
-                            if (map.remove) map.remove();
-                        } catch (e) {
-                            console.log('⚠️ Ignorando erro de limpeza:', e.message);
-                        }
-                    }
+                // Última tentativa - forçar inline
+                mapElement.setAttribute('style', `
+                    width: 100% !important;
+                    height: 600px !important;
+                    min-height: 600px !important;
+                    display: block !important;
+                    position: relative !important;
+                    background: red !important;
+                `);
+                
+                // Verificar novamente
+                setTimeout(() => {
+                    const newRect = mapElement.getBoundingClientRect();
+                    console.log('�� Após forçar inline:', newRect);
                     
-                    map = null;
-                    mapElement.innerHTML = '';
+                    if (newRect.width > 0 && newRect.height > 0) {
+                        createMap();
+                    } else {
+                        console.error('❌ Impossível criar dimensões. Problema no DOM.');
+                        resolve();
+                    }
+                }, 100);
+            } else {
+                console.log('✅ Dimensões OK! Criando mapa...');
+                createMap();
+            }
+            
+            function createMap() {
+                try {
+                    // Limpeza
+                    if (map) {
+                        try { map.remove(); } catch (e) {}
+                        map = null;
+                    }
                     
                     // Criar mapa
                     map = L.map('map', {
@@ -542,40 +520,34 @@ async function initializeMapIndividual() {
                         zoom: 8
                     });
                     
-                    console.log('✅ Mapa criado!');
-                    
-                    // Adicionar tiles
+                    // Tiles
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         attribution: '© OpenStreetMap contributors',
                         maxZoom: 18
                     }).addTo(map);
                     
-                    // Invalidar tamanho
+                    console.log('✅ Mapa criado com sucesso!');
+                    
+                    // Invalidar e adicionar elementos
                     setTimeout(() => {
                         if (map) {
                             map.invalidateSize(true);
-                            console.log('🔄 Tamanho invalidado');
-                            
-                            // Adicionar elementos
                             addRadioMarkerIndividual();
                             addCoverageIndividual();
                             addCityMarkersIndividual();
                             fitMapToCoverageIndividual();
-                            
                             console.log('✅ Mapa individual completo!');
                         }
                         resolve();
-                    }, 300);
+                    }, 200);
                     
                 } catch (error) {
                     console.error('❌ Erro ao criar mapa:', error);
                     resolve();
                 }
-            } else {
-                console.error('❌ Não foi possível forçar dimensões do container');
-                resolve();
             }
-        }, 800); // Aguardar mais tempo
+            
+        }, 1000); // Aguardar 1 segundo para CSS ser aplicado
     });
 }
 
@@ -1437,6 +1409,7 @@ function hideLoading() {
     
     if (isPropostaMode) {
         // Modo Proposta
+        document.body.className = 'proposta-mode';
         if (propostaElement) propostaElement.style.display = 'grid';
         if (infoElement) infoElement.style.display = 'none';
         if (mapElement) mapElement.style.display = 'none';
@@ -1452,49 +1425,17 @@ function hideLoading() {
         }
         if (radioInfoElement) radioInfoElement.textContent = '';
     } else {
-        // 🔧 MODO INDIVIDUAL - FORÇAR DIMENSÕES AGRESSIVAMENTE
+        // 🔧 MODO INDIVIDUAL - FORÇAR COM CLASSE NO BODY
+        document.body.className = 'individual-mode';
+        
         if (infoElement) infoElement.style.display = 'none';
         if (propostaElement) propostaElement.style.display = 'none';
         
+        // O CSS já força a visibilidade, só precisamos garantir que existe
         if (mapElement) {
-            // Forçar todas as propriedades de layout
             mapElement.style.display = 'block';
-            mapElement.style.visibility = 'visible';
-            mapElement.style.opacity = '1';
-            mapElement.style.width = '100%';
-            mapElement.style.height = '600px';
-            mapElement.style.minHeight = '600px';
-            mapElement.style.position = 'relative';
-            mapElement.style.zIndex = '1';
-            mapElement.style.backgroundColor = '#f0f0f0'; // Debug
-            mapElement.style.border = '2px solid red'; // Debug
             mapElement.classList.add('individual-layout');
-            
-            // Forçar o elemento #map interno também
-            const mapInner = document.getElementById('map');
-            if (mapInner) {
-                mapInner.style.width = '100%';
-                mapInner.style.height = '100%';
-                mapInner.style.minHeight = '600px';
-                mapInner.style.display = 'block';
-                mapInner.style.position = 'relative';
-                mapInner.style.backgroundColor = '#e0e0e0'; // Debug
-                mapInner.style.border = '1px solid green'; // Debug
-            }
-            
-            // Forçar reflow múltiplas vezes
-            mapElement.offsetHeight;
-            mapElement.offsetWidth;
-            
-            if (mapInner) {
-                mapInner.offsetHeight;
-                mapInner.offsetWidth;
-            }
-            
-            console.log('✅ Container forçado:', {
-                mapElement: mapElement.getBoundingClientRect(),
-                mapInner: mapInner ? mapInner.getBoundingClientRect() : 'não encontrado'
-            });
+            console.log('✅ Container configurado para individual');
         }
         
         const sourceSuffix = radioData.source === 'example' ? ' (EXEMPLO)' : '';
