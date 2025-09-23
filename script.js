@@ -436,45 +436,75 @@ async function fetchPropostaFromNotion(databaseId) {
     return data;
 }
 
-// =========================================================================
-// 🎯 MODO INDIVIDUAL MELHORADO (SEM CARDS + MAPA MAIOR)
-// =========================================================================
 async function initializeIndividualMode() {
-    // 🔧 NOVO: Não renderizar cards no modo individual
-    // renderInfoIndividual(); // REMOVIDO
+    console.log('🎯 Inicializando modo individual...');
+    
+    // Mostrar o container do mapa primeiro
+    const mapSection = document.getElementById('map-section');
+    if (mapSection) {
+        mapSection.style.display = 'block';
+        mapSection.classList.add('individual-layout');
+    }
+    
+    // Aguardar um frame antes de inicializar o mapa
+    await new Promise(resolve => requestAnimationFrame(resolve));
     
     await initializeMapIndividual();
     renderCidadesIndividual();
+    
+    console.log('✅ Modo individual inicializado');
 }
 
-// 🔧 MODIFICADO: Modo Individual
 async function initializeMapIndividual() {
     return new Promise((resolve) => {
+        // Garantir que o container esteja visível ANTES de criar o mapa
+        const mapContainer = document.getElementById('map-section');
+        const mapElement = document.getElementById('map');
+        
+        if (mapContainer) {
+            mapContainer.style.display = 'block';
+        }
+        
+        // Aguardar um pouco mais para garantir que o DOM esteja pronto
         setTimeout(() => {
             try {
-                map = L.map('map');
+                // Verificar se já existe um mapa e destruí-lo
+                if (map) {
+                    map.remove();
+                    map = null;
+                }
                 
+                // Criar novo mapa
+                map = L.map('map', {
+                    zoomControl: true,
+                    scrollWheelZoom: true
+                });
+                
+                // Adicionar tile layer
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© OpenStreetMap contributors',
                     maxZoom: 18
                 }).addTo(map);
                 
-                setTimeout(() => map.invalidateSize(), 100);
+                // Aguardar mais um pouco antes de invalidar o tamanho
+                setTimeout(() => {
+                    map.invalidateSize(true);
+                    
+                    // Adicionar elementos do mapa
+                    addRadioMarkerIndividual();
+                    addCoverageIndividual();
+                    addCityMarkersIndividual();
+                    fitMapToCoverageIndividual();
+                    
+                    console.log('✅ Mapa individual inicializado com sucesso');
+                    resolve();
+                }, 200);
                 
-                addRadioMarkerIndividual();
-                addCoverageIndividual();
-                
-                // 🔧 MODIFICADO: Usar função unificada
-                addCityMarkersIndividual();
-                
-                fitMapToCoverageIndividual();
-                
-                resolve();
             } catch (error) {
-                console.error('Erro do mapa:', error);
+                console.error('❌ Erro ao inicializar mapa individual:', error);
                 resolve();
             }
-        }, 50);
+        }, 100);
     });
 }
 
@@ -1336,9 +1366,15 @@ function hideLoading() {
         if (radioInfoElement) radioInfoElement.textContent = '';
     } else {
         // Modo Individual: mostrar layout simplificado (SEM CARDS)
-        if (infoElement) infoElement.style.display = 'none'; // 🔧 NOVO: Ocultar cards no individual
-        if (mapElement) mapElement.style.display = 'block';
+        if (infoElement) infoElement.style.display = 'none';
         if (propostaElement) propostaElement.style.display = 'none';
+        
+        // CORREÇÃO: Mostrar o container do mapa ANTES de outras operações
+        if (mapElement) {
+            mapElement.style.display = 'block';
+            // Forçar reflow do DOM
+            mapElement.offsetHeight;
+        }
         
         const sourceSuffix = radioData.source === 'example' ? ' (EXEMPLO)' : '';
         if (radioNameElement) {

@@ -1123,3 +1123,29 @@ CABEÇALHO SUPERIOR COM LOGO (E-MÍDIAS)
         max-width: 140px;
     }
 }
+
+/* =============================================================================
+    🔧 CORREÇÃO: Garantir visibilidade do mapa individual
+    ============================================================================= */
+#map-section {
+    min-height: 600px;
+    position: relative;
+}
+
+#map-section.individual-layout {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+#map {
+    position: relative;
+    z-index: 1;
+}
+
+/* Garantir que o mapa tenha dimensões definidas */
+.individual-layout #map {
+    width: 100% !important;
+    height: 600px !important;
+    min-height: 600px !important;
+}
