@@ -19,8 +19,8 @@ exports.handler = async (event, context) => {
   try {
     const { id, proposta, database } = event.queryStringParameters || {};
     
-    // NOVO: Detectar tipo de consulta
-    const isProposta = proposta || database; // Aceita tanto ?proposta= quanto ?database=
+    // Detectar tipo de consulta
+    const isProposta = proposta || database;
     const queryId = id || isProposta;
     
     if (!queryId) {
@@ -42,18 +42,15 @@ exports.handler = async (event, context) => {
     }
 
     if (isProposta) {
-      // 🆕 MODO PROPOSTA: Buscar todas as rádios do database
       console.log('🎯 Modo PROPOSTA - Buscando todas as rádios do database:', queryId);
       return await handlePropostaMode(queryId, notionToken, headers);
     } else {
-      // MODO INDIVIDUAL: Buscar uma rádio específica (comportamento original)
       console.log('🔍 Modo INDIVIDUAL - Buscando rádio específica:', queryId);
       return await handleIndividualMode(queryId, notionToken, headers);
     }
 
   } catch (error) {
-    console.error('💥 Erro na função (catch geral):', error);
-    console.error('📋 Stack trace:', error.stack);
+    console.error('💥 Erro na função:', error);
     return {
       statusCode: 500,
       headers,
@@ -65,12 +62,11 @@ exports.handler = async (event, context) => {
   }
 };
 
-// 🆕 FUNÇÃO PARA MODO PROPOSTA (MÚLTIPLAS RÁDIOS)
+// FUNÇÃO PARA MODO PROPOSTA (MÚLTIPLAS RÁDIOS)
 async function handlePropostaMode(databaseId, notionToken, headers) {
   try {
     console.log('📊 Consultando database:', databaseId);
     
-    // Buscar todas as páginas (rádios) do database
     const allRadios = await queryNotionDatabase(databaseId, notionToken);
     
     if (!allRadios || allRadios.length === 0) {
@@ -91,7 +87,7 @@ async function handlePropostaMode(databaseId, notionToken, headers) {
     const processedRadios = [];
     let totalUniverso = 0;
     let totalPMM = 0;
-    let totalImpactos = 0; // ✅ FIX: Adicionar totalImpactos
+    let totalImpactos = 0;
     const allCidades = new Set();
     const regions = new Set();
     const ufs = new Set();
@@ -105,11 +101,15 @@ async function handlePropostaMode(databaseId, notionToken, headers) {
           // Agregar estatísticas
           totalUniverso += radioData.universo || 0;
           totalPMM += radioData.pmm || 0;
-          totalImpactos += radioData.impactos || 0; // ✅ FIX: Somar impactos
+          totalImpactos += radioData.impactos || 0;
           
-          // Coletar cidades únicas
+          // Coletar cidades únicas (filtro melhorado)
           if (radioData.cidades) {
-            radioData.cidades.forEach(cidade => allCidades.add(cidade));
+            radioData.cidades.forEach(cidade => {
+              if (isValidCity(cidade)) {
+                allCidades.add(cidade);
+              }
+            });
           }
           
           regions.add(radioData.region);
@@ -126,16 +126,14 @@ async function handlePropostaMode(databaseId, notionToken, headers) {
       databaseId: databaseId,
       totalRadios: processedRadios.length,
       radios: processedRadios,
-      // Estatísticas agregadas
       stats: {
         totalUniverso: totalUniverso,
         totalPMM: totalPMM,
-        totalImpactos: totalImpactos, // ✅ FIX: Adicionar totalImpactos às stats
+        totalImpactos: totalImpactos,
         totalCidades: allCidades.size,
         regions: Array.from(regions),
         ufs: Array.from(ufs)
       },
-      // Lista unificada de cidades
       allCidades: Array.from(allCidades).sort(),
       lastUpdate: new Date().toISOString(),
       source: 'notion-proposta'
@@ -145,7 +143,7 @@ async function handlePropostaMode(databaseId, notionToken, headers) {
       radios: propostaData.totalRadios,
       universo: propostaData.stats.totalUniverso.toLocaleString(),
       pmm: propostaData.stats.totalPMM.toLocaleString(),
-      impactos: propostaData.stats.totalImpactos.toLocaleString(), // ✅ FIX: Log dos impactos
+      impactos: propostaData.stats.totalImpactos.toLocaleString(),
       cidades: propostaData.stats.totalCidades
     });
 
@@ -168,11 +166,10 @@ async function handlePropostaMode(databaseId, notionToken, headers) {
   }
 }
 
-// FUNÇÃO PARA MODO INDIVIDUAL (ORIGINAL)
+// FUNÇÃO PARA MODO INDIVIDUAL
 async function handleIndividualMode(radioId, notionToken, headers) {
   console.log('🔍 Buscando rádio individual no Notion:', radioId);
 
-  // Buscar dados da página no Notion
   const response = await fetch(`https://api.notion.com/v1/pages/${radioId}`, {
     headers: {
       'Authorization': `Bearer ${notionToken}`,
@@ -208,7 +205,6 @@ async function handleIndividualMode(radioId, notionToken, headers) {
   const notionData = await response.json();
   const radioData = await processRadioData(notionData, notionToken);
   
-  // Adicionar tipo individual
   radioData.type = 'individual';
 
   return {
@@ -218,7 +214,7 @@ async function handleIndividualMode(radioId, notionToken, headers) {
   };
 }
 
-// 🆕 FUNÇÃO PARA CONSULTAR DATABASE DO NOTION
+// FUNÇÃO PARA CONSULTAR DATABASE DO NOTION
 async function queryNotionDatabase(databaseId, notionToken) {
   const allResults = [];
   let hasMore = true;
@@ -265,7 +261,7 @@ async function queryNotionDatabase(databaseId, notionToken) {
   return allResults;
 }
 
-// FUNÇÃO UNIFICADA PARA PROCESSAR DADOS DE UMA RÁDIO
+// FUNÇÃO MELHORADA PARA PROCESSAR DADOS DE UMA RÁDIO
 async function processRadioData(notionData, notionToken) {
   console.log('✅ Processando rádio:', {
     id: notionData.id,
@@ -273,37 +269,16 @@ async function processRadioData(notionData, notionToken) {
     propertiesKeys: Object.keys(notionData.properties || {})
   });
 
-  // Mapear propriedades do Notion
   const properties = notionData.properties || {};
   
-  // ✅ FIX: Debug detalhado das propriedades para identificar o nome correto
-  console.log('🔍 DEBUG - Propriedades disponíveis:', Object.keys(properties));
-  console.log('🔍 DEBUG - Buscando propriedade Impactos...');
+  // 🔧 BUSCA MELHORADA DO CAMPO IMPACTOS
+  const impactosProperty = findImpactosProperty(properties);
   
-  // Buscar variações possíveis de "Impactos"
-  const impactosProperty = properties['Impactos'] || 
-                          properties['impactos'] || 
-                          properties['IMPACTOS'] || 
-                          properties['Impacto'] || 
-                          properties['impacto'] ||
-                          properties['IMPACTO'];
-  
-  if (impactosProperty) {
-    console.log('✅ DEBUG - Propriedade Impactos encontrada:', impactosProperty);
-  } else {
-    console.log('❌ DEBUG - Propriedade Impactos NÃO encontrada. Propriedades disponíveis:', Object.keys(properties));
-  }
-  
-  // Função helper para extrair valores
+  // Função helper para extrair valores (simplificada)
   const extractValue = (prop, defaultValue = '', propName = '') => {
     if (!prop) {
-      if (propName) {
-        console.log(`⚠️ Propriedade '${propName}' não encontrada`);
-      }
       return defaultValue;
     }
-    
-    console.log(`✅ Extraindo valor de '${propName}':`, prop.type, prop);
     
     switch (prop.type) {
       case 'number':
@@ -321,7 +296,6 @@ async function processRadioData(notionData, notionToken) {
       case 'url':
         return prop.url || defaultValue;
       default:
-        console.log(`⚠️ Tipo de propriedade desconhecido: ${prop.type} para '${propName}'`);
         return defaultValue;
     }
   };
@@ -332,11 +306,11 @@ async function processRadioData(notionData, notionToken) {
     name: extractValue(properties['Emissora'] || properties['emissora'], 'Rádio Desconhecida', 'Emissora'),
     dial: extractValue(properties['Dial'] || properties['dial'], 'N/A', 'Dial'),
     
-    // Coordenadas (fallback caso KML falhe)
+    // Coordenadas
     latitude: parseFloat(extractValue(properties['Latitude'] || properties['latitude'], -23.5505, 'Latitude')),
     longitude: parseFloat(extractValue(properties['Longitude'] || properties['longitude'], -46.6333, 'Longitude')),
     
-    // Raio de cobertura (fallback)
+    // Raio de cobertura
     radius: parseFloat(extractValue(properties['Raio'] || properties['raio'] || properties['Alcance'], 50, 'Raio')) * 1000,
     
     // URL do KML
@@ -351,7 +325,7 @@ async function processRadioData(notionData, notionToken) {
     universo: parseInt(extractValue(properties['Universo'] || properties['universo'], 0, 'Universo')),
     pmm: parseInt(extractValue(properties['PMM'] || properties['pmm'], 1000, 'PMM')),
     
-    // ✅ FIX: Adicionar mapeamento correto para Impactos
+    // 🎯 IMPACTOS CORRIGIDO
     impactos: parseInt(extractValue(impactosProperty, 0, 'Impactos')),
     
     // URLs e mídias
@@ -363,14 +337,12 @@ async function processRadioData(notionData, notionToken) {
     lastUpdate: new Date().toISOString()
   };
 
-  // ✅ FIX: Log detalhado dos valores extraídos
-  console.log('📊 DEBUG - Valores extraídos:', {
+  console.log('📊 Valores extraídos:', {
     name: radioData.name,
     dial: radioData.dial,
     universo: radioData.universo,
     pmm: radioData.pmm,
-    impactos: radioData.impactos,
-    hasImpactosProperty: !!impactosProperty
+    impactos: radioData.impactos
   });
 
   // PROCESSAR KML SE DISPONÍVEL
@@ -384,7 +356,6 @@ async function processRadioData(notionData, notionToken) {
         radioData.kmlBounds = kmlData.bounds;
         radioData.coverageType = 'kml';
         
-        // Extrair URL da imagem do KML
         if (kmlData.imageUrl) {
           radioData.imageUrl = kmlData.imageUrl;
           radioData.imageSource = 'kml';
@@ -402,11 +373,10 @@ async function processRadioData(notionData, notionToken) {
     radioData.coverageType = 'circle';
   }
 
-  // BUSCAR CIDADES
+  // BUSCAR CIDADES (filtro melhorado)
   radioData.cidades = await fetchCitiesFromMultipleSources(radioData, notionToken);
 
-  // ✅ FIX: Log das cidades encontradas
-  console.log('🏙️ DEBUG - Cidades encontradas:', {
+  console.log('🏙️ Cidades encontradas:', {
     total: radioData.cidades ? radioData.cidades.length : 0,
     amostra: radioData.cidades ? radioData.cidades.slice(0, 5) : []
   });
@@ -424,7 +394,71 @@ async function processRadioData(notionData, notionToken) {
   return radioData;
 }
 
-// FUNÇÕES AUXILIARES MANTIDAS (KML, Cities, etc.)
+// 🔍 FUNÇÃO MELHORADA PARA ENCONTRAR CAMPO IMPACTOS
+function findImpactosProperty(properties) {
+  console.log('🔍 Procurando campo Impactos...');
+  console.log('📋 Propriedades disponíveis:', Object.keys(properties));
+  
+  // Lista de possíveis nomes para o campo Impactos
+  const possibleNames = [
+    'Impactos', 'impactos', 'IMPACTOS',
+    'Impacto', 'impacto', 'IMPACTO',
+    'Impact', 'impact', 'IMPACT',
+    'Impacts', 'impacts', 'IMPACTS'
+  ];
+  
+  for (const name of possibleNames) {
+    if (properties[name]) {
+      console.log(`✅ Campo Impactos encontrado como: "${name}"`);
+      console.log('📊 Valor do campo:', properties[name]);
+      return properties[name];
+    }
+  }
+  
+  // Se não encontrou, procurar por campos que contenham a palavra "impacto"
+  for (const [key, value] of Object.entries(properties)) {
+    if (key.toLowerCase().includes('impacto')) {
+      console.log(`✅ Campo similar encontrado: "${key}"`);
+      console.log('📊 Valor do campo:', value);
+      return value;
+    }
+  }
+  
+  console.log('❌ Campo Impactos não encontrado');
+  return null;
+}
+
+// 🏙️ FUNÇÃO MELHORADA PARA VALIDAR CIDADES (MENOS RESTRITIVA)
+function isValidCity(cityName) {
+  if (!cityName || typeof cityName !== 'string') return false;
+  
+  const cityNameTrim = cityName.trim();
+  
+  // Filtros básicos (menos restritivos)
+  if (cityNameTrim.length < 2) return false;
+  if (cityNameTrim.length > 80) return false; // Aumentado de 50 para 80
+  
+  const lowerCityName = cityNameTrim.toLowerCase();
+  
+  // Rejeitar apenas padrões óbvios de não-cidade
+  const obviousRejects = [
+    /^\d+[\.,]\d+$/, // Frequências: 107.3, 90.5
+    /^www\.|\.com|\.br|http|@/, // URLs e emails
+    /^\d+$/, // Apenas números
+    /^(fm|am|radio|rádio|stereo|mix|hits|music|station)$/i // Palavras isoladas de rádio
+  ];
+  
+  for (const pattern of obviousRejects) {
+    if (pattern.test(cityNameTrim)) {
+      return false;
+    }
+  }
+  
+  console.log(`✅ Cidade aceita: "${cityName}"`);
+  return true;
+}
+
+// FUNÇÕES DE KML MANTIDAS (sem alterações grandes)
 async function processKMLWithFallback(driveUrl) {
   console.log('🔄 Iniciando processamento KML:', driveUrl);
   
@@ -721,13 +755,16 @@ function parseKMLContent(kmlText) {
 async function fetchCitiesFromMultipleSources(radioData, notionToken) {
   // Priorizar KML placemarks
   if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
-    const kmlCities = radioData.kmlPlacemarks.map(placemark => {
-      const cityName = placemark.name;
-      if (cityName.includes(' - ')) {
-        return cityName;
-      }
-      return `${cityName} - ${radioData.uf}`;
-    });
+    const kmlCities = radioData.kmlPlacemarks
+      .map(placemark => {
+        const cityName = placemark.name;
+        if (cityName.includes(' - ')) {
+          return cityName;
+        }
+        return `${cityName} - ${radioData.uf}`;
+      })
+      .filter(cidade => isValidCity(cidade)); // Aplicar filtro melhorado
+    
     return kmlCities;
   }
   
