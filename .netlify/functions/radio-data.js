@@ -261,7 +261,7 @@ async function queryNotionDatabase(databaseId, notionToken) {
   return allResults;
 }
 
-// FUNÇÃO MELHORADA PARA PROCESSAR DADOS DE UMA RÁDIO
+// 🔧 FUNÇÃO MELHORADA PARA PROCESSAR DADOS DE UMA RÁDIO
 async function processRadioData(notionData, notionToken) {
   console.log('✅ Processando rádio:', {
     id: notionData.id,
@@ -373,13 +373,22 @@ async function processRadioData(notionData, notionToken) {
     radioData.coverageType = 'circle';
   }
 
-  // BUSCAR CIDADES
-  radioData.cidades = await fetchCitiesFromMultipleSources(radioData, notionToken);
-
-  console.log('🏙️ Cidades encontradas:', {
-    total: radioData.cidades ? radioData.cidades.length : 0,
-    amostra: radioData.cidades ? radioData.cidades.slice(0, 5) : []
-  });
+  // 🔧 NOVA LÓGICA: Converter KML Placemarks para Lista de Cidades
+  if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
+    console.log('📍 Convertendo KML placemarks para lista de cidades');
+    radioData.cidades = convertKMLPlacemarksToCities(
+      radioData.kmlPlacemarks,
+      [radioData.latitude, radioData.longitude],
+      radioData.uf,
+      radioData.name
+    );
+    
+    console.log(`🏙️ Cidades convertidas do KML: ${radioData.cidades.length}`);
+  } else {
+    // FALLBACK: Buscar cidades das fontes originais se não há KML
+    radioData.cidades = await fetchCitiesFromMultipleSources(radioData, notionToken);
+    console.log(`🏙️ Cidades do fallback: ${radioData.cidades ? radioData.cidades.length : 0}`);
+  }
 
   // Validações básicas
   if (isNaN(radioData.latitude) || isNaN(radioData.longitude)) {
@@ -392,6 +401,72 @@ async function processRadioData(notionData, notionToken) {
   }
 
   return radioData;
+}
+
+// 🔧 NOVA FUNÇÃO: Converter KML Placemarks para Lista de Cidades
+function convertKMLPlacemarksToCities(kmlPlacemarks, radioCoords, radioUF, radioName = '') {
+  if (!kmlPlacemarks || kmlPlacemarks.length === 0) {
+    console.log('❌ Nenhum placemark KML encontrado');
+    return [];
+  }
+  
+  console.log(`📍 Convertendo ${kmlPlacemarks.length} placemarks para lista de cidades`);
+  
+  const radioLocation = radioName ? radioName.toLowerCase() : '';
+  const convertedCities = [];
+  
+  kmlPlacemarks.forEach((placemark, index) => {
+    const cityName = placemark.name;
+    const cityNameLower = cityName.toLowerCase();
+    
+    // 🔧 Filtrar origem/rádio para não incluir na lista
+    if (
+      cityNameLower.includes('origem') ||
+      cityNameLower.includes(radioLocation.replace('rádio', '').replace('fm', '').trim()) ||
+      placemark.description?.includes('0.0 km') ||
+      placemark.description?.includes('0,0 km')
+    ) {
+      console.log(`⚠️ Ignorando placemark de origem: "${cityName}"`);
+      return;
+    }
+    
+    const [lat, lng] = placemark.coordinates;
+    const distance = calculateDistance(radioCoords[0], radioCoords[1], lat, lng);
+    
+    // Filtrar cidades muito próximas (provavelmente a própria rádio)
+    if (distance < 0.5) {
+      console.log(`⚠️ Ignorando cidade muito próxima: "${cityName}" (${distance.toFixed(1)} km)`);
+      return;
+    }
+    
+    // Formato: "Cidade (X.X km) - UF"
+    const formattedCity = `${cityName} (${distance.toFixed(1)} km) - ${radioUF}`;
+    convertedCities.push(formattedCity);
+    
+    console.log(`✅ Cidade convertida: "${formattedCity}"`);
+  });
+  
+  // Ordenar por distância
+  convertedCities.sort((a, b) => {
+    const distanceA = parseFloat(a.match(/\((\d+\.?\d*)\s*km\)/)?.[1] || 999999);
+    const distanceB = parseFloat(b.match(/\((\d+\.?\d*)\s*km\)/)?.[1] || 999999);
+    return distanceA - distanceB;
+  });
+  
+  console.log(`📋 Total de cidades convertidas: ${convertedCities.length}`);
+  return convertedCities;
+}
+
+// Função auxiliar para calcular distância entre coordenadas (Haversine)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Raio da Terra em km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c; // Distância em km
 }
 
 // 🔍 FUNÇÃO MELHORADA PARA ENCONTRAR CAMPO IMPACTOS
