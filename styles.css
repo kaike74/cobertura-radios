@@ -1,6 +1,5 @@
-
 /* =============================================================================
-    🎨 IDENTIDADE VISUAL E-MÍDIAS
+    �� IDENTIDADE VISUAL E-MÍDIAS
     ============================================================================= */
 
 :root {
@@ -22,7 +21,7 @@
     --gradient-success: linear-gradient(135deg, var(--emidias-success) 0%, #34D399 100%);
     
     /* 📝 Tipografia E-MÍDIAS */
-    --font-primary: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-primary: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     --font-weight-light: 300;
     --font-weight-normal: 400;
     --font-weight-medium: 500;
@@ -34,9 +33,33 @@
     --shadow-md: 0 4px 12px rgba(6, 5, 91, 0.1);
     --shadow-lg: 0 8px 25px rgba(6, 5, 91, 0.15);
     --shadow-accent: 0 4px 15px rgba(252, 30, 117, 0.2);
+    
+    /* 🎨 Transições */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.4s ease;
+    
+    /* 📏 Espaçamentos */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    
+    /* 📐 Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
 }
 
-* {
+/* =============================================================================
+    🔧 RESET E BASE
+    ============================================================================= */
+
+*,
+*::before,
+*::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -48,23 +71,55 @@ body {
     color: var(--emidias-dark);
     line-height: 1.6;
     font-weight: var(--font-weight-normal);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
+    padding: var(--spacing-lg);
+}
+
+/* =============================================================================
+    🏢 CABEÇALHO SUPERIOR E-MÍDIAS
+    ============================================================================= */
+
+.top-header {
+    background: var(--emidias-primary);
+    padding: var(--spacing-md) var(--spacing-lg);
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(6, 5, 91, 0.2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 2px solid var(--emidias-magenta);
+}
+
+.top-logo {
+    max-height: 40px;
+    height: auto;
+    max-width: 200px;
+    transition: transform var(--transition-normal);
+    filter: brightness(1.1);
+    will-change: transform;
+}
+
+.top-logo:hover {
+    transform: scale(1.05);
 }
 
 /* =============================================================================
     🎨 HEADER COM IDENTIDADE E-MÍDIAS
     ============================================================================= */
+
 .header {
     background: var(--emidias-white);
     color: var(--emidias-primary);
-    padding: 32px 24px;
-    border-radius: 16px;
-    margin-bottom: 16px;
+    padding: var(--spacing-xl) var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-md);
     box-shadow: var(--shadow-lg);
     text-align: center;
     position: relative;
@@ -72,7 +127,6 @@ body {
     border: 2px solid var(--emidias-primary);
 }
 
-/* Efeito de brilho sutil */
 .header::before {
     content: '';
     position: absolute;
@@ -82,6 +136,7 @@ body {
     height: 100%;
     background: linear-gradient(90deg, transparent, rgba(6, 5, 91, 0.05), transparent);
     animation: shine 4s infinite;
+    pointer-events: none;
 }
 
 @keyframes shine {
@@ -89,14 +144,28 @@ body {
     100% { left: 100%; }
 }
 
-.header-title {
-    font-size: 28px;
-    font-weight: var(--font-weight-bold);
-    margin-bottom: 12px;
+.header-content {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0px;
+    gap: var(--spacing-lg);
+    position: relative;
+    z-index: 1;
+}
+
+.header-main {
+    flex: 1;
+    text-align: center;
+}
+
+.header-title {
+    font-size: clamp(20px, 4vw, 28px);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
     position: relative;
     z-index: 1;
     flex-direction: column;
@@ -106,10 +175,11 @@ body {
     width: 150px;
     height: 120px;
     object-fit: contain;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     box-shadow: var(--shadow-md);
-    transition: transform 0.3s ease;
-    margin-bottom: 16px;
+    transition: transform var(--transition-normal);
+    margin-bottom: var(--spacing-md);
+    will-change: transform;
 }
 
 .header-logo:hover {
@@ -125,51 +195,19 @@ body {
     color: var(--emidias-gray);
 }
 
-.header-content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    position: relative;
-    z-index: 1;
-}
-
-.header-main {
-    flex: 1;
-    text-align: center;
-}
-
 /* =============================================================================
-    🏢 MARCA D'ÁGUA E-MÍDIAS INSTITUCIONAL
+    �� INDICADOR DE TIPO
     ============================================================================= */
-.brand-watermark {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    height: 120px;
-    width: auto;
-    opacity: 0.15;
-    pointer-events: none;
-    z-index: 999;
-    transition: opacity 0.3s ease;
-}
 
-.brand-watermark:hover {
-    opacity: 0.3;
-}
-
-/* =============================================================================
-    🎯 INDICADOR DE TIPO (INDIVIDUAL VS PROPOSTA)
-    ============================================================================= */
 .type-indicator {
     display: inline-block;
-    padding: 6px 12px;
-    border-radius: 20px;
+    padding: 6px var(--spacing-md);
+    border-radius: var(--radius-xl);
     font-size: 12px;
     font-weight: var(--font-weight-bold);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-left: 12px;
+    margin-left: var(--spacing-md);
 }
 
 .type-individual {
@@ -183,148 +221,59 @@ body {
 }
 
 /* =============================================================================
-    📋 CARDS DE INFORMAÇÃO E-MÍDIAS (REMOVIDOS DO MODO INDIVIDUAL)
+    📋 LAYOUT PROPOSTA
     ============================================================================= */
-.info-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 20px;
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
-}
 
-/* 🎯 NOVO LAYOUT PARA PROPOSTA: mapa + lista de rádios + botão expandir */
 .proposta-layout {
     display: grid;
     grid-template-columns: 1fr 400px;
-    gap: 20px;
-    margin-bottom: 20px;
-    transition: all 0.4s ease;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    transition: all var(--transition-slow);
 }
 
-/* 🔧 NOVO: Layout expandido para mapa */
 .proposta-layout.map-expanded {
     grid-template-columns: 1fr;
 }
 
 .proposta-radios-section {
     background: var(--emidias-white);
-    border-radius: 16px;
-    padding: 24px;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
     box-shadow: var(--shadow-md);
     border-left: 4px solid var(--emidias-primary);
     position: relative;
-    transition: all 0.4s ease;
+    transition: all var(--transition-slow);
 }
 
-/* 🔧 NOVO: Ocultar seção de rádios quando expandido */
 .proposta-layout.map-expanded .proposta-radios-section {
     transform: translateX(100%);
     opacity: 0;
     pointer-events: none;
 }
 
-.info-card {
-    background: var(--emidias-white);
-    padding: 16px;
-    border-radius: 12px;
-    box-shadow: var(--shadow-md);
-    border-left: 4px solid var(--emidias-primary);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: visible;
-}
-
-.info-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: var(--gradient-primary);
-}
-
-.info-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
-    border-left-color: var(--emidias-magenta);
-}
-
-.info-card:hover::before {
-    background: var(--gradient-accent);
-}
-
-.card-title {
-    font-size: 18px;
-    font-weight: var(--font-weight-bold);
-    color: var(--emidias-primary);
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--emidias-light-gray);
-    transition: all 0.2s ease;
-}
-
-.info-item:last-child {
-    border-bottom: none;
-}
-
-.info-item:hover {
-    background: rgba(6, 5, 91, 0.02);
-    border-radius: 8px;
-    padding-left: 8px;
-    padding-right: 8px;
-}
-
-.info-label {
-    font-weight: var(--font-weight-semibold);
-    color: var(--emidias-gray);
-}
-
-.info-value {
-    font-weight: var(--font-weight-medium);
-    color: var(--emidias-dark);
-}
-
-.info-value.highlight {
-    background: var(--gradient-primary);
-    color: var(--emidias-white);
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 14px;
-}
-
 /* =============================================================================
-    🔧 BOTÃO EXPANDIR MAPA (NOVO)
+    🔧 BOTÃO EXPANDIR MAPA
     ============================================================================= */
+
 .map-expand-btn {
     background: var(--gradient-primary);
     color: var(--emidias-white);
     border: none;
-    padding: 10px 16px;
-    border-radius: 12px;
+    padding: 10px var(--spacing-md);
+    border-radius: var(--radius-md);
     font-size: 14px;
     font-weight: var(--font-weight-semibold);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all var(--transition-normal);
     box-shadow: var(--shadow-sm);
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 16px;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
     width: 100%;
     justify-content: center;
+    will-change: transform;
 }
 
 .map-expand-btn:hover {
@@ -337,22 +286,39 @@ body {
 }
 
 /* =============================================================================
-    📊 LISTA DE RÁDIOS NA PROPOSTA
+    📊 LISTA DE RÁDIOS
     ============================================================================= */
+
 .radios-list {
     max-height: 300px;
     overflow-y: auto;
     border: 1px solid var(--emidias-light-gray);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: rgba(6, 5, 91, 0.01);
+    scrollbar-width: thin;
+    scrollbar-color: var(--emidias-primary) var(--emidias-light-gray);
+}
+
+.radios-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.radios-list::-webkit-scrollbar-track {
+    background: var(--emidias-light-gray);
+    border-radius: 3px;
+}
+
+.radios-list::-webkit-scrollbar-thumb {
+    background: var(--emidias-primary);
+    border-radius: 3px;
 }
 
 .radio-item {
     display: flex;
     align-items: center;
-    padding: 8px 12px;
+    padding: var(--spacing-sm) var(--spacing-md);
     border-bottom: 1px solid var(--emidias-light-gray);
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
     cursor: pointer;
 }
 
@@ -369,31 +335,39 @@ body {
     width: 36px;
     height: 27px;
     border-radius: 4px;
-    margin-right: 8px;
+    margin-right: var(--spacing-sm);
     object-fit: cover;
 }
 
 .radio-item-info {
     flex: 1;
+    min-width: 0;
 }
 
 .radio-item-name {
     font-weight: var(--font-weight-semibold);
     font-size: 14px;
     color: var(--emidias-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .radio-item-details {
     font-size: 12px;
     color: var(--emidias-gray);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .radio-item-checkbox {
-    margin-left: 12px;
+    margin-left: var(--spacing-md);
     width: 18px;
     height: 18px;
     cursor: pointer;
     accent-color: var(--emidias-primary);
+    flex-shrink: 0;
 }
 
 .radio-item.disabled {
@@ -403,12 +377,12 @@ body {
 
 .radio-count-badge {
     position: absolute;
-    top: 12px;
-    right: 16px;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
     background: var(--gradient-accent);
     color: var(--emidias-white);
-    padding: 4px 8px;
-    border-radius: 12px;
+    padding: 4px var(--spacing-sm);
+    border-radius: var(--radius-md);
     font-size: 14px;
     font-weight: var(--font-weight-bold);
     min-width: 24px;
@@ -416,16 +390,18 @@ body {
 }
 
 /* =============================================================================
-    🗺️ MAPA CONTAINER E-MÍDIAS (MELHORADO)
+    🗺️ MAPA CONTAINER
     ============================================================================= */
+
 .map-container {
     background: var(--emidias-white);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-lg);
-    margin-bottom: 24px;
-    transition: all 0.3s ease;
+    margin-bottom: var(--spacing-lg);
+    transition: all var(--transition-normal);
     border: 1px solid var(--emidias-light-gray);
+    will-change: transform;
 }
 
 .map-container:hover {
@@ -437,33 +413,42 @@ body {
     height: 550px;
     width: 100%;
     min-height: 550px;
-    transition: filter 0.3s ease;
+    transition: filter var(--transition-normal);
 }
 
-/* 🔧 MODO INDIVIDUAL: Mapa maior (sem cards) */
+/* Modo Individual: Mapa maior */
+.individual-layout {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 .individual-layout #map {
-    height: 600px;
-    min-height: 600px;
+    height: 600px !important;
+    min-height: 600px !important;
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
 }
 
-/* 🎯 Para layout proposta, mapa normal */
+/* Layout proposta */
 .proposta-layout #map {
     height: 450px;
     min-height: 450px;
 }
 
-/* 🔧 Para layout proposta expandido, mapa ainda maior */
 .proposta-layout.map-expanded #map {
     height: 600px;
     min-height: 600px;
 }
 
 /* =============================================================================
-    🌍 SEÇÃO CIDADES E-MÍDIAS (TOOLTIPS MELHORADOS)
+    🌍 SEÇÃO CIDADES
     ============================================================================= */
+
 .cidades-container {
     background: var(--emidias-white);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 28px;
     box-shadow: var(--shadow-md);
     border-left: 4px solid var(--emidias-primary);
@@ -485,9 +470,9 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-lg);
     flex-wrap: wrap;
-    gap: 16px;
+    gap: var(--spacing-md);
 }
 
 .cidades-title {
@@ -502,8 +487,8 @@ body {
 .cidade-count {
     background: var(--gradient-accent);
     color: var(--emidias-white);
-    padding: 4px 8px;
-    border-radius: 12px;
+    padding: 4px var(--spacing-sm);
+    border-radius: var(--radius-md);
     font-size: 14px;
     font-weight: var(--font-weight-bold);
 }
@@ -511,23 +496,24 @@ body {
 .cidades-actions {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: var(--spacing-md);
 }
 
 .excel-export-btn {
     background: var(--gradient-success);
     color: var(--emidias-white);
     border: none;
-    padding: 10px 20px;
-    border-radius: 12px;
+    padding: 10px var(--spacing-lg);
+    border-radius: var(--radius-md);
     font-size: 14px;
     font-weight: var(--font-weight-semibold);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all var(--transition-normal);
     box-shadow: var(--shadow-sm);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-sm);
+    will-change: transform;
 }
 
 .excel-export-btn:hover {
@@ -536,18 +522,18 @@ body {
 }
 
 .search-box {
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-lg);
 }
 
 .search-input {
     width: 100%;
-    padding: 16px 20px;
+    padding: var(--spacing-md) var(--spacing-lg);
     border: 2px solid var(--emidias-light-gray);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     font-size: 16px;
     font-family: var(--font-primary);
     font-weight: var(--font-weight-normal);
-    transition: all 0.3s ease;
+    transition: all var(--transition-normal);
     background: var(--emidias-white);
 }
 
@@ -562,15 +548,31 @@ body {
     max-height: 350px;
     overflow-y: auto;
     border: 1px solid var(--emidias-light-gray);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     background: var(--emidias-white);
     position: relative;
+    scrollbar-width: thin;
+    scrollbar-color: var(--emidias-primary) var(--emidias-light-gray);
+}
+
+.cidades-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.cidades-list::-webkit-scrollbar-track {
+    background: var(--emidias-light-gray);
+    border-radius: 3px;
+}
+
+.cidades-list::-webkit-scrollbar-thumb {
+    background: var(--emidias-primary);
+    border-radius: 3px;
 }
 
 .cidade-item {
-    padding: 16px 20px;
+    padding: var(--spacing-md) var(--spacing-lg);
     border-bottom: 1px solid var(--emidias-light-gray);
-    transition: all 0.3s ease;
+    transition: all var(--transition-normal);
     cursor: pointer;
     position: relative;
     display: flex;
@@ -584,7 +586,7 @@ body {
     background: linear-gradient(90deg, rgba(6, 5, 91, 0.03) 0%, var(--emidias-white) 100%);
     transform: translateX(8px);
     border-left: 4px solid var(--emidias-primary);
-    padding-left: 16px;
+    padding-left: var(--spacing-md);
 }
 
 .cidade-item:last-child {
@@ -605,7 +607,7 @@ body {
 .cidade-uf {
     font-size: 13px;
     color: var(--emidias-gray);
-    margin-left: 8px;
+    margin-left: var(--spacing-sm);
     font-weight: var(--font-weight-normal);
 }
 
@@ -613,20 +615,21 @@ body {
     font-size: 12px;
     color: var(--emidias-success);
     font-weight: var(--font-weight-semibold);
-    margin-left: 8px;
+    margin-left: var(--spacing-sm);
 }
 
 .cidade-radios {
     display: flex;
     align-items: center;
     gap: 4px;
-    margin-left: 16px;
+    margin-left: var(--spacing-md);
     flex-shrink: 0;
 }
 
 /* =============================================================================
-    🔧 TOOLTIPS MELHORADOS (SEM PROBLEMAS DE POSICIONAMENTO)
+    🔧 TOOLTIPS MELHORADOS
     ============================================================================= */
+
 .cidade-radios-container {
     position: relative;
     display: flex;
@@ -637,26 +640,24 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
-    transition: all 0.3s ease;
+    transition: all var(--transition-normal);
 }
 
 .radios-expanded {
     position: absolute;
     background: var(--emidias-white);
     border: 2px solid var(--emidias-primary);
-    border-radius: 12px;
-    padding: 12px;
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
     box-shadow: var(--shadow-lg);
     z-index: 1000;
     min-width: 280px;
     display: none;
     flex-direction: column;
-    gap: 8px;
-    
+    gap: var(--spacing-sm);
     right: 0;
     top: 50%;
     transform: translateY(-50%);
-    
     max-width: calc(100vw - 40px);
     max-height: 300px;
     overflow-y: auto;
@@ -665,32 +666,14 @@ body {
 .cidade-item:nth-child(-n+3) .radios-expanded {
     top: 100%;
     transform: translateY(0);
-    margin-top: 8px;
+    margin-top: var(--spacing-sm);
 }
 
 .cidade-item:nth-last-child(-n+3) .radios-expanded {
     top: auto;
     bottom: 100%;
     transform: translateY(0);
-    margin-bottom: 8px;
-}
-
-@media (max-width: 768px) {
-    .radios-expanded {
-        right: auto;
-        left: 50%;
-        transform: translateX(-50%) translateY(-50%);
-        min-width: 200px;
-        max-width: calc(100vw - 20px);
-    }
-    
-    .cidade-item:nth-child(-n+3) .radios-expanded {
-        transform: translateX(-50%) translateY(0);
-    }
-    
-    .cidade-item:nth-last-child(-n+3) .radios-expanded {
-        transform: translateX(-50%) translateY(0);
-    }
+    margin-bottom: var(--spacing-sm);
 }
 
 .cidade-radios-container:hover .radios-expanded {
@@ -703,8 +686,9 @@ body {
     border-radius: 6px;
     object-fit: cover;
     border: 2px solid var(--emidias-light-gray);
-    transition: all 0.3s ease;
+    transition: all var(--transition-normal);
     cursor: pointer;
+    will-change: transform;
 }
 
 .radio-logo-mini:hover {
@@ -729,11 +713,11 @@ body {
 .radio-expanded {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 8px 12px;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
     background: rgba(6, 5, 91, 0.05);
-    border-radius: 8px;
-    transition: all 0.3s ease;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-normal);
 }
 
 .radio-expanded:hover {
@@ -753,6 +737,7 @@ body {
     display: flex;
     flex-direction: column;
     flex: 1;
+    min-width: 0;
 }
 
 .radio-expanded-name {
@@ -760,20 +745,27 @@ body {
     font-weight: var(--font-weight-semibold);
     color: var(--emidias-dark);
     line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .radio-expanded-details {
     font-size: 12px;
     color: var(--emidias-gray);
     line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* =============================================================================
-    ⏳ LOADING E-MÍDIAS
+    ⏳ LOADING E ERROR
     ============================================================================= */
+
 .loading {
     text-align: center;
-    padding: 60px 20px;
+    padding: 60px var(--spacing-lg);
     color: var(--emidias-gray);
 }
 
@@ -784,7 +776,7 @@ body {
     border-top: 4px solid var(--emidias-primary);
     border-radius: 50%;
     animation: spin 1.2s linear infinite;
-    margin: 0 auto 20px;
+    margin: 0 auto var(--spacing-lg);
 }
 
 @keyframes spin {
@@ -792,41 +784,39 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-/* =============================================================================
-    ❌ ERROR E-MÍDIAS
-    ============================================================================= */
 .error {
     background: linear-gradient(135deg, #FEF2F2 0%, #FFFFFF 100%);
     border: 1px solid #FECACA;
     color: var(--emidias-magenta);
-    padding: 24px;
-    border-radius: 12px;
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
     text-align: center;
-    margin: 24px 0;
+    margin: var(--spacing-lg) 0;
     box-shadow: var(--shadow-sm);
 }
 
 .error-details {
-    margin-top: 16px;
+    margin-top: var(--spacing-md);
     font-size: 12px;
     color: #991B1B;
     font-family: 'Courier New', monospace;
     background: rgba(255, 255, 255, 0.8);
-    padding: 12px;
-    border-radius: 8px;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-sm);
     text-align: left;
 }
 
 /* =============================================================================
-    🦶 RODAPÉ E-MÍDIAS
+    🦶 RODAPÉ
     ============================================================================= */
+
 .footer {
     text-align: center;
-    padding: 40px 20px;
+    padding: 40px var(--spacing-lg);
     margin-top: 40px;
     border-top: 2px solid var(--emidias-light-gray);
     background: linear-gradient(135deg, #FAFBFC 0%, var(--emidias-white) 100%);
-    border-radius: 16px 16px 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 .footer-text {
@@ -837,133 +827,11 @@ body {
 }
 
 /* =============================================================================
-    📱 RESPONSIVIDADE E-MÍDIAS
+    🗺️ CUSTOMIZAÇÕES LEAFLET
     ============================================================================= */
-@media (max-width: 768px) {
-    .header-content {
-        flex-direction: column;
-        gap: 16px;
-    }
-    
-    .info-grid { 
-        grid-template-columns: 1fr; 
-        gap: 14px;
-        max-width: 100%;
-    }
-    
-    .proposta-layout {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-    
-    .proposta-layout.map-expanded {
-        grid-template-columns: 1fr;
-    }
-    
-    .proposta-layout.map-expanded .proposta-radios-section {
-        display: none;
-    }
-    
-    .header-logo { 
-        width: 100px;
-        height: 80px; 
-        margin-bottom: 12px;
-    }
-    
-    .header-title { 
-        font-size: 20px; 
-    }
-    
-    .container { 
-        padding: 16px; 
-    }
-    
-    #map { 
-        height: 450px; 
-        min-height: 450px; 
-    }
-    
-    .individual-layout #map {
-        height: 500px; 
-        min-height: 500px; 
-    }
-    
-    .proposta-layout #map {
-        height: 400px; 
-        min-height: 400px; 
-    }
-    
-    .proposta-layout.map-expanded #map {
-        height: 500px; 
-        min-height: 500px; 
-    }
-    
-    .header {
-        padding: 24px 20px;
-        margin-bottom: 20px;
-    }
-    
-    .cidades-header {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .cidades-actions {
-        justify-content: center;
-    }
-    
-    .search-input {
-        padding: 14px 16px;
-        font-size: 16px;
-    }
-    
-    .brand-watermark {
-        height: 80px;
-        top: 10px;
-        right: 10px;
-    }
-    
-    .type-indicator {
-        margin-left: 0;
-        margin-top: 8px;
-        display: block;
-    }
-}
 
-@media (max-width: 480px) {
-    .header-title {
-        font-size: 18px;
-    }
-    
-    .header-logo { 
-        width: 80px;
-        height: 60px; 
-        margin-bottom: 8px;
-    }
-    
-    .info-card {
-        padding: 12px;
-    }
-    
-    .cidades-container {
-        padding: 20px;
-    }
-    
-    .excel-export-btn {
-        padding: 8px 16px;
-        font-size: 13px;
-    }
-    
-    .brand-watermark {
-        height: 60px;
-    }
-}
-
-/* =============================================================================
-    🗺️ CUSTOMIZAÇÕES LEAFLET E-MÍDIAS
-    ============================================================================= */
 .leaflet-popup-content-wrapper {
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
 }
 
@@ -981,13 +849,13 @@ body {
     width: 90px;
     height: 68px;
     object-fit: cover;
-    border-radius: 8px;
-    margin-bottom: 12px;
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--spacing-md);
     box-shadow: var(--shadow-sm);
 }
 
 .radio-popup h3 {
-    margin: 0 0 8px 0;
+    margin: 0 0 var(--spacing-sm) 0;
     color: var(--emidias-primary);
     font-size: 18px;
     font-weight: var(--font-weight-bold);
@@ -1015,7 +883,8 @@ body {
     border: 3px solid var(--emidias-white);
     box-shadow: var(--shadow-md);
     object-fit: cover;
-    transition: all 0.3s ease;
+    transition: all var(--transition-normal);
+    will-change: transform;
 }
 
 .radio-marker-image:hover {
@@ -1023,30 +892,17 @@ body {
     box-shadow: var(--shadow-lg);
 }
 
-/* Marcadores específicos para proposta (cores diferentes) */
-.radio-marker-image.proposta-1 {
-    border-color: var(--emidias-primary);
-}
-
-.radio-marker-image.proposta-2 {
-    border-color: var(--emidias-magenta);
-}
-
-.radio-marker-image.proposta-3 {
-    border-color: var(--emidias-rosa);
-}
-
-.radio-marker-image.proposta-4 {
-    border-color: var(--emidias-roxo);
-}
-
-.radio-marker-image.proposta-5 {
-    border-color: var(--emidias-success);
-}
+/* Marcadores específicos para proposta */
+.radio-marker-image.proposta-1 { border-color: var(--emidias-primary); }
+.radio-marker-image.proposta-2 { border-color: var(--emidias-magenta); }
+.radio-marker-image.proposta-3 { border-color: var(--emidias-rosa); }
+.radio-marker-image.proposta-4 { border-color: var(--emidias-roxo); }
+.radio-marker-image.proposta-5 { border-color: var(--emidias-success); }
 
 /* =============================================================================
-    🎨 ANIMAÇÕES E-MÍDIAS
+    🎨 ANIMAÇÕES
     ============================================================================= */
+
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -1058,95 +914,171 @@ body {
     }
 }
 
-.info-card,
 .map-container,
 .cidades-container,
 .proposta-layout {
     animation: fadeInUp 0.6s ease-out;
 }
 
-.info-card:nth-child(2) {
-    animation-delay: 0.1s;
-}
+.map-container { animation-delay: 0.2s; }
+.cidades-container { animation-delay: 0.3s; }
 
-.map-container {
-    animation-delay: 0.2s;
-}
+/* =============================================================================
+    📱 RESPONSIVIDADE
+    ============================================================================= */
 
-.cidades-container {
-    animation-delay: 0.3s;
-}
-
-/* =========================================================
-CABEÇALHO SUPERIOR COM LOGO (E-MÍDIAS)
-========================================================= */
-.top-header {
-    background: var(--emidias-primary); /* usa a cor principal da sua marca */
-    padding: 12px 20px;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(6, 5, 91, 0.2);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    border-bottom: 2px solid var(--emidias-magenta);
-}
-
-.top-logo {
-    max-height: 40px;
-    height: auto;
-    max-width: 200px;
-    transition: transform 0.3s ease;
-    filter: brightness(1.1);
-}
-
-.top-logo:hover {
-    transform: scale(1.05);
-}
-
-/* Responsividade */
 @media (max-width: 768px) {
-    .top-header {
-        padding: 8px 16px;
+    :root {
+        --spacing-lg: 16px;
+        --spacing-xl: 24px;
     }
+    
+    .top-header {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+    
     .top-logo {
         max-height: 32px;
         max-width: 160px;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+    
+    .header-logo {
+        width: 100px;
+        height: 80px;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .proposta-layout {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-lg);
+    }
+    
+    .proposta-layout.map-expanded .proposta-radios-section {
+        display: none;
+    }
+    
+    .container {
+        padding: var(--spacing-md);
+    }
+    
+    #map {
+        height: 450px;
+        min-height: 450px;
+    }
+    
+    .individual-layout #map {
+        height: 500px !important;
+        min-height: 500px !important;
+    }
+    
+    .proposta-layout #map {
+        height: 400px;
+        min-height: 400px;
+    }
+    
+    .proposta-layout.map-expanded #map {
+        height: 500px;
+        min-height: 500px;
+    }
+    
+    .header {
+        padding: var(--spacing-lg) var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .cidades-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .cidades-actions {
+        justify-content: center;
+    }
+    
+    .search-input {
+        padding: 14px var(--spacing-md);
+        font-size: 16px;
+    }
+    
+    .type-indicator {
+        margin-left: 0;
+        margin-top: var(--spacing-sm);
+        display: block;
+    }
+    
+    .radios-expanded {
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%) translateY(-50%);
+        min-width: 200px;
+        max-width: calc(100vw - 20px);
+    }
+    
+    .cidade-item:nth-child(-n+3) .radios-expanded {
+        transform: translateX(-50%) translateY(0);
+    }
+    
+    .cidade-item:nth-last-child(-n+3) .radios-expanded {
+        transform: translateX(-50%) translateY(0);
     }
 }
 
 @media (max-width: 480px) {
     .top-header {
-        padding: 6px 12px;
+        padding: 6px var(--spacing-md);
     }
+    
     .top-logo {
         max-height: 28px;
         max-width: 140px;
     }
+    
+    .header-title {
+        font-size: 18px;
+    }
+    
+    .header-logo {
+        width: 80px;
+        height: 60px;
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .cidades-container {
+        padding: var(--spacing-lg);
+    }
+    
+    .excel-export-btn {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 13px;
+    }
 }
 
 /* =============================================================================
-    🔧 CORREÇÕES PARA MODO INDIVIDUAL
+    🎯 MELHORIAS DE PERFORMANCE
     ============================================================================= */
 
-/* Garantir que o mapa individual seja sempre visível */
-.individual-layout {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-.individual-layout #map {
-    height: 600px !important;
-    min-height: 600px !important;
-    display: block !important;
-    visibility: visible !important;
-    width: 100% !important;
-}
-
-/* Forçar visibilidade em dispositivos móveis */
-@media (max-width: 768px) {
-    .individual-layout #map {
-        height: 500px !important;
-        min-height: 500px !important;
+/* Reduzir repaints em animações */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
+}
+
+/* Otimização para GPU */
+.radio-marker-image,
+.radio-logo-mini,
+.map-expand-btn,
+.excel-export-btn {
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
