@@ -1126,12 +1126,12 @@ CABEÇALHO SUPERIOR COM LOGO (E-MÍDIAS)
 
 
 /* =============================================================================
-    🔧 SOLUÇÃO DEFINITIVA: Forçar existência do container
+    🔧 SOLUÇÃO DEFINITIVA: Forçar dimensões em TODA a hierarquia
     ============================================================================= */
 
-/* Garantir que o container sempre tenha dimensões mínimas */
+/* Reset completo para garantir que não há conflitos */
 * {
-    box-sizing: border-box;
+    box-sizing: border-box !important;
 }
 
 html, body {
@@ -1141,43 +1141,67 @@ html, body {
     padding: 0 !important;
 }
 
+/* Container principal */
 .container {
     width: 100% !important;
     max-width: 1200px !important;
     margin: 0 auto !important;
     padding: 20px !important;
     min-height: 100vh !important;
+    display: block !important;
 }
 
-/* Container do mapa - SEMPRE com dimensões */
+/* FORÇAR o container do mapa a sempre ter dimensões */
 #map-section {
     width: 100% !important;
     height: 650px !important;
     min-height: 650px !important;
+    max-height: none !important;
     display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
     position: relative !important;
-    background: #f8f9fa !important;
-    border: 3px solid #dc3545 !important; /* Vermelho para debug */
+    background: #ff0000 !important; /* Vermelho para debug */
+    border: 5px solid #0000ff !important; /* Azul para debug */
     margin: 20px 0 !important;
     padding: 10px !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
 }
 
-/* Elemento do mapa */
+/* FORÇAR o elemento do mapa */
 #map {
-    width: 100% !important;
-    height: 600px !important;
+    width: calc(100% - 20px) !important; /* Descontar padding do pai */
+    height: calc(100% - 20px) !important; /* Descontar padding do pai */
+    min-width: 600px !important;
     min-height: 600px !important;
+    max-height: none !important;
     display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
     position: relative !important;
-    background: #e9ecef !important;
-    border: 2px solid #28a745 !important; /* Verde para debug */
+    background: #ffff00 !important; /* Amarelo para debug */
+    border: 3px solid #00ff00 !important; /* Verde para debug */
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* Ocultar outros elementos no modo individual */
-body.individual-mode #proposta-section {
+body.individual-mode #proposta-section,
+body.individual-mode #info-section {
     display: none !important;
 }
 
-body.individual-mode #info-section {
-    display: none !important;
+/* Garantir que o header não interfira */
+.header {
+    width: 100% !important;
+    margin-bottom: 20px !important;
+}
+
+/* Garantir que o footer não interfira */
+.footer {
+    width: 100% !important;
+    margin-top: 20px !important;
 }
