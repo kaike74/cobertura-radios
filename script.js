@@ -437,74 +437,138 @@ async function fetchPropostaFromNotion(databaseId) {
 }
 
 async function initializeIndividualMode() {
-    console.log('🎯 Inicializando modo individual...');
+    console.log('🎯 === INICIANDO MODO INDIVIDUAL ===');
     
-    // Mostrar o container do mapa primeiro
+    // Garantir que o container esteja visível primeiro
     const mapSection = document.getElementById('map-section');
     if (mapSection) {
         mapSection.style.display = 'block';
+        mapSection.style.visibility = 'visible';
+        mapSection.style.opacity = '1';
         mapSection.classList.add('individual-layout');
+        console.log('✅ Container do mapa configurado');
     }
     
-    // Aguardar um frame antes de inicializar o mapa
-    await new Promise(resolve => requestAnimationFrame(resolve));
+    // Aguardar renderização completa
+    await new Promise(resolve => {
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                setTimeout(resolve, 100);
+            });
+        });
+    });
     
+    // Inicializar mapa
     await initializeMapIndividual();
+    
+    // Renderizar cidades
     renderCidadesIndividual();
     
-    console.log('✅ Modo individual inicializado');
+    console.log('✅ === MODO INDIVIDUAL CONCLUÍDO ===');
 }
 
 async function initializeMapIndividual() {
     return new Promise((resolve) => {
-        // Garantir que o container esteja visível ANTES de criar o mapa
-        const mapContainer = document.getElementById('map-section');
-        const mapElement = document.getElementById('map');
+        console.log('🗺️ Iniciando criação do mapa individual...');
         
-        if (mapContainer) {
-            mapContainer.style.display = 'block';
+        // Verificar se o elemento existe
+        const mapElement = document.getElementById('map');
+        if (!mapElement) {
+            console.error('❌ Elemento #map não encontrado!');
+            resolve();
+            return;
         }
         
-        // Aguardar um pouco mais para garantir que o DOM esteja pronto
-        setTimeout(() => {
-            try {
-                // Verificar se já existe um mapa e destruí-lo
-                if (map) {
-                    map.remove();
-                    map = null;
-                }
-                
-                // Criar novo mapa
-                map = L.map('map', {
-                    zoomControl: true,
-                    scrollWheelZoom: true
-                });
-                
-                // Adicionar tile layer
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors',
-                    maxZoom: 18
-                }).addTo(map);
-                
-                // Aguardar mais um pouco antes de invalidar o tamanho
+        console.log('✅ Elemento #map encontrado:', mapElement);
+        
+        // Aguardar múltiplos frames para garantir renderização
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
                 setTimeout(() => {
-                    map.invalidateSize(true);
-                    
-                    // Adicionar elementos do mapa
-                    addRadioMarkerIndividual();
-                    addCoverageIndividual();
-                    addCityMarkersIndividual();
-                    fitMapToCoverageIndividual();
-                    
-                    console.log('✅ Mapa individual inicializado com sucesso');
-                    resolve();
-                }, 200);
-                
-            } catch (error) {
-                console.error('❌ Erro ao inicializar mapa individual:', error);
-                resolve();
-            }
-        }, 100);
+                    try {
+                        // Destruir mapa existente se houver
+                        if (window.map) {
+                            console.log('🗑️ Removendo mapa existente...');
+                            window.map.remove();
+                            window.map = null;
+                        }
+                        
+                        // Verificar dimensões do container
+                        const rect = mapElement.getBoundingClientRect();
+                        console.log('📏 Dimensões do container:', {
+                            width: rect.width,
+                            height: rect.height,
+                            top: rect.top,
+                            left: rect.left
+                        });
+                        
+                        if (rect.width === 0 || rect.height === 0) {
+                            console.error('❌ Container do mapa tem dimensões zero!');
+                            // Forçar dimensões
+                            mapElement.style.width = '100%';
+                            mapElement.style.height = '600px';
+                            mapElement.style.minHeight = '600px';
+                        }
+                        
+                        // Criar mapa com configurações explícitas
+                        console.log('🆕 Criando novo mapa...');
+                        map = L.map('map', {
+                            center: [radioData.latitude, radioData.longitude],
+                            zoom: 8,
+                            zoomControl: true,
+                            scrollWheelZoom: true,
+                            doubleClickZoom: true,
+                            boxZoom: true,
+                            keyboard: true,
+                            dragging: true,
+                            touchZoom: true
+                        });
+                        
+                        console.log('✅ Mapa criado:', map);
+                        
+                        // Adicionar tile layer
+                        const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© OpenStreetMap contributors',
+                            maxZoom: 18,
+                            minZoom: 3
+                        });
+                        
+                        tileLayer.addTo(map);
+                        console.log('✅ Tile layer adicionado');
+                        
+                        // Aguardar tile layer carregar
+                        tileLayer.on('load', () => {
+                            console.log('✅ Tiles carregados');
+                        });
+                        
+                        // Invalidar tamanho múltiplas vezes
+                        setTimeout(() => {
+                            map.invalidateSize(true);
+                            console.log('🔄 Tamanho do mapa invalidado (1ª vez)');
+                            
+                            setTimeout(() => {
+                                map.invalidateSize(true);
+                                console.log('🔄 Tamanho do mapa invalidado (2ª vez)');
+                                
+                                // Adicionar elementos do mapa
+                                addRadioMarkerIndividual();
+                                addCoverageIndividual();
+                                addCityMarkersIndividual();
+                                fitMapToCoverageIndividual();
+                                
+                                console.log('✅ Mapa individual totalmente inicializado!');
+                                resolve();
+                            }, 200);
+                        }, 100);
+                        
+                    } catch (error) {
+                        console.error('❌ Erro crítico ao criar mapa:', error);
+                        console.error('Stack trace:', error.stack);
+                        resolve();
+                    }
+                }, 300); // Aguardar mais tempo
+            });
+        });
     });
 }
 
@@ -1365,15 +1429,25 @@ function hideLoading() {
         }
         if (radioInfoElement) radioInfoElement.textContent = '';
     } else {
-        // Modo Individual: mostrar layout simplificado (SEM CARDS)
+        // 🔧 CORREÇÃO CRÍTICA: Modo Individual
         if (infoElement) infoElement.style.display = 'none';
         if (propostaElement) propostaElement.style.display = 'none';
         
-        // CORREÇÃO: Mostrar o container do mapa ANTES de outras operações
+        // ✅ GARANTIR que o container do mapa esteja visível IMEDIATAMENTE
         if (mapElement) {
             mapElement.style.display = 'block';
+            mapElement.style.visibility = 'visible';
+            mapElement.style.opacity = '1';
+            mapElement.classList.add('individual-layout');
+            
             // Forçar reflow do DOM
             mapElement.offsetHeight;
+            
+            console.log('✅ Container do mapa individual configurado:', {
+                display: mapElement.style.display,
+                visibility: mapElement.style.visibility,
+                opacity: mapElement.style.opacity
+            });
         }
         
         const sourceSuffix = radioData.source === 'example' ? ' (EXEMPLO)' : '';

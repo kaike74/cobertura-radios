@@ -1125,27 +1125,28 @@ CABEÇALHO SUPERIOR COM LOGO (E-MÍDIAS)
 }
 
 /* =============================================================================
-    🔧 CORREÇÃO: Garantir visibilidade do mapa individual
+    🔧 CORREÇÃO CRÍTICA: Forçar visibilidade do mapa individual
     ============================================================================= */
-#map-section {
-    min-height: 600px;
-    position: relative;
-}
-
 #map-section.individual-layout {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    position: relative !important;
+    width: 100% !important;
+    min-height: 600px !important;
 }
 
-#map {
-    position: relative;
-    z-index: 1;
-}
-
-/* Garantir que o mapa tenha dimensões definidas */
-.individual-layout #map {
+#map-section.individual-layout #map {
     width: 100% !important;
     height: 600px !important;
     min-height: 600px !important;
+    position: relative !important;
+    z-index: 1 !important;
+    background: #f0f0f0 !important; /* Para debug - você verá um fundo cinza se o mapa não carregar */
+}
+
+/* Debug: Container deve ter fundo visível */
+.individual-layout {
+    border: 2px solid red !important; /* TEMPORÁRIO: para debug */
+    background: yellow !important; /* TEMPORÁRIO: para debug */
 }
