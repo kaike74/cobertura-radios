@@ -440,8 +440,27 @@ async function fetchPropostaFromNotion(databaseId) {
 // 🎯 MODO INDIVIDUAL MELHORADO (SEM CARDS + MAPA MAIOR)
 // =========================================================================
 async function initializeIndividualMode() {
-    // 🔧 NOVO: Não renderizar cards no modo individual
-    // renderInfoIndividual(); // REMOVIDO
+    // 🔧 VERIFICAR se os elementos necessários existem
+    const mapSection = document.getElementById('map-section');
+    const mapDiv = document.getElementById('map');
+    
+    if (!mapSection) {
+        console.error('❌ Elemento #map-section não encontrado!');
+        return;
+    }
+    
+    if (!mapDiv) {
+        console.error('❌ Elemento #map não encontrado!');
+        return;
+    }
+    
+    console.log('✅ Elementos do mapa encontrados');
+    
+    // Forçar visibilidade imediatamente
+    mapSection.style.display = 'block';
+    mapDiv.style.display = 'block';
+    
+    console.log('🎯 Inicializando modo individual...');
     
     await initializeMapIndividual();
     renderCidadesIndividual();
@@ -449,36 +468,84 @@ async function initializeIndividualMode() {
 
 async function initializeMapIndividual() {
     return new Promise((resolve) => {
+        // 🔧 AUMENTAR o delay para garantir que o DOM esteja pronto
         setTimeout(() => {
             try {
-                map = L.map('map');
+                console.log('🗺️ Inicializando mapa individual...');
+                
+                // Verificar se o elemento existe
+                const mapElement = document.getElementById('map');
+                if (!mapElement) {
+                    console.error('❌ Elemento #map não encontrado!');
+                    resolve();
+                    return;
+                }
+                
+                console.log('✅ Elemento #map encontrado, criando mapa...');
+                
+                // Garantir que o elemento esteja visível
+                mapElement.style.height = '600px';
+                mapElement.style.minHeight = '600px';
+                mapElement.style.display = 'block';
+                mapElement.style.visibility = 'visible';
+                
+                map = L.map('map', {
+                    preferCanvas: false,
+                    attributionControl: true,
+                    zoomControl: true
+                });
+                
+                console.log('✅ Mapa Leaflet criado');
                 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© OpenStreetMap contributors',
                     maxZoom: 18
                 }).addTo(map);
                 
-                setTimeout(() => map.invalidateSize(), 100);
+                console.log('✅ Camada de tiles adicionada');
+                
+                // Forçar redimensionamento
+                setTimeout(() => {
+                    map.invalidateSize();
+                    console.log('✅ Mapa redimensionado');
+                }, 100);
                 
                 addRadioMarkerIndividual();
+                console.log('✅ Marcador da rádio adicionado');
+                
                 addCoverageIndividual();
+                console.log('✅ Cobertura adicionada');
                 
                 // 🔧 CORRIGIDO: Adicionar bolinhas de cidades
                 if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
                     console.log('🔧 Inicializando marcadores de cidades (modo individual)');
                     addCityMarkersIndividual();
+                    console.log('✅ Marcadores de cidades adicionados');
                 } else {
                     console.log('⚠️ Nenhum KML placemark encontrado para criar marcadores de cidades');
+                    console.log('📊 Dados disponíveis:', {
+                        hasKmlPlacemarks: !!radioData.kmlPlacemarks,
+                        kmlPlacemarksLength: radioData.kmlPlacemarks ? radioData.kmlPlacemarks.length : 0,
+                        hasCidades: !!radioData.cidades,
+                        cidadesLength: radioData.cidades ? radioData.cidades.length : 0
+                    });
                 }
                 
                 fitMapToCoverageIndividual();
+                console.log('✅ Zoom do mapa ajustado');
+                
+                // Forçar redimensionamento final
+                setTimeout(() => {
+                    map.invalidateSize();
+                    console.log('✅ Redimensionamento final do mapa');
+                }, 200);
                 
                 resolve();
             } catch (error) {
-                console.error('Erro do mapa:', error);
+                console.error('❌ Erro ao inicializar mapa:', error);
                 resolve();
             }
-        }, 50);
+        }, 100); // Aumentado de 50ms para 100ms
     });
 }
 
@@ -571,109 +638,18 @@ function addCoverageCircleIndividual() {
     coverageLayers.push(coverageLayer);
 }
 
-// 🔧 CORRIGIDO: Função para modo individual
+// 🔧 MODIFICADO: Usar função unificada
 function addCityMarkersIndividual() {
     // Limpar marcadores anteriores
-    cityMarkers.forEach(marker => map.removeLayer(marker));
-    cityMarkers = [];
-    window.cityPlacemarkMap = {};
+    clearAllCityMarkers();
     
-    // Limpar também o array por rádio
-    if (cityMarkersByRadio[0]) {
-        cityMarkersByRadio[0].forEach(marker => map.removeLayer(marker));
-    }
-    cityMarkersByRadio[0] = [];
-    
-    // Verificar se temos dados KML
-    if (!radioData.kmlPlacemarks || radioData.kmlPlacemarks.length === 0) {
-        console.log('❌ Nenhum placemark KML encontrado para modo individual');
-        return;
+    // Usar função unificada para modo individual
+    if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
+        addCityMarkers(radioData, 0, '#06055B', true);
     }
     
-    console.log(`📍 Adicionando ${radioData.kmlPlacemarks.length} marcadores de cidades (modo individual)`);
-    
-    const cityIcon = L.divIcon({
-        html: `
-            <div style="
-                width: 18px; 
-                height: 18px; 
-                background: #06055B; 
-                border-radius: 50%; 
-                border: 2px solid white;
-                box-shadow: 0 2px 6px rgba(6, 5, 91, 0.3);
-            "></div>
-        `,
-        className: 'city-marker',
-        iconSize: [18, 18],
-        iconAnchor: [9, 9]
-    });
-    
-    const radioLocation = radioData.praca ? radioData.praca.toLowerCase() : '';
-    const radioName = radioData.name ? radioData.name.toLowerCase() : '';
-    
-    radioData.kmlPlacemarks.forEach((placemark, index) => {
-        const cityName = placemark.name.toLowerCase();
-        
-        // Filtrar origem/rádio para não criar marcador
-        if (
-            cityName.includes(radioLocation) || 
-            placemark.description?.includes('0.0 km') ||
-            placemark.description?.includes('0,0 km') ||
-            cityName === radioLocation ||
-            cityName.includes('origem') ||
-            cityName.includes(radioName.replace('rádio', '').replace('fm', '').trim()) ||
-            radioName.includes(cityName) ||
-            (placemark.description && placemark.description.match(/0\.[0-9]\s*km/))
-        ) {
-            console.log(`⚠️ Ignorando placemark de origem: "${placemark.name}"`);
-            return;
-        }
-        
-        const [lat, lng] = placemark.coordinates;
-        
-        const distanceFromRadio = calculateDistance(
-            radioData.latitude, radioData.longitude,
-            lat, lng
-        );
-        
-        if (distanceFromRadio < 0.5) {
-            console.log(`⚠️ Ignorando cidade muito próxima: "${placemark.name}" (${distanceFromRadio.toFixed(1)} km)`);
-            return;
-        }
-        
-        const cityMarker = L.marker([lat, lng], { icon: cityIcon })
-            .bindPopup(`
-                <div style="text-align: center; min-width: 160px; font-family: var(--font-primary);">
-                    <h4 style="margin: 0 0 8px 0; color: #06055B; font-weight: 600;">${placemark.name}</h4>
-                    ${placemark.description ? `<p style="margin: 4px 0; font-size: 12px; color: #64748B;">${placemark.description}</p>` : ''}
-                    <p style="margin: 4px 0; font-size: 11px; color: #9CA3AF;">
-                        📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}
-                    </p>
-                </div>
-            `)
-            .addTo(map);
-            
-        // Adicionar aos arrays de controle
-        const markerIndex = cityMarkers.length;
-        cityMarkers.push(cityMarker);
-        
-        // Inicializar array se não existir
-        if (!cityMarkersByRadio[0]) {
-            cityMarkersByRadio[0] = [];
-        }
-        cityMarkersByRadio[0].push(cityMarker);
-        
-        // Mapeamento para função highlightCity
-        window.cityPlacemarkMap[placemark.name.toLowerCase()] = {
-            markerIndex: markerIndex,
-            coordinates: [lat, lng],
-            placemark: placemark
-        };
-        
-        console.log(`✅ Cidade adicionada: "${placemark.name}" (${distanceFromRadio.toFixed(1)} km)`);
-    });
-    
-    console.log(`📍 Total de marcadores de cidades criados: ${cityMarkers.length}`);
+    // Atualizar visibilidade
+    updateCityMarkersVisibility();
 }
 
 function fitMapToCoverageIndividual() {
@@ -1423,28 +1399,51 @@ function hideLoading() {
         if (radioNameElement) {
             radioNameElement.innerHTML = `
                 <img class="header-logo" src="./assets/logo E-MIDIAS png fundo branco.png" alt="Logo E-MÍDIAS" 
-                        onerror="this.src='./assets/logo E-MIDIAS png fundo branco HORIZONTAL.png'; this.onerror=function(){this.style.display='none'};">
+                     onerror="this.src='./assets/logo E-MIDIAS png fundo branco HORIZONTAL.png'; this.onerror=function(){this.style.display='none'};">
                 Cobertura do Plano${sourceSuffix}
                 <span class="type-indicator type-proposta">Proposta</span>
             `;
         }
         if (radioInfoElement) radioInfoElement.textContent = '';
     } else {
-        // Modo Individual: mostrar layout simplificado (SEM CARDS)
-        if (infoElement) infoElement.style.display = 'none'; // 🔧 NOVO: Ocultar cards no individual
-        if (mapElement) mapElement.style.display = 'block';
+        // 🔧 CORRIGIDO: Modo Individual - garantir que o mapa seja mostrado
+        if (infoElement) infoElement.style.display = 'none';
         if (propostaElement) propostaElement.style.display = 'none';
+        
+        // 🔧 FORÇAR a exibição do mapa no modo individual
+        if (mapElement) {
+            mapElement.style.display = 'block';
+            mapElement.style.visibility = 'visible';
+            mapElement.style.opacity = '1';
+            
+            // Garantir que o div interno do mapa também esteja visível
+            const mapDiv = document.getElementById('map');
+            if (mapDiv) {
+                mapDiv.style.display = 'block';
+                mapDiv.style.visibility = 'visible';
+                mapDiv.style.height = '600px';
+                mapDiv.style.minHeight = '600px';
+            }
+        }
         
         const sourceSuffix = radioData.source === 'example' ? ' (EXEMPLO)' : '';
         if (radioNameElement) {
             radioNameElement.innerHTML = `
                 <img class="header-logo" src="${radioData.imageUrl}" alt="Logo ${radioData.name}" 
-                        onerror="this.style.display='none';">
+                     onerror="this.style.display='none';">
                 ${radioData.name}${sourceSuffix}
                 <span class="type-indicator type-individual">Individual</span>
             `;
         }
         if (radioInfoElement) radioInfoElement.textContent = `${radioData.dial} • ${radioData.praca} - ${radioData.uf}`;
+        
+        // 🔧 NOVO: Forçar redimensionamento do mapa após um pequeno delay
+        setTimeout(() => {
+            if (map) {
+                console.log('🔧 Forçando redimensionamento do mapa individual');
+                map.invalidateSize();
+            }
+        }, 100);
     }
 }
 
@@ -1640,27 +1639,19 @@ function toggleIndividualCities(show = true) {
     }
 }
 
-// 🔧 NOVA: Função para toggle de cidades no modo individual
-function toggleIndividualCities(show = true) {
-    if (isPropostaMode) return;
+async function initializeIndividualMode() {
+    console.log('🎯 Inicializando modo individual...');
+    console.log('📊 Dados da rádio:', {
+        name: radioData.name,
+        hasKmlPlacemarks: !!radioData.kmlPlacemarks,
+        kmlPlacemarksCount: radioData.kmlPlacemarks ? radioData.kmlPlacemarks.length : 0,
+        hasCidades: !!radioData.cidades,
+        cidadesCount: radioData.cidades ? radioData.cidades.length : 0
+    });
     
-    console.log(`🔧 Toggle cidades individuais: ${show ? 'mostrar' : 'ocultar'}`);
+    await initializeMapIndividual();
+    console.log('✅ Mapa individual inicializado');
     
-    if (cityMarkersByRadio[0] && cityMarkersByRadio[0].length > 0) {
-        cityMarkersByRadio[0].forEach(cityMarker => {
-            if (show) {
-                if (!map.hasLayer(cityMarker)) {
-                    map.addLayer(cityMarker);
-                }
-            } else {
-                if (map.hasLayer(cityMarker)) {
-                    map.removeLayer(cityMarker);
-                }
-            }
-        });
-        
-        console.log(`📍 ${show ? 'Mostradas' : 'Ocultadas'} ${cityMarkersByRadio[0].length} cidades`);
-    } else {
-        console.log('⚠️ Nenhum marcador de cidade encontrado para toggle');
-    }
+    renderCidadesIndividual();
+    console.log('✅ Lista de cidades renderizada');
 }

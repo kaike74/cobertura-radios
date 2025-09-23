@@ -1123,3 +1123,30 @@ CABEÇALHO SUPERIOR COM LOGO (E-MÍDIAS)
         max-width: 140px;
     }
 }
+
+/* =============================================================================
+    🔧 CORREÇÕES PARA MODO INDIVIDUAL
+    ============================================================================= */
+
+/* Garantir que o mapa individual seja sempre visível */
+.individual-layout {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.individual-layout #map {
+    height: 600px !important;
+    min-height: 600px !important;
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+}
+
+/* Forçar visibilidade em dispositivos móveis */
+@media (max-width: 768px) {
+    .individual-layout #map {
+        height: 500px !important;
+        min-height: 500px !important;
+    }
+}
