@@ -471,103 +471,111 @@ async function initializeMapIndividual() {
     return new Promise((resolve) => {
         console.log('🗺️ Iniciando criação do mapa individual...');
         
-        // Verificar se o elemento existe
         const mapElement = document.getElementById('map');
+        const mapSection = document.getElementById('map-section');
+        
         if (!mapElement) {
             console.error('❌ Elemento #map não encontrado!');
             resolve();
             return;
         }
         
-        console.log('✅ Elemento #map encontrado:', mapElement);
+        // 🔧 FORÇAR DIMENSÕES ANTES DE QUALQUER COISA
+        if (mapSection) {
+            mapSection.style.display = 'block';
+            mapSection.style.width = '100%';
+            mapSection.style.height = '600px';
+            mapSection.style.minHeight = '600px';
+            mapSection.classList.add('individual-layout');
+        }
         
-        // Aguardar renderização
+        mapElement.style.width = '100%';
+        mapElement.style.height = '600px';
+        mapElement.style.minHeight = '600px';
+        mapElement.style.display = 'block';
+        
+        // Aguardar renderização com múltiplas verificações
         setTimeout(() => {
-            try {
-                // 🔧 CORREÇÃO TOTAL: Limpeza segura sem erros
-                if (typeof map !== 'undefined' && map !== null) {
-                    try {
-                        if (map.remove) {
-                            map.remove();
+            // Verificar dimensões novamente
+            let rect = mapElement.getBoundingClientRect();
+            console.log('📏 Primeira verificação de dimensões:', rect);
+            
+            if (rect.width === 0 || rect.height === 0) {
+                console.log('🔧 Dimensões ainda zero, forçando novamente...');
+                
+                // Forçar com pixels absolutos
+                mapElement.style.width = '1000px';
+                mapElement.style.height = '600px';
+                
+                if (mapSection) {
+                    mapSection.style.width = '1000px';
+                    mapSection.style.height = '600px';
+                }
+                
+                // Forçar reflow
+                mapElement.offsetHeight;
+                
+                // Verificar novamente
+                rect = mapElement.getBoundingClientRect();
+                console.log('📏 Segunda verificação de dimensões:', rect);
+            }
+            
+            if (rect.width > 0 && rect.height > 0) {
+                console.log('✅ Dimensões OK, criando mapa...');
+                
+                try {
+                    // Limpeza segura
+                    if (typeof map !== 'undefined' && map !== null) {
+                        try {
+                            if (map.remove) map.remove();
+                        } catch (e) {
+                            console.log('⚠️ Ignorando erro de limpeza:', e.message);
                         }
-                    } catch (e) {
-                        console.log('⚠️ Ignorando erro de limpeza:', e.message);
                     }
-                }
-                
-                // Resetar variável
-                map = null;
-                
-                // Limpar elemento DOM se necessário
-                mapElement.innerHTML = '';
-                if (mapElement._leaflet_id) {
-                    delete mapElement._leaflet_id;
-                }
-                
-                // Verificar dimensões
-                const rect = mapElement.getBoundingClientRect();
-                console.log('📏 Dimensões do container:', rect);
-                
-                if (rect.width === 0 || rect.height === 0) {
-                    console.log('🔧 Forçando dimensões do container...');
-                    mapElement.style.width = '100%';
-                    mapElement.style.height = '600px';
-                    mapElement.style.minHeight = '600px';
-                    mapElement.style.display = 'block';
-                }
-                
-                // Aguardar um pouco mais para garantir que o DOM está pronto
-                setTimeout(() => {
-                    try {
-                        // Criar mapa novo
-                        console.log('🆕 Criando mapa...');
-                        map = L.map('map', {
-                            center: [radioData.latitude || -23.5505, radioData.longitude || -46.6333],
-                            zoom: 8
-                        });
-                        
-                        console.log('✅ Mapa criado com sucesso!');
-                        
-                        // Adicionar tiles
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            attribution: '© OpenStreetMap contributors',
-                            maxZoom: 18
-                        }).addTo(map);
-                        
-                        console.log('✅ Tiles adicionados!');
-                        
-                        // Aguardar um pouco antes de invalidar tamanho
-                        setTimeout(() => {
-                            if (map) {
-                                map.invalidateSize(true);
-                                console.log('🔄 Tamanho invalidado');
-                                
-                                // Adicionar elementos
-                                try {
-                                    addRadioMarkerIndividual();
-                                    addCoverageIndividual();
-                                    addCityMarkersIndividual();
-                                    fitMapToCoverageIndividual();
-                                    console.log('✅ Elementos do mapa adicionados!');
-                                } catch (elemError) {
-                                    console.error('❌ Erro ao adicionar elementos:', elemError);
-                                }
-                                
-                                resolve();
-                            }
-                        }, 200);
-                        
-                    } catch (createError) {
-                        console.error('❌ Erro ao criar mapa:', createError);
+                    
+                    map = null;
+                    mapElement.innerHTML = '';
+                    
+                    // Criar mapa
+                    map = L.map('map', {
+                        center: [radioData.latitude || -23.5505, radioData.longitude || -46.6333],
+                        zoom: 8
+                    });
+                    
+                    console.log('✅ Mapa criado!');
+                    
+                    // Adicionar tiles
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors',
+                        maxZoom: 18
+                    }).addTo(map);
+                    
+                    // Invalidar tamanho
+                    setTimeout(() => {
+                        if (map) {
+                            map.invalidateSize(true);
+                            console.log('🔄 Tamanho invalidado');
+                            
+                            // Adicionar elementos
+                            addRadioMarkerIndividual();
+                            addCoverageIndividual();
+                            addCityMarkersIndividual();
+                            fitMapToCoverageIndividual();
+                            
+                            console.log('✅ Mapa individual completo!');
+                        }
                         resolve();
-                    }
-                }, 100);
-                
-            } catch (error) {
-                console.error('❌ Erro geral:', error);
+                    }, 300);
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao criar mapa:', error);
+                    resolve();
+                }
+            } else {
+                console.error('❌ Não foi possível forçar dimensões do container');
                 resolve();
             }
-        }, 500); // Aguardar mais tempo
+        }, 800); // Aguardar mais tempo
     });
 }
 
@@ -1427,9 +1435,8 @@ function hideLoading() {
     
     if (loadingElement) loadingElement.style.display = 'none';
     
-    // Atualizar header baseado no modo
     if (isPropostaMode) {
-        // Modo Proposta: mostrar layout específico
+        // Modo Proposta
         if (propostaElement) propostaElement.style.display = 'grid';
         if (infoElement) infoElement.style.display = 'none';
         if (mapElement) mapElement.style.display = 'none';
@@ -1445,24 +1452,48 @@ function hideLoading() {
         }
         if (radioInfoElement) radioInfoElement.textContent = '';
     } else {
-        // 🔧 CORREÇÃO CRÍTICA: Modo Individual
+        // 🔧 MODO INDIVIDUAL - FORÇAR DIMENSÕES AGRESSIVAMENTE
         if (infoElement) infoElement.style.display = 'none';
         if (propostaElement) propostaElement.style.display = 'none';
         
-        // ✅ GARANTIR que o container do mapa esteja visível IMEDIATAMENTE
         if (mapElement) {
+            // Forçar todas as propriedades de layout
             mapElement.style.display = 'block';
             mapElement.style.visibility = 'visible';
             mapElement.style.opacity = '1';
+            mapElement.style.width = '100%';
+            mapElement.style.height = '600px';
+            mapElement.style.minHeight = '600px';
+            mapElement.style.position = 'relative';
+            mapElement.style.zIndex = '1';
+            mapElement.style.backgroundColor = '#f0f0f0'; // Debug
+            mapElement.style.border = '2px solid red'; // Debug
             mapElement.classList.add('individual-layout');
             
-            // Forçar reflow do DOM
-            mapElement.offsetHeight;
+            // Forçar o elemento #map interno também
+            const mapInner = document.getElementById('map');
+            if (mapInner) {
+                mapInner.style.width = '100%';
+                mapInner.style.height = '100%';
+                mapInner.style.minHeight = '600px';
+                mapInner.style.display = 'block';
+                mapInner.style.position = 'relative';
+                mapInner.style.backgroundColor = '#e0e0e0'; // Debug
+                mapInner.style.border = '1px solid green'; // Debug
+            }
             
-            console.log('✅ Container do mapa individual configurado:', {
-                display: mapElement.style.display,
-                visibility: mapElement.style.visibility,
-                opacity: mapElement.style.opacity
+            // Forçar reflow múltiplas vezes
+            mapElement.offsetHeight;
+            mapElement.offsetWidth;
+            
+            if (mapInner) {
+                mapInner.offsetHeight;
+                mapInner.offsetWidth;
+            }
+            
+            console.log('✅ Container forçado:', {
+                mapElement: mapElement.getBoundingClientRect(),
+                mapInner: mapInner ? mapInner.getBoundingClientRect() : 'não encontrado'
             });
         }
         

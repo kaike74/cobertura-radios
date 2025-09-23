@@ -1124,24 +1124,65 @@ CABEÇALHO SUPERIOR COM LOGO (E-MÍDIAS)
     }
 }
 
-/* Forçar visibilidade do mapa individual */
+/* =============================================================================
+    🔧 CORREÇÃO CRÍTICA: Forçar dimensões do container
+    ============================================================================= */
+
+/* Container principal do mapa */
 #map-section {
     display: none; /* Oculto por padrão */
+    width: 100%;
+    min-height: 600px;
 }
 
+/* Quando é modo individual, forçar visibilidade total */
 #map-section.individual-layout {
     display: block !important;
-    width: 100% !important;
-    min-height: 600px !important;
-    background: #f8f9fa; /* Fundo visível para debug */
-    border: 1px solid #ddd; /* Borda para debug */
-    border-radius: 16px;
-    overflow: hidden;
-}
-
-#map {
+    visibility: visible !important;
+    opacity: 1 !important;
     width: 100% !important;
     height: 600px !important;
     min-height: 600px !important;
-    background: #e9ecef; /* Fundo cinza claro para ver se o container está aparecendo */
+    max-width: none !important;
+    position: relative !important;
+    
+    /* Forçar layout */
+    box-sizing: border-box !important;
+    
+    /* Debug visual */
+    background: #f0f0f0 !important;
+    border: 2px solid #007bff !important;
+    margin: 20px 0 !important;
+    padding: 0 !important;
+}
+
+/* Elemento do mapa em si */
+#map {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 600px !important;
+    max-height: none !important;
+    position: relative !important;
+    display: block !important;
+    
+    /* Forçar layout */
+    box-sizing: border-box !important;
+    
+    /* Debug visual */
+    background: #e0e0e0 !important;
+    border: 1px solid #28a745 !important;
+}
+
+/* Container pai (se existir) */
+.container {
+    width: 100% !important;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+    padding: 20px !important;
+}
+
+/* Garantir que body e html tenham dimensões */
+html, body {
+    width: 100% !important;
+    min-height: 100vh !important;
 }
