@@ -1,4 +1,50 @@
 // =========================================================================
+// 🔧 FUNÇÃO DE DEBUG COMPLETA
+// =========================================================================
+function debugCompleto() {
+    console.log('=== DEBUG COMPLETO ===');
+    
+    // Verificar se os elementos existem
+    const mapSection = document.getElementById('map-section');
+    const mapElement = document.getElementById('map');
+    const container = document.querySelector('.container');
+    const body = document.body;
+    
+    console.log('Elementos encontrados:', {
+        mapSection: !!mapSection,
+        mapElement: !!mapElement,
+        container: !!container,
+        body: !!body
+    });
+    
+    if (mapSection) {
+        console.log('mapSection:', {
+            display: window.getComputedStyle(mapSection).display,
+            width: window.getComputedStyle(mapSection).width,
+            height: window.getComputedStyle(mapSection).height,
+            rect: mapSection.getBoundingClientRect()
+        });
+    }
+    
+    if (mapElement) {
+        console.log('mapElement:', {
+            display: window.getComputedStyle(mapElement).display,
+            width: window.getComputedStyle(mapElement).width,
+            height: window.getComputedStyle(mapElement).height,
+            rect: mapElement.getBoundingClientRect()
+        });
+    }
+    
+    // Verificar hierarquia DOM
+    console.log('Hierarquia DOM:');
+    console.log('body classes:', body.className);
+    console.log('container:', container ? container.getBoundingClientRect() : 'não encontrado');
+    
+    // Verificar CSS aplicado
+    console.log('Modo atual:', isPropostaMode ? 'PROPOSTA' : 'INDIVIDUAL');
+}
+
+// =========================================================================
 // 🚀 VARIÁVEIS GLOBAIS E-MÍDIAS MELHORADAS
 // =========================================================================
 let map;
@@ -453,101 +499,162 @@ async function initializeIndividualMode() {
 
 async function initializeMapIndividual() {
     return new Promise((resolve) => {
-        console.log('🗺️ Iniciando mapa individual (versão simplificada)...');
+        console.log('🗺️ === INICIANDO DEBUG DO MAPA INDIVIDUAL ===');
         
-        // Aguardar um tempo para garantir que o CSS foi aplicado
+        // Debug imediato
+        debugCompleto();
+        
+        // Aguardar e verificar novamente
         setTimeout(() => {
+            console.log('🔍 Verificando após 1 segundo...');
+            debugCompleto();
+            
             const mapElement = document.getElementById('map');
+            const mapSection = document.getElementById('map-section');
             
             if (!mapElement) {
-                console.error('❌ Elemento #map não encontrado!');
+                console.error('❌ CRÍTICO: Elemento #map não existe no DOM!');
+                console.log('DOM atual:', document.body.innerHTML.substring(0, 1000));
                 resolve();
                 return;
             }
             
-            // Verificar dimensões finais
-            const rect = mapElement.getBoundingClientRect();
-            console.log('📏 Dimensões finais do container:', {
-                width: rect.width,
-                height: rect.height,
-                top: rect.top,
-                left: rect.left,
-                display: window.getComputedStyle(mapElement).display,
-                visibility: window.getComputedStyle(mapElement).visibility
-            });
-            
-            if (rect.width === 0 || rect.height === 0) {
-                console.error('❌ AINDA com dimensões zero! Algo está errado no CSS.');
-                
-                // Última tentativa - forçar inline
-                mapElement.setAttribute('style', `
-                    width: 100% !important;
-                    height: 600px !important;
-                    min-height: 600px !important;
-                    display: block !important;
-                    position: relative !important;
-                    background: red !important;
-                `);
-                
-                // Verificar novamente
-                setTimeout(() => {
-                    const newRect = mapElement.getBoundingClientRect();
-                    console.log('�� Após forçar inline:', newRect);
-                    
-                    if (newRect.width > 0 && newRect.height > 0) {
-                        createMap();
-                    } else {
-                        console.error('❌ Impossível criar dimensões. Problema no DOM.');
-                        resolve();
-                    }
-                }, 100);
-            } else {
-                console.log('✅ Dimensões OK! Criando mapa...');
-                createMap();
+            if (!mapSection) {
+                console.error('❌ CRÍTICO: Elemento #map-section não existe no DOM!');
+                resolve();
+                return;
             }
             
-            function createMap() {
-                try {
-                    // Limpeza
-                    if (map) {
-                        try { map.remove(); } catch (e) {}
+            // Forçar visibilidade de forma MUITO agressiva
+            console.log('🔨 Forçando visibilidade agressivamente...');
+            
+            // Remover TODOS os estilos que podem estar interferindo
+            mapSection.removeAttribute('style');
+            mapElement.removeAttribute('style');
+            
+            // Aplicar estilos inline diretos
+            mapSection.style.cssText = `
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                width: 100% !important;
+                height: 650px !important;
+                min-height: 650px !important;
+                max-height: none !important;
+                position: relative !important;
+                background: red !important;
+                border: 5px solid blue !important;
+                margin: 20px auto !important;
+                padding: 10px !important;
+                z-index: 1000 !important;
+                box-sizing: border-box !important;
+            `;
+            
+            mapElement.style.cssText = `
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                width: 100% !important;
+                height: 600px !important;
+                min-height: 600px !important;
+                max-height: none !important;
+                position: relative !important;
+                background: yellow !important;
+                border: 3px solid green !important;
+                z-index: 1001 !important;
+                box-sizing: border-box !important;
+            `;
+            
+            // Forçar reflow
+            mapSection.offsetHeight;
+            mapElement.offsetHeight;
+            
+            // Verificar dimensões após forçar
+            setTimeout(() => {
+                const rect = mapElement.getBoundingClientRect();
+                const sectionRect = mapSection.getBoundingClientRect();
+                
+                console.log('📏 Dimensões após forçar:', {
+                    mapElement: rect,
+                    mapSection: sectionRect
+                });
+                
+                if (rect.width > 0 && rect.height > 0) {
+                    console.log('✅ SUCESSO! Dimensões forçadas funcionaram!');
+                    
+                    // Agora criar o mapa
+                    try {
+                        // Limpeza
+                        if (window.map) {
+                            try { window.map.remove(); } catch (e) {}
+                        }
+                        if (map) {
+                            try { map.remove(); } catch (e) {}
+                        }
                         map = null;
+                        
+                        // Limpar conteúdo
+                        mapElement.innerHTML = '';
+                        
+                        console.log('🆕 Criando mapa Leaflet...');
+                        
+                        // Criar mapa
+                        map = L.map(mapElement, {
+                            center: [radioData.latitude || -23.5505, radioData.longitude || -46.6333],
+                            zoom: 8,
+                            zoomControl: true
+                        });
+                        
+                        console.log('✅ Mapa Leaflet criado!', map);
+                        
+                        // Adicionar tiles
+                        const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© OpenStreetMap contributors',
+                            maxZoom: 18
+                        });
+                        
+                        tileLayer.addTo(map);
+                        console.log('✅ Tiles adicionados!');
+                        
+                        // Aguardar tiles carregarem
+                        setTimeout(() => {
+                            if (map) {
+                                map.invalidateSize(true);
+                                console.log('🔄 Tamanho invalidado');
+                                
+                                // Adicionar elementos
+                                try {
+                                    addRadioMarkerIndividual();
+                                    addCoverageIndividual();
+                                    addCityMarkersIndividual();
+                                    fitMapToCoverageIndividual();
+                                    console.log('✅ Elementos adicionados ao mapa!');
+                                } catch (elemError) {
+                                    console.error('❌ Erro ao adicionar elementos:', elemError);
+                                }
+                            }
+                            resolve();
+                        }, 500);
+                        
+                    } catch (mapError) {
+                        console.error('❌ Erro ao criar mapa Leaflet:', mapError);
+                        resolve();
                     }
                     
-                    // Criar mapa
-                    map = L.map('map', {
-                        center: [radioData.latitude || -23.5505, radioData.longitude || -46.6333],
-                        zoom: 8
+                } else {
+                    console.error('❌ FALHA TOTAL: Não conseguiu forçar dimensões');
+                    console.error('Rect final:', rect);
+                    console.error('Computed styles:', {
+                        display: window.getComputedStyle(mapElement).display,
+                        width: window.getComputedStyle(mapElement).width,
+                        height: window.getComputedStyle(mapElement).height,
+                        position: window.getComputedStyle(mapElement).position
                     });
-                    
-                    // Tiles
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '© OpenStreetMap contributors',
-                        maxZoom: 18
-                    }).addTo(map);
-                    
-                    console.log('✅ Mapa criado com sucesso!');
-                    
-                    // Invalidar e adicionar elementos
-                    setTimeout(() => {
-                        if (map) {
-                            map.invalidateSize(true);
-                            addRadioMarkerIndividual();
-                            addCoverageIndividual();
-                            addCityMarkersIndividual();
-                            fitMapToCoverageIndividual();
-                            console.log('✅ Mapa individual completo!');
-                        }
-                        resolve();
-                    }, 200);
-                    
-                } catch (error) {
-                    console.error('❌ Erro ao criar mapa:', error);
                     resolve();
                 }
-            }
+            }, 200);
             
-        }, 1000); // Aguardar 1 segundo para CSS ser aplicado
+        }, 1000);
     });
 }
 
@@ -1399,20 +1506,15 @@ function highlightCity(cityName) {
 
 function hideLoading() {
     const loadingElement = document.getElementById('loading');
-    const infoElement = document.getElementById('info-section');
-    const mapElement = document.getElementById('map-section');
-    const propostaElement = document.getElementById('proposta-section');
     const radioNameElement = document.getElementById('radio-name');
     const radioInfoElement = document.getElementById('radio-info');
     
     if (loadingElement) loadingElement.style.display = 'none';
     
     if (isPropostaMode) {
-        // Modo Proposta
-        document.body.className = 'proposta-mode';
-        if (propostaElement) propostaElement.style.display = 'grid';
-        if (infoElement) infoElement.style.display = 'none';
-        if (mapElement) mapElement.style.display = 'none';
+        document.getElementById('proposta-section').style.display = 'grid';
+        document.getElementById('info-section').style.display = 'none';
+        document.getElementById('map-section').style.display = 'none';
         
         const sourceSuffix = radioData.source === 'example' ? ' (EXEMPLO)' : '';
         if (radioNameElement) {
@@ -1425,18 +1527,12 @@ function hideLoading() {
         }
         if (radioInfoElement) radioInfoElement.textContent = '';
     } else {
-        // 🔧 MODO INDIVIDUAL - FORÇAR COM CLASSE NO BODY
-        document.body.className = 'individual-mode';
+        // 🔧 MODO INDIVIDUAL - APENAS MOSTRAR OS ELEMENTOS NECESSÁRIOS
+        document.getElementById('info-section').style.display = 'none';
+        document.getElementById('proposta-section').style.display = 'none';
+        document.getElementById('map-section').style.display = 'block';
         
-        if (infoElement) infoElement.style.display = 'none';
-        if (propostaElement) propostaElement.style.display = 'none';
-        
-        // O CSS já força a visibilidade, só precisamos garantir que existe
-        if (mapElement) {
-            mapElement.style.display = 'block';
-            mapElement.classList.add('individual-layout');
-            console.log('✅ Container configurado para individual');
-        }
+        console.log('✅ Elementos configurados para modo individual');
         
         const sourceSuffix = radioData.source === 'example' ? ' (EXEMPLO)' : '';
         if (radioNameElement) {
