@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa de Cobertura - E-MÍDIAS</title>
 
+
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
@@ -15,6 +16,7 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <body>
     <!-- CABEÇALHO SUPERIOR E-MÍDIAS -->
     <div class="top-header">
         <img src="https://raw.githubusercontent.com/kaike74/distribuicaoemidias/main/logo%20E-MIDIAS%20png%20fundo%20escuro%20HORIZONTAL%20(1).png"
@@ -23,102 +25,103 @@
              onerror="this.src='./assets/logo E-MIDIAS png fundo branco HORIZONTAL.png'; this.onerror=function(){this.style.display='none'};">
     </div>
 
-    <!-- HEADER E-MÍDIAS COM LOGO INTEGRADA -->
-    <div class="header">
-        <div class="header-content">
-            <div class="header-main">
-                <h1 class="header-title" id="radio-name">
-                    Carregando...
-                    <img class="header-logo" id="header-logo" src="" alt="Logo" style="display: none;">
-                </h1>
-                <div class="header-subtitle">
-                    <span id="radio-info"></span>
+        <!-- HEADER E-MÍDIAS COM LOGO INTEGRADA -->
+        <div class="header">
+            <div class="header-content">
+                <div class="header-main">
+                    <h1 class="header-title" id="radio-name">
+                        Carregando...
+                        <img class="header-logo" id="header-logo" src="" alt="Logo" style="display: none;">
+                    </h1>
+                    <div class="header-subtitle">
+                        <span id="radio-info"></span>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    
-    <!-- LOADING -->
-    <div id="loading" class="loading">
-        <div class="loading-spinner"></div>
-        <p>Carregando dados...</p>
-    </div>
-    
-    <!-- ERROR -->
-    <div id="error" class="error" style="display: none;">
-        <div id="error-message"></div>
-        <div id="error-details" class="error-details" style="display: none;"></div>
-    </div>
-    
-    <!-- INFORMAÇÕES (MODO INDIVIDUAL - REMOVIDO OS CARDS) -->
-    <div id="info-section" class="info-grid" style="display: none;">
-        <!-- Cards removidos para o modo individual -->
-    </div>
-    
-    <!-- LAYOUT PROPOSTA (MAPA + LISTA DE RÁDIOS) -->
-    <div id="proposta-section" class="proposta-layout" style="display: none;">
-        <!-- MAPA -->
-        <div id="map-section-proposta" class="map-container">
+        
+        <!-- LOADING -->
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <p>Carregando dados...</p>
+        </div>
+        
+        <!-- ERROR -->
+        <div id="error" class="error" style="display: none;">
+            <div id="error-message"></div>
+            <div id="error-details" class="error-details" style="display: none;"></div>
+        </div>
+        
+        <!-- INFORMAÇÕES (MODO INDIVIDUAL - REMOVIDO OS CARDS) -->
+        <div id="info-section" class="info-grid" style="display: none;">
+            <!-- Cards removidos para o modo individual -->
+        </div>
+        
+        <!-- LAYOUT PROPOSTA (MAPA + LISTA DE RÁDIOS) -->
+        <div id="proposta-section" class="proposta-layout" style="display: none;">
+            <!-- MAPA -->
+            <div id="map-section-proposta" class="map-container">
+                <div id="map"></div>
+            </div>
+            
+            <!-- LISTA DE RÁDIOS COM BOTÃO EXPANDIR -->
+            <div class="proposta-radios-section">
+                <!-- 🔧 NOVO: Botão para expandir/ocultar mapa -->
+                <button class="map-expand-btn" id="map-expand-btn" onclick="toggleMapExpansion()">
+                    <span id="expand-icon">🔼</span>
+                    <span id="expand-text">Expandir Mapa</span>
+                </button>
+                
+                <h3 class="card-title">
+                    📻 Rádios do Plano 
+                    <span class="radio-count-badge" id="radio-count-badge">0</span>
+                </h3>
+                <div class="radios-list" id="radios-list">
+                    <!-- Lista será gerada dinamicamente -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- MAPA (MODO INDIVIDUAL) -->
+        <div id="map-section" class="map-container individual-layout" style="display: none;">
             <div id="map"></div>
         </div>
         
-        <!-- LISTA DE RÁDIOS COM BOTÃO EXPANDIR -->
-        <div class="proposta-radios-section">
-            <!-- 🔧 NOVO: Botão para expandir/ocultar mapa -->
-            <button class="map-expand-btn" id="map-expand-btn" onclick="toggleMapExpansion()">
-                <span id="expand-icon">🔼</span>
-                <span id="expand-text">Expandir Mapa</span>
-            </button>
+        <!-- CIDADES -->
+        <div id="cidades-section" class="cidades-container" style="display: none;">
+            <div class="cidades-header">
+                <h2 class="cidades-title">
+                    🌍 Cidades de Cobertura
+                    <span class="cidade-count" id="cidade-count">0</span>
+                </h2>
+                <div class="cidades-actions">
+                    <button 
+                        class="excel-export-btn" 
+                        onclick="exportToExcel()" 
+                        title="Exportar cidades para Excel">
+                        📊 Exportar Excel (.xlsx)
+                    </button>
+                </div>
+            </div>
             
-            <h3 class="card-title">
-                📻 Rádios do Plano 
-                <span class="radio-count-badge" id="radio-count-badge">0</span>
-            </h3>
-            <div class="radios-list" id="radios-list">
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    id="city-search" 
+                    placeholder="🔍 Buscar cidade ou região..."
+                >
+            </div>
+            
+            <div class="cidades-list" id="cidades-list">
                 <!-- Lista será gerada dinamicamente -->
             </div>
         </div>
-    </div>
-    
-    <!-- MAPA (MODO INDIVIDUAL) -->
-    <div id="map-section" class="map-container individual-layout" style="display: none;">
-        <div id="map"></div>
-    </div>
-    
-    <!-- CIDADES -->
-    <div id="cidades-section" class="cidades-container" style="display: none;">
-        <div class="cidades-header">
-            <h2 class="cidades-title">
-                🌍 Cidades de Cobertura
-                <span class="cidade-count" id="cidade-count">0</span>
-            </h2>
-            <div class="cidades-actions">
-                <button 
-                    class="excel-export-btn" 
-                    onclick="exportToExcel()" 
-                    title="Exportar cidades para Excel">
-                    📊 Exportar Excel (.xlsx)
-                </button>
-            </div>
-        </div>
         
-        <div class="search-box">
-            <input 
-                type="text" 
-                class="search-input" 
-                id="city-search" 
-                placeholder="🔍 Buscar cidade ou região..."
-            >
+        <!-- RODAPÉ E-MÍDIAS -->
+        <div class="footer">
+            <p class="footer-text">Plataforma de Mapeamento de Cobertura de Rádios • E-MÍDIAS</p>
         </div>
-        
-        <div class="cidades-list" id="cidades-list">
-            <!-- Lista será gerada dinamicamente -->
-        </div>
-    </div>
-    
-    <!-- RODAPÉ E-MÍDIAS -->
-    <div class="footer">
-        <p class="footer-text">Plataforma de Mapeamento de Cobertura de Rádios • E-MÍDIAS</p>
     </div>
     
     <!-- Leaflet JS -->
