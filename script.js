@@ -489,47 +489,69 @@ async function initializeMapIndividual() {
     });
 }
 
+// =========================================================================
+// 📍 ADICIONAR MARCADOR DE RÁDIO INDIVIDUAL (GARANTIR QUE FUNCIONA)
+// =========================================================================
 function addRadioMarkerIndividual() {
-    const radioIcon = L.divIcon({
-        html: `
-            <img src="${radioData.imageUrl}" 
-                    alt="${radioData.name}" 
-                    class="radio-marker-image"
-                    onerror="this.src='https://via.placeholder.com/56x56/06055B/white?text=${encodeURIComponent(radioData.dial || 'FM')}'">
-        `,
-        className: 'radio-marker',
-        iconSize: [56, 56],
-        iconAnchor: [28, 28]
-    });
-    
-    const popupContent = `
-        <div class="radio-popup">
-            <img src="${radioData.imageUrl}" 
-                    alt="${radioData.name}" 
-                    onerror="this.src='https://via.placeholder.com/90x68/06055B/white?text=${encodeURIComponent(radioData.dial || 'FM')}'"
-            >
-            <h3>${radioData.name}</h3>
-            <p><strong>${radioData.dial}</strong></p>
-            <p>${radioData.praca} - ${radioData.uf}</p>
-        </div>
-    `;
-    
-    const radioMarker = L.marker([radioData.latitude, radioData.longitude], { icon: radioIcon })
-        .bindPopup(popupContent)
-        .addTo(map);
+    try {
+        console.log('📍 Adicionando marcador da rádio...');
         
-    radioMarkers.push(radioMarker);
+        const radioIcon = L.divIcon({
+            html: `
+                <img src="${radioData.imageUrl}" 
+                        alt="${radioData.name}" 
+                        class="radio-marker-image"
+                        onerror="this.src='https://via.placeholder.com/56x56/06055B/white?text=${encodeURIComponent(radioData.dial || 'FM')}'">
+            `,
+            className: 'radio-marker',
+            iconSize: [56, 56],
+            iconAnchor: [28, 28]
+        });
+        
+        const popupContent = `
+            <div class="radio-popup">
+                <img src="${radioData.imageUrl}" 
+                        alt="${radioData.name}" 
+                        onerror="this.src='https://via.placeholder.com/90x68/06055B/white?text=${encodeURIComponent(radioData.dial || 'FM')}'">
+                <h3>${radioData.name}</h3>
+                <p><strong>${radioData.dial}</strong></p>
+                <p>${radioData.praca} - ${radioData.uf}</p>
+            </div>
+        `;
+        
+        const radioMarker = L.marker([radioData.latitude, radioData.longitude], { icon: radioIcon })
+            .bindPopup(popupContent)
+            .addTo(map);
+            
+        radioMarkers.push(radioMarker);
+        console.log('✅ Marcador da rádio adicionado');
+        
+    } catch (error) {
+        console.error('❌ Erro ao adicionar marcador da rádio:', error);
+    }
 }
 
+// =========================================================================
+// ⭕ ADICIONAR COBERTURA INDIVIDUAL (GARANTIR QUE FUNCIONA)
+// =========================================================================
 function addCoverageIndividual() {
-    if (radioData.coverageType === 'kml' && radioData.kmlCoordinates && radioData.kmlCoordinates.length > 0) {
-        addKMLPolygonsIndividual();
-    } else {
-        addCoverageCircleIndividual();
-    }
-    
-    if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
-        addCityMarkersIndividual();
+    try {
+        console.log('⭕ Adicionando cobertura...');
+        
+        if (radioData.coverageType === 'kml' && radioData.kmlCoordinates && radioData.kmlCoordinates.length > 0) {
+            addKMLPolygonsIndividual();
+        } else {
+            addCoverageCircleIndividual();
+        }
+        
+        if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
+            addCityMarkersIndividual();
+        }
+        
+        console.log('✅ Cobertura adicionada');
+        
+    } catch (error) {
+        console.error('❌ Erro ao adicionar cobertura:', error);
     }
 }
 
@@ -562,24 +584,34 @@ function addKMLPolygonsIndividual() {
     coverageLayers.push(coverageLayer);
 }
 
+// =========================================================================
+// ⭕ ADICIONAR CÍRCULO DE COBERTURA (SIMPLIFICADO)
+// =========================================================================
 function addCoverageCircleIndividual() {
-    const coverageLayer = L.circle([radioData.latitude, radioData.longitude], {
-        color: '#06055B',
-        fillColor: '#06055B',
-        fillOpacity: 0.1,
-        radius: radioData.radius,
-        weight: 2
-    });
-    
-    coverageLayer.bindPopup(`
-        <div style="text-align: center; font-family: var(--font-primary);">
-            <h4 style="color: #06055B; margin: 0 0 8px 0;">Projeção de Cobertura</h4>
-            <p style="margin: 0; color: #64748B;">Raio: <strong>${(radioData.radius / 1000).toFixed(0)} km</strong></p>
-        </div>
-    `);
-    
-    coverageLayer.addTo(map);
-    coverageLayers.push(coverageLayer);
+    try {
+        const coverageLayer = L.circle([radioData.latitude, radioData.longitude], {
+            color: '#06055B',
+            fillColor: '#06055B',
+            fillOpacity: 0.1,
+            radius: radioData.radius || 50000,
+            weight: 2
+        });
+        
+        coverageLayer.bindPopup(`
+            <div style="text-align: center; font-family: var(--font-primary);">
+                <h4 style="color: #06055B; margin: 0 0 8px 0;">Projeção de Cobertura</h4>
+                <p style="margin: 0; color: #64748B;">Raio: <strong>${((radioData.radius || 50000) / 1000).toFixed(0)} km</strong></p>
+            </div>
+        `);
+        
+        coverageLayer.addTo(map);
+        coverageLayers.push(coverageLayer);
+        
+        console.log('⭕ Círculo de cobertura adicionado');
+        
+    } catch (error) {
+        console.error('❌ Erro ao adicionar círculo de cobertura:', error);
+    }
 }
 
 function addCityMarkersIndividual() {
@@ -657,33 +689,24 @@ function addCityMarkersIndividual() {
 }
 
 // =========================================================================
-// 🗺️ AJUSTAR ZOOM INDIVIDUAL (CORRIGIDO PARA EVITAR ERRO getBounds)
+// 🗺️ AJUSTAR ZOOM INDIVIDUAL (SIMPLIFICADO)
 // =========================================================================
 function fitMapToCoverageIndividual() {
     try {
         let bounds = L.latLngBounds();
         let boundsCreated = false;
         
-        console.log('🗺️ Iniciando ajuste de zoom individual...');
+        console.log('🗺️ Ajustando zoom individual...');
         
         // 1. Adicionar coordenadas da rádio
         if (radioData.latitude && radioData.longitude) {
             bounds.extend([radioData.latitude, radioData.longitude]);
             boundsCreated = true;
-            console.log('📍 Coordenadas da rádio adicionadas:', [radioData.latitude, radioData.longitude]);
         }
         
-        // 2. Adicionar bounds do KML se existir
-        if (radioData.coverageType === 'kml' && radioData.kmlBounds) {
-            bounds.extend([radioData.kmlBounds.south, radioData.kmlBounds.west]);
-            bounds.extend([radioData.kmlBounds.north, radioData.kmlBounds.east]);
-            boundsCreated = true;
-            console.log('🗺️ KML bounds adicionados');
-        }
-        
-        // 3. Adicionar coordenadas de todas as cidades (placemarks)
+        // 2. Adicionar coordenadas das cidades (placemarks)
         if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
-            radioData.kmlPlacemarks.forEach((placemark, index) => {
+            radioData.kmlPlacemarks.forEach(placemark => {
                 if (placemark.coordinates && placemark.coordinates.length >= 2) {
                     const [lat, lng] = placemark.coordinates;
                     if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
@@ -695,9 +718,9 @@ function fitMapToCoverageIndividual() {
             console.log(`🏙️ ${radioData.kmlPlacemarks.length} cidades adicionadas ao bounds`);
         }
         
-        // 4. Se cobertura circular, calcular área baseada no raio
-        if (radioData.coverageType === 'circle' && radioData.radius) {
-            const radiusInDegrees = radioData.radius / 111320; // Conversão aproximada metros para graus
+        // 3. Se não tem placemarks, usar cobertura circular
+        if (!boundsCreated || radioData.kmlPlacemarks.length === 0) {
+            const radiusInDegrees = (radioData.radius || 50000) / 111320;
             bounds.extend([
                 radioData.latitude - radiusInDegrees,
                 radioData.longitude - radiusInDegrees
@@ -707,37 +730,25 @@ function fitMapToCoverageIndividual() {
                 radioData.longitude + radiusInDegrees
             ]);
             boundsCreated = true;
-            console.log('⭕ Cobertura circular adicionada, raio:', radioData.radius / 1000, 'km');
+            console.log('⭕ Usando cobertura circular para bounds');
         }
         
-        // 5. Aplicar bounds com padding adequado
+        // 4. Aplicar bounds se válido
         if (boundsCreated && bounds.isValid()) {
-            // ⚠️ AGUARDAR MAPA ESTAR COMPLETAMENTE CARREGADO
-            setTimeout(() => {
-                try {
-                    map.fitBounds(bounds, { 
-                        padding: [30, 30],
-                        maxZoom: 10 // Evitar zoom muito próximo
-                    });
-                    console.log('✅ Zoom individual aplicado com sucesso');
-                } catch (error) {
-                    console.error('❌ Erro ao aplicar fitBounds:', error);
-                    // Fallback seguro
-                    map.setView([radioData.latitude, radioData.longitude], 8);
-                }
-            }, 200); // Aguardar 200ms para garantir que o mapa está pronto
+            map.fitBounds(bounds, { 
+                padding: [30, 30],
+                maxZoom: 10
+            });
+            console.log('✅ Zoom ajustado com sucesso');
         } else {
-            // Fallback: zoom padrão na rádio
+            // Fallback
             map.setView([radioData.latitude, radioData.longitude], 8);
-            console.log('⚠️ Usando fallback: zoom padrão na rádio');
+            console.log('⚠️ Usando zoom padrão');
         }
         
     } catch (error) {
-        console.error('❌ Erro ao ajustar zoom individual:', error);
-        // Fallback seguro
-        setTimeout(() => {
-            map.setView([radioData.latitude, radioData.longitude], 6);
-        }, 100);
+        console.error('❌ Erro ao ajustar zoom:', error);
+        map.setView([radioData.latitude, radioData.longitude], 8);
     }
 }
 
