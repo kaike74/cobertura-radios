@@ -1381,3 +1381,73 @@ body {
     width: 100%;
     flex: none;
 }
+
+/* =============================================================================
+    📻 LOGOS DAS RÁDIOS NA LISTA DE CIDADES
+    ============================================================================= */
+
+.cidade-radios-logos {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.radio-logo-cidade {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 2px solid var(--emidias-light-gray);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.radio-logo-cidade:hover {
+    transform: scale(1.1);
+    border-color: var(--emidias-primary);
+    box-shadow: 0 2px 8px rgba(6, 5, 91, 0.2);
+}
+
+/* Quando há muitas rádios, limitar o tamanho */
+.cidade-radios-logos:has(.radio-logo-cidade:nth-child(4)) .radio-logo-cidade {
+    width: 28px;
+    height: 28px;
+}
+
+.cidade-radios-logos:has(.radio-logo-cidade:nth-child(6)) .radio-logo-cidade {
+    width: 24px;
+    height: 24px;
+}
+
+/* =============================================================================
+    📱 RESPONSIVIDADE PARA LOGOS DAS RÁDIOS
+    ============================================================================= */
+
+@media (max-width: 768px) {
+    .radio-logo-cidade {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .cidade-radios-logos:has(.radio-logo-cidade:nth-child(4)) .radio-logo-cidade {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .cidade-radios-logos:has(.radio-logo-cidade:nth-child(6)) .radio-logo-cidade {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .radio-logo-cidade {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .cidade-radios-logos {
+        gap: 2px;
+    }
+}
