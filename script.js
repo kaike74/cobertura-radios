@@ -787,16 +787,21 @@ function renderCidadesIndividual() {
         console.warn('⚠️ Nenhuma cidade encontrada nos dados');
         allCities = [];
     } else {
-        // Filtrar cidades válidas (remover nomes de rádios)
-        allCities = radioData.cidades.filter(cidade => {
-            const cityName = cidade.toLowerCase();
-            const radioName = (radioData.name || '').toLowerCase();
-            const radioLocation = (radioData.praca || '').toLowerCase();
-            
-            // Não incluir se for o nome da rádio ou localização da rádio
-            return !cityName.includes(radioName.replace('rádio', '').replace('fm', '').trim()) &&
-                   !cityName.includes(radioLocation);
-        });
+        // Filtrar cidades válidas (remover nomes de rádios) e LIMPAR distâncias duplicadas
+        allCities = radioData.cidades
+            .filter(cidade => {
+                const cityName = cidade.toLowerCase();
+                const radioName = (radioData.name || '').toLowerCase();
+                const radioLocation = (radioData.praca || '').toLowerCase();
+                
+                // Não incluir se for o nome da rádio ou localização da rádio
+                return !cityName.includes(radioName.replace('rádio', '').replace('fm', '').trim()) &&
+                       !cityName.includes(radioLocation);
+            })
+            .map(cidade => {
+                // 🔧 LIMPAR DISTÂNCIAS DUPLICADAS
+                return cleanDuplicateDistance(cidade);
+            });
         
         console.log('🏙️ Cidades válidas encontradas:', allCities.length);
     }
@@ -819,6 +824,33 @@ function renderCidadesIndividual() {
     }
     
     console.log('✅ Seção de cidades renderizada:', allCities.length, 'cidades');
+}
+
+// =========================================================================
+// 🧹 NOVA FUNÇÃO: LIMPAR DISTÂNCIAS DUPLICADAS
+// =========================================================================
+function cleanDuplicateDistance(cityName) {
+    // Regex para encontrar padrões como: "Cidade (15.2 km) (15.2 km)"
+    const duplicateDistanceRegex = /^(.*?)\s*\(([0-9]+[.,]?[0-9]*)\s*km\)\s*\(([0-9]+[.,]?[0-9]*)\s*km\)(.*)$/i;
+    
+    const match = cityName.match(duplicateDistanceRegex);
+    
+    if (match) {
+        const cityBaseName = match[1].trim();
+        const distance1 = match[2];
+        const distance2 = match[3];
+        const suffix = match[4].trim();
+        
+        // Se as distâncias são iguais, manter apenas uma
+        if (distance1 === distance2) {
+            const cleanName = `${cityBaseName} (${distance1} km)${suffix ? ' ' + suffix : ''}`;
+            console.log('🧹 Distância duplicada removida:', cityName, '→', cleanName);
+            return cleanName;
+        }
+    }
+    
+    // Se não encontrou duplicação, retornar original
+    return cityName;
 }
 
 // =========================================================================
@@ -1052,6 +1084,7 @@ function addRadioMarkerProposta(radio) {
                     <div style="margin-top:6px;"><strong>PMM:</strong> ${pmmFormatted}</div>
                     <div><strong>Universo:</strong> ${universoFormatted}</div>
                     <div><strong>Cidades:</strong> ${cidadesCount}</div>
+                    <div><strong>Raio:</strong> ${coverageKm} km</div>
                 </div>
             </div>
         `;
@@ -1626,21 +1659,44 @@ function updateCidadesList() {
     console.log('📋 Atualizando lista com', filteredCities.length, 'cidades');
     
     container.innerHTML = filteredCities.map((cidade, index) => {
-        const parts = cidade.split(' - ');
-        const nome = parts[0];
-        const uf = parts[1] || radioData.uf || '';
+        // 🔧 PROCESSAR CIDADE SEM DUPLICAR DISTÂNCIA
+        const processedCity = processCityForDisplay(cidade);
         
         return `
             <div class="cidade-item" onclick="highlightCity('${cidade}')" title="Clique para localizar no mapa">
                 <div class="cidade-info">
-                    <span class="cidade-name">${nome}</span>
-                    <span class="cidade-uf">${uf}</span>
+                    <span class="cidade-name">${processedCity.nome}</span>
+                    <span class="cidade-uf">${processedCity.uf}</span>
                 </div>
             </div>
         `;
     }).join('');
     
     console.log('✅ Lista de cidades atualizada');
+}
+
+// =========================================================================
+// 🔧 NOVA FUNÇÃO: PROCESSAR CIDADE PARA EXIBIÇÃO
+// =========================================================================
+function processCityForDisplay(cidade) {
+    // Primeiro, limpar distâncias duplicadas
+    const cleanCity = cleanDuplicateDistance(cidade);
+    
+    // Separar nome, distância e UF
+    let nome = cleanCity;
+    let uf = radioData.uf || '';
+    
+    // Padrão: "Cidade (distância) - UF" ou "Cidade - UF"
+    if (cleanCity.includes(' - ')) {
+        const parts = cleanCity.split(' - ');
+        nome = parts[0].trim();
+        uf = parts[1].trim();
+    }
+    
+    return {
+        nome: nome,
+        uf: uf
+    };
 }
 
 // =========================================================================
@@ -1956,4 +2012,39 @@ function centerMapOnRadioMobile(lat, lng, marker) {
         animate: true,
         duration: 0.6
     });
+}
+
+// =========================================================================
+// 🧹 FUNÇÃO AVANÇADA: LIMPAR MÚLTIPLAS DUPLICAÇÕES
+// =========================================================================
+function cleanAllDuplicateDistances(cityName) {
+    let cleanName = cityName;
+    
+    // Remover múltiplas ocorrências de distâncias iguais
+    const distanceRegex = /\(([0-9]+[.,]?[0-9]*)\s*km\)/gi;
+    const distances = [];
+    let match;
+    
+    // Encontrar todas as distâncias
+    while ((match = distanceRegex.exec(cityName)) !== null) {
+        distances.push({
+            full: match[0],
+            value: match[1]
+        });
+    }
+    
+    // Se há distâncias duplicadas
+    if (distances.length > 1) {
+        const uniqueDistances = [...new Set(distances.map(d => d.value))];
+        
+        if (uniqueDistances.length === 1) {
+            // Todas as distâncias são iguais, manter apenas uma
+            const baseCity = cityName.replace(distanceRegex, '').trim();
+            cleanName = `${baseCity} (${uniqueDistances[0]} km)`;
+            
+            console.log('🧹 Múltiplas distâncias iguais removidas:', cityName, '→', cleanName);
+        }
+    }
+    
+    return cleanName;
 }
