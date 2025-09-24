@@ -431,7 +431,7 @@ async function fetchPropostaFromNotion(databaseId) {
 // =========================================================================
 async function initializeIndividualMode() {
     console.log('🔍 Modo Individual ativado');
-    renderInfoIndividual();
+    // NÃO chamamos renderInfoIndividual() pois essa função foi removida intencionalmente
     await initializeMapIndividual();
     renderCidadesIndividual();
 }
@@ -446,41 +446,39 @@ async function initializeMapIndividual() {
                 if (typeof L === 'undefined') {
                     throw new Error('Leaflet não foi carregado corretamente');
                 }
-                
+
                 const mapElement = document.getElementById('map');
                 if (!mapElement) {
                     throw new Error('Elemento do mapa não encontrado');
                 }
-                
+
+                // Mostrar o container do mapa antes de criar o mapa (evita cálculo de tamanho errado)
+                const mapSection = document.getElementById('map-section');
+                if (mapSection) mapSection.style.display = 'block';
+
                 console.log('🗺️ Criando mapa individual...');
-                
-                // Criar mapa COM POSIÇÃO INICIAL
                 map = L.map('map').setView([radioData.latitude, radioData.longitude], 8);
-                
-                // Adicionar camada de tiles
+
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© OpenStreetMap contributors',
                     maxZoom: 18
                 }).addTo(map);
-                
-                console.log('🗺️ Mapa criado, adicionando elementos...');
-                
-                // Invalidar tamanho após criação
+
+                // Pequeno delay para o DOM atualizar, depois invalida e adiciona camadas
                 setTimeout(() => {
                     map.invalidateSize();
-                    
-                    // Adicionar elementos do mapa
+
                     addRadioMarkerIndividual();
                     addCoverageIndividual();
-                    
-                    // Ajustar zoom após elementos serem adicionados
+
+                    // Depois de adicionar, ajustar bounds
                     setTimeout(() => {
                         fitMapToCoverageIndividual();
                         resolve();
-                    }, 200);
-                    
-                }, 100);
-                
+                    }, 300);
+
+                }, 120);
+
             } catch (error) {
                 console.error('❌ Erro detalhado do mapa individual:', error);
                 reject(error);
@@ -489,47 +487,91 @@ async function initializeMapIndividual() {
     });
 }
 
+
 // =========================================================================
 // 📍 ADICIONAR MARCADOR DE RÁDIO INDIVIDUAL (GARANTIR QUE FUNCIONA)
 // =========================================================================
 function addRadioMarkerIndividual() {
     try {
         console.log('📍 Adicionando marcador da rádio...');
-        
+
+        const r = radioData;
+
         const radioIcon = L.divIcon({
             html: `
-                <img src="${radioData.imageUrl}" 
-                        alt="${radioData.name}" 
+                <img src="${r.imageUrl}" 
+                        alt="${r.name}" 
                         class="radio-marker-image"
-                        onerror="this.src='https://via.placeholder.com/56x56/06055B/white?text=${encodeURIComponent(radioData.dial || 'FM')}'">
+                        onerror="this.src='https://via.placeholder.com/56x56/06055B/white?text=${encodeURIComponent(r.dial || 'FM')}'">
             `,
             className: 'radio-marker',
             iconSize: [56, 56],
             iconAnchor: [28, 28]
         });
-        
+
+        const pmmFormatted = r.pmm ? r.pmm.toLocaleString() : 'N/A';
+        const universoFormatted = r.universo ? r.universo.toLocaleString() : 'N/A';
+        const cidadesCount = r.cidades ? r.cidades.length : 0;
+        const coverageKm = r.radius ? (r.radius / 1000).toFixed(0) : 'N/A';
+
         const popupContent = `
-            <div class="radio-popup">
-                <img src="${radioData.imageUrl}" 
-                        alt="${radioData.name}" 
-                        onerror="this.src='https://via.placeholder.com/90x68/06055B/white?text=${encodeURIComponent(radioData.dial || 'FM')}'">
-                <h3>${radioData.name}</h3>
-                <p><strong>${radioData.dial}</strong></p>
-                <p>${radioData.praca} - ${radioData.uf}</p>
+            <div class="radio-popup" style="min-width:200px; font-family:var(--font-primary);">
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <img src="${r.imageUrl}" alt="${r.name}" style="width:72px;height:54px;object-fit:cover;border-radius:6px;"
+                        onerror="this.src='https://via.placeholder.com/90x68/06055B/white?text=${encodeURIComponent(r.dial || 'FM')}'">
+                    <div>
+                        <h3 style="margin:0; font-size:15px; color:#06055B;">${r.name}</h3>
+                        <div style="font-size:13px; color:#334155;"><strong>${r.dial}</strong> — ${r.praca} - ${r.uf}</div>
+                    </div>
+                </div>
+
+                <hr style="margin:8px 0; border:none; border-top:1px solid rgba(0,0,0,0.06)">
+
+                <div style="font-size:13px; color:#475569;">
+                    <div><strong>🌐 Alcance e Cobertura</strong></div>
+                    <div style="margin-top:6px;"><strong>PMM:</strong> ${pmmFormatted}</div>
+                    <div><strong>Universo:</strong> ${universoFormatted}</div>
+                    <div><strong>Cidades:</strong> ${cidadesCount}</div>
+                    <div><strong>Raio:</strong> ${coverageKm} km</div>
+                </div>
             </div>
         `;
-        
-        const radioMarker = L.marker([radioData.latitude, radioData.longitude], { icon: radioIcon })
-            .bindPopup(popupContent)
-            .addTo(map);
-            
+
+        const radioMarker = L.marker([r.latitude, r.longitude], { icon: radioIcon })
+            .addTo(map)
+            .bindPopup(popupContent);
+
         radioMarkers.push(radioMarker);
         console.log('✅ Marcador da rádio adicionado');
-        
+
+        // Ao clicar, centralizar suavemente e abrir popup (com offset para o popup não ficar cortado)
+        radioMarker.on('click', () => {
+            // calcula ponto do marcador no container e desloca para cima 120px (para abrir espaço pro popup)
+            try {
+                const containerPoint = map.latLngToContainerPoint([r.latitude, r.longitude]);
+                const targetPoint = L.point(containerPoint.x, containerPoint.y - 120);
+                const targetLatLng = map.containerPointToLatLng(targetPoint);
+
+                map.once('moveend', () => {
+                    radioMarker.openPopup();
+                });
+
+                map.flyTo(targetLatLng, Math.max(map.getZoom(), 8), {
+                    animate: true,
+                    duration: 0.8
+                });
+            } catch (e) {
+                // fallback simples se ocorrer algum problema
+                radioMarker.openPopup();
+                map.flyTo([r.latitude, r.longitude], Math.max(map.getZoom(), 8), { animate: true, duration: 0.8 });
+            }
+        });
+
     } catch (error) {
         console.error('❌ Erro ao adicionar marcador da rádio:', error);
     }
 }
+
 
 // =========================================================================
 // ⭕ ADICIONAR COBERTURA INDIVIDUAL (GARANTIR QUE FUNCIONA)
@@ -752,52 +794,6 @@ function fitMapToCoverageIndividual() {
     }
 }
 
-
-function renderInfoIndividual() {
-    const container = document.getElementById('info-section');
-    
-    const pmmFormatted = radioData.pmm ? radioData.pmm.toLocaleString() : 'N/A';
-    const universoFormatted = radioData.universo ? radioData.universo.toLocaleString() : 'N/A';
-    
-    container.innerHTML = `
-        <!-- TÉCNICAS -->
-        <div class="info-card">
-            <h3 class="card-title">📻 Informações Técnicas</h3>
-            <div class="info-item">
-                <span class="info-label">Dial:</span>
-                <span class="info-value">${radioData.dial}</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Praça:</span>
-                <span class="info-value">${radioData.praca} - ${radioData.uf}</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Região:</span>
-                <span class="info-value">${radioData.region}</span>
-            </div>
-        </div>
-        
-        <!-- ALCANCE -->
-        <div class="info-card">
-            <h3 class="card-title">🌐 Alcance e Cobertura</h3>
-            <div class="info-item">
-                <span class="info-label">PMM:</span>
-                <span class="info-value">${pmmFormatted}</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Universo:</span>
-                <span class="info-value">${universoFormatted}</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Cidades:</span>
-                <span class="info-value">${radioData.cidades ? radioData.cidades.length : 0}</span>
-            </div>
-        </div>
-    `;
-    
-    container.style.display = 'grid';
-}
-
 // =========================================================================
 // 🏙️ RENDERIZAR CIDADES INDIVIDUAL (CORRIGIDO)
 // =========================================================================
@@ -922,6 +918,14 @@ async function initializeMapProposta() {
                     }, 200);
                     
                 }, 100);
+
+                // Mostrar o container do mapa
+                document.getElementById("map-section").style.display = "block";
+
+                // Forçar o Leaflet a recalcular o tamanho
+                setTimeout(() => {
+                    map.invalidateSize();
+                }, 300);
                 
             } catch (error) {
                 console.error('❌ Erro detalhado do mapa proposta:', error);
@@ -1045,24 +1049,39 @@ function addRadioMarkerProposta(radio, index, color, adjustedPosition = null) {
         iconAnchor: [28, 28]
     });
     
-    const popupContent = `
-        <div class="radio-popup">
-            <img src="${radio.imageUrl}" 
-                    alt="${radio.name}" 
-                    onerror="this.src='https://via.placeholder.com/90x68/${color.replace('#', '')}/white?text=${encodeURIComponent(radio.dial || 'FM')}'"
-            >
-            <h3>${radio.name}</h3>
-            <p><strong>${radio.dial}</strong></p>
-            <p>${radio.praca} - ${radio.uf}</p>
-            <p style="font-size: 12px; color: ${color};">Rádio ${index + 1} de ${radioData.totalRadios}</p>
-        </div>
-    `;
+        const pmmFormatted = radioData.pmm ? radioData.pmm.toLocaleString() : 'N/A';
+        const universoFormatted = radioData.universo ? radioData.universo.toLocaleString() : 'N/A';
+        const cidadesCount = radioData.cidades ? radioData.cidades.length : 0;
+
+        const popupContent = `
+            <div class="radio-popup">
+                <img src="${radioData.imageUrl}" 
+                    alt="${radioData.name}" 
+                    onerror="this.src='https://via.placeholder.com/90x68/06055B/white?text=${encodeURIComponent(radioData.dial || 'FM')}'">
+                <h3>${radioData.name}</h3>
+                <p><strong>${radioData.dial}</strong></p>
+                <p>${radioData.praca} - ${radioData.uf}</p>
+
+                <hr style="margin:8px 0; border:none; border-top:1px solid #ddd;">
+
+                <h4 style="margin:4px 0; color:#06055B;">🌐 Alcance e Cobertura</h4>
+                <p><strong>PMM:</strong> ${pmmFormatted}</p>
+                <p><strong>Universo:</strong> ${universoFormatted}</p>
+                <p><strong>Cidades:</strong> ${cidadesCount}</p>
+            </div>
+        `;
     
     const radioMarker = L.marker([lat, lng], { icon: radioIcon })
         .bindPopup(popupContent)
         .addTo(map);
-        
-    radioMarkers.push(radioMarker);
+
+    radioMarker.on('click', () => {
+        radioMarker.openPopup();
+        map.flyTo([lat, lng], map.getZoom(), {
+            animate: true,
+            duration: 1.2
+        });
+    });
 }
 
 function addCoverageProposta(radio, index, color) {
