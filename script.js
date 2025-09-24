@@ -875,7 +875,7 @@ async function initializePropostaMode() {
     
     console.log('📊 Rádios validadas:', radioData.radios.length);
     
-    renderInfoProposta();
+    // renderInfoProposta();
     await initializeMapProposta();
     renderCidadesProposta();
 }
@@ -1033,56 +1033,80 @@ function groupRadiosByProximity(radios) {
     return groups;
 }
 
-function addRadioMarkerProposta(radio, index, color, adjustedPosition = null) {
-    // Usar posição ajustada se fornecida, senão usar posição original
-    const [lat, lng] = adjustedPosition || [radio.latitude, radio.longitude];
-    
-    const radioIcon = L.divIcon({
-        html: `
-            <img src="${radio.imageUrl}" 
-                    alt="${radio.name}" 
-                    class="radio-marker-image proposta-${(index % 5) + 1}"
-                    onerror="this.src='https://via.placeholder.com/56x56/${color.replace('#', '')}/white?text=${encodeURIComponent(radio.dial || 'FM')}'">
-        `,
-        className: 'radio-marker',
-        iconSize: [56, 56],
-        iconAnchor: [28, 28]
-    });
-    
-        const pmmFormatted = radioData.pmm ? radioData.pmm.toLocaleString() : 'N/A';
-        const universoFormatted = radioData.universo ? radioData.universo.toLocaleString() : 'N/A';
-        const cidadesCount = radioData.cidades ? radioData.cidades.length : 0;
+function addRadioMarkerProposta(radio) {
+    try {
+        const radioIcon = L.divIcon({
+            html: `
+                <img src="${radio.imageUrl}" 
+                        alt="${radio.name}" 
+                        class="radio-marker-image"
+                        onerror="this.src='https://via.placeholder.com/56x56/06055B/white?text=${encodeURIComponent(radio.dial || 'FM')}'">
+            `,
+            className: 'radio-marker',
+            iconSize: [56, 56],
+            iconAnchor: [28, 28]
+        });
+
+        const pmmFormatted = radio.pmm ? radio.pmm.toLocaleString() : 'N/A';
+        const universoFormatted = radio.universo ? radio.universo.toLocaleString() : 'N/A';
+        const cidadesCount = radio.cidades ? radio.cidades.length : 0;
+        const coverageKm = radio.radius ? (radio.radius / 1000).toFixed(0) : 'N/A';
 
         const popupContent = `
-            <div class="radio-popup">
-                <img src="${radioData.imageUrl}" 
-                    alt="${radioData.name}" 
-                    onerror="this.src='https://via.placeholder.com/90x68/06055B/white?text=${encodeURIComponent(radioData.dial || 'FM')}'">
-                <h3>${radioData.name}</h3>
-                <p><strong>${radioData.dial}</strong></p>
-                <p>${radioData.praca} - ${radioData.uf}</p>
+            <div class="radio-popup" style="min-width:200px; font-family:var(--font-primary);">
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <img src="${radio.imageUrl}" alt="${radio.name}" style="width:72px;height:54px;object-fit:cover;border-radius:6px;"
+                        onerror="this.src='https://via.placeholder.com/90x68/06055B/white?text=${encodeURIComponent(radio.dial || 'FM')}'">
+                    <div>
+                        <h3 style="margin:0; font-size:15px; color:#06055B;">${radio.name}</h3>
+                        <div style="font-size:13px; color:#334155;"><strong>${radio.dial}</strong> — ${radio.praca} - ${radio.uf}</div>
+                    </div>
+                </div>
 
-                <hr style="margin:8px 0; border:none; border-top:1px solid #ddd;">
+                <hr style="margin:8px 0; border:none; border-top:1px solid rgba(0,0,0,0.06)">
 
-                <h4 style="margin:4px 0; color:#06055B;">🌐 Alcance e Cobertura</h4>
-                <p><strong>PMM:</strong> ${pmmFormatted}</p>
-                <p><strong>Universo:</strong> ${universoFormatted}</p>
-                <p><strong>Cidades:</strong> ${cidadesCount}</p>
+                <div style="font-size:13px; color:#475569;">
+                    <div><strong>🌐 Alcance e Cobertura</strong></div>
+                    <div style="margin-top:6px;"><strong>PMM:</strong> ${pmmFormatted}</div>
+                    <div><strong>Universo:</strong> ${universoFormatted}</div>
+                    <div><strong>Cidades:</strong> ${cidadesCount}</div>
+                    <div><strong>Raio:</strong> ${coverageKm} km</div>
+                </div>
             </div>
         `;
-    
-    const radioMarker = L.marker([lat, lng], { icon: radioIcon })
-        .bindPopup(popupContent)
-        .addTo(map);
 
-    radioMarker.on('click', () => {
-        radioMarker.openPopup();
-        map.flyTo([lat, lng], map.getZoom(), {
-            animate: true,
-            duration: 1.2
+        const radioMarker = L.marker([radio.latitude, radio.longitude], { icon: radioIcon })
+            .addTo(map)
+            .bindPopup(popupContent);
+
+        radioMarkers.push(radioMarker);
+
+        // Centralizar suavemente e abrir popup ao clicar
+        radioMarker.on('click', () => {
+            try {
+                const containerPoint = map.latLngToContainerPoint([radio.latitude, radio.longitude]);
+                const targetPoint = L.point(containerPoint.x, containerPoint.y - 120);
+                const targetLatLng = map.containerPointToLatLng(targetPoint);
+
+                map.once('moveend', () => {
+                    radioMarker.openPopup();
+                });
+
+                map.flyTo(targetLatLng, Math.max(map.getZoom(), 8), {
+                    animate: true,
+                    duration: 0.8
+                });
+            } catch (e) {
+                radioMarker.openPopup();
+                map.flyTo([radio.latitude, radio.longitude], Math.max(map.getZoom(), 8), { animate: true, duration: 0.8 });
+            }
         });
-    });
+
+    } catch (error) {
+        console.error('❌ Erro ao adicionar marcador da rádio (proposta):', error);
+    }
 }
+
 
 function addCoverageProposta(radio, index, color) {
     if (radio.coverageType === 'kml' && radio.kmlCoordinates && radio.kmlCoordinates.length > 0) {
