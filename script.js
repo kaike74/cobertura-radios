@@ -517,7 +517,7 @@ function addRadioMarkerIndividual() {
         const popupContent = `
             <div class="radio-popup" style="min-width:200px; font-family:var(--font-primary);">
                 <div style="display:flex; gap:10px; align-items:center;">
-                    <img src="${r.imageUrl}" alt="${r.name}" style="width:72px;height:54px;object-fit:cover;border-radius:6px;"
+                    <img src="${r.imageUrl}" alt="${r.name}" style="width:72px;height:72px;object-fit:cover;border-radius:6px;"
                         onerror="this.src='https://via.placeholder.com/90x68/06055B/white?text=${encodeURIComponent(r.dial || 'FM')}'">
                     <div>
                         <h3 style="margin:0; font-size:15px; color:#06055B;">${r.name}</h3>
@@ -1037,7 +1037,7 @@ function addRadioMarkerProposta(radio) {
         const popupContent = `
             <div class="radio-popup" style="min-width:200px; font-family:var(--font-primary);">
                 <div style="display:flex; gap:10px; align-items:center;">
-                    <img src="${radio.imageUrl}" alt="${radio.name}" style="width:72px;height:54px;object-fit:cover;border-radius:6px;"
+                    <img src="${radio.imageUrl}" alt="${radio.name}" style="width:72px;height:72px;object-fit:cover;border-radius:6px;"
                         onerror="this.src='https://via.placeholder.com/90x68/06055B/white?text=${encodeURIComponent(radio.dial || 'FM')}'">
                     <div>
                         <h3 style="margin:0; font-size:15px; color:#06055B;">${radio.name}</h3>
