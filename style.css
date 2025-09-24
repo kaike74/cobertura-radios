@@ -288,7 +288,7 @@ body {
     📊 LISTA DE RÁDIOS NA PROPOSTA
     ============================================================================= */
 .radios-list {
-    max-height: 200px;
+    max-height: 350px;
     overflow-y: auto;
     border: 1px solid var(--emidias-light-gray);
     border-radius: 8px;
@@ -1278,7 +1278,7 @@ body {
 
 .radio-logo-list {
     width: 48px;
-    height: 36px;
+    height: 48px;
     border-radius: 8px;
     object-fit: cover;
     margin-right: 12px;

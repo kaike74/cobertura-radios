@@ -1746,39 +1746,146 @@ function fitMapToActiveCoverage() {
 function updateMapLayers() {
     if (!isPropostaMode) return;
     
-    // Mostrar/ocultar marcadores de rádio
+    console.log('🗺️ Atualizando camadas do mapa...');
+    
+    // 1. MOSTRAR/OCULTAR MARCADORES DE RÁDIO
     radioMarkers.forEach((marker, index) => {
         if (activeRadios[index] && activeRadios[index].active) {
             if (!map.hasLayer(marker)) {
                 map.addLayer(marker);
+                console.log(`📻 Rádio ${index} adicionada ao mapa`);
             }
         } else {
             if (map.hasLayer(marker)) {
                 map.removeLayer(marker);
+                console.log(`📻 Rádio ${index} removida do mapa`);
             }
         }
     });
     
-    // Mostrar/ocultar camadas de cobertura
+    // 2. MOSTRAR/OCULTAR CAMADAS DE COBERTURA
     coverageLayers.forEach((layer, index) => {
         if (activeRadios[index] && activeRadios[index].active) {
             if (!map.hasLayer(layer)) {
                 map.addLayer(layer);
+                console.log(`⭕ Cobertura ${index} adicionada ao mapa`);
             }
         } else {
             if (map.hasLayer(layer)) {
                 map.removeLayer(layer);
+                console.log(`⭕ Cobertura ${index} removida do mapa`);
             }
         }
     });
     
-    // 🆕 REAJUSTAR ZOOM PARA RÁDIOS ATIVAS
+    // 3. 🆕 MOSTRAR/OCULTAR MARCADORES DE CIDADES
+    updateCityMarkersVisibility();
+    
+    // 4. REAJUSTAR ZOOM PARA RÁDIOS ATIVAS
     setTimeout(() => {
         fitMapToActiveCoverage();
     }, 100);
     
-    // Atualizar lista de cidades (mostrar apenas cidades das rádios ativas)
+    // 5. ATUALIZAR LISTA DE CIDADES
     updateCitiesForActiveRadios();
+}
+
+// =========================================================================
+// 🏙️ NOVA FUNÇÃO: CONTROLAR VISIBILIDADE DOS MARCADORES DE CIDADES
+// =========================================================================
+function updateCityMarkersVisibility() {
+    console.log('🏙️ Atualizando visibilidade dos marcadores de cidades...');
+    
+    // Remover todos os marcadores de cidades existentes
+    cityMarkers.forEach(marker => {
+        if (map.hasLayer(marker)) {
+            map.removeLayer(marker);
+        }
+    });
+    cityMarkers = [];
+    
+    // Adicionar marcadores apenas das rádios ativas
+    activeRadios.forEach((radio, index) => {
+        if (radio.active && radioData.radios[index]) {
+            const radioData_single = radioData.radios[index];
+            
+            // Adicionar marcadores de cidades desta rádio
+            if (radioData_single.kmlPlacemarks && radioData_single.kmlPlacemarks.length > 0) {
+                addCityMarkersForRadio(radioData_single, index);
+            }
+        }
+    });
+    
+    console.log(`🏙️ ${cityMarkers.length} marcadores de cidades atualizados`);
+}
+
+// =========================================================================
+// 🏙️ NOVA FUNÇÃO: ADICIONAR MARCADORES DE CIDADES PARA UMA RÁDIO ESPECÍFICA
+// =========================================================================
+function addCityMarkersForRadio(radio, radioIndex) {
+    const colorIndex = radioIndex % RADIO_COLORS.length;
+    const color = RADIO_COLORS[colorIndex];
+    
+    const cityIcon = L.divIcon({
+        html: `
+            <div style="
+                width: 16px; 
+                height: 16px; 
+                background: ${color}; 
+                border-radius: 50%; 
+                border: 2px solid white;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            "></div>
+        `,
+        className: 'city-marker',
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+    });
+    
+    const radioLocation = radio.praca ? radio.praca.toLowerCase() : '';
+    const radioName = radio.name ? radio.name.toLowerCase() : '';
+    
+    radio.kmlPlacemarks.forEach((placemark, index) => {
+        const cityName = placemark.name.toLowerCase();
+        
+        // Filtros para evitar marcadores duplicados
+        if (
+            cityName.includes(radioLocation) || 
+            placemark.description?.includes('0.0 km') ||
+            placemark.description?.includes('0,0 km') ||
+            cityName === radioLocation ||
+            cityName.includes('origem') ||
+            cityName.includes(radioName.replace('rádio', '').replace('fm', '').trim())
+        ) {
+            return;
+        }
+        
+        const [lat, lng] = placemark.coordinates;
+        
+        const distanceFromRadio = calculateDistance(
+            radio.latitude, radio.longitude,
+            lat, lng
+        );
+        
+        if (distanceFromRadio < 0.5) {
+            return;
+        }
+        
+        const cityMarker = L.marker([lat, lng], { icon: cityIcon })
+            .bindPopup(`
+                <div style="text-align: center; min-width: 160px; font-family: var(--font-primary);">
+                    <h4 style="margin: 0 0 8px 0; color: ${color}; font-weight: 600;">${placemark.name}</h4>
+                    <p style="margin: 4px 0; font-size: 12px; color: #64748B;">Cobertura de: ${radio.name}</p>
+                    ${placemark.description ? `<p style="margin: 4px 0; font-size: 12px; color: #64748B;">${placemark.description}</p>` : ''}
+                    <p style="margin: 4px 0; font-size: 11px; color: #9CA3AF;">
+                        📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}
+                    </p>
+                </div>
+            `)
+            .addTo(map);
+            
+        cityMarkers.push(cityMarker);
+    });
 }
 
 // =========================================================================
@@ -1828,18 +1935,23 @@ function buildCityRadioMappingForActiveRadios() {
             // Filtrar apenas cidades reais
             if (!isRealCity(cidade)) return;
             
-            const cityName = cidade.split(' - ')[0];
+            // 🔧 LIMPAR DISTÂNCIA DUPLICADA E EXTRAIR NOME BASE
+            const cidadeLimpa = cleanDuplicateDistance(cidade);
+            const cityName = cidadeLimpa.split(' - ')[0];
+            const nomeBase = cityName.replace(/\s*\([^)]*\)\s*/g, '').trim(); // Remove parênteses
             
-            if (!cityRadioMapping[cityName]) {
-                cityRadioMapping[cityName] = [];
+            if (!cityRadioMapping[nomeBase]) {
+                cityRadioMapping[nomeBase] = [];
             }
             
-            cityRadioMapping[cityName].push({
+            cityRadioMapping[nomeBase].push({
                 ...radioData_single,
                 originalIndex: index
             });
         });
     });
+    
+    console.log('🗺️ Mapeamento atualizado para rádios ativas:', Object.keys(cityRadioMapping).length, 'cidades');
 }
 
 // =========================================================================
@@ -2028,12 +2140,16 @@ function updateCidadesListProposta() {
     }
     
     container.innerHTML = filteredCities.map(cidade => {
-        const parts = cidade.split(' - ');
+        // 🔧 LIMPAR DISTÂNCIA DUPLICADA ANTES DE PROCESSAR
+        const cidadeLimpa = cleanDuplicateDistance(cidade);
+        
+        const parts = cidadeLimpa.split(' - ');
         const nome = parts[0];
         const uf = parts[1] || '';
         
-        // Buscar rádios que cobrem esta cidade
-        const radiosQueCobrema = cityRadioMapping[nome] || [];
+        // Buscar rádios que cobrem esta cidade (usar nome base sem distância)
+        const nomeBase = nome.replace(/\s*\([^)]*\)\s*/g, '').trim(); // Remove qualquer coisa entre parênteses
+        const radiosQueCobrema = cityRadioMapping[nomeBase] || [];
         
         // Gerar HTML das rádios
         let radiosHtml = '';
@@ -2055,7 +2171,7 @@ function updateCidadesListProposta() {
             // Múltiplas rádios: mostrar logos lado a lado com hover
             radiosHtml = `
                 <div class="cidade-radios-container" 
-                        onmouseenter="expandRadiosList(this, '${nome}')"
+                        onmouseenter="expandRadiosList(this, '${nomeBase}')"
                         onmouseleave="collapseRadiosList(this)">
                     <div class="radios-collapsed">
                         ${radiosQueCobrema.slice(0, 3).map(radio => `
@@ -2085,7 +2201,7 @@ function updateCidadesListProposta() {
         }
         
         return `
-            <div class="cidade-item" onclick="highlightCity('${cidade}')">
+            <div class="cidade-item" onclick="highlightCity('${cidadeLimpa}')">
                 <div class="cidade-info">
                     <span class="cidade-name">${nome}</span>
                     <span class="cidade-uf">${uf}</span>
