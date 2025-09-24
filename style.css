@@ -1085,3 +1085,285 @@ body {
         height: 60px;
     }
 }
+
+/* =============================================================================
+    🗺️ LAYOUT DO MAPA COM LISTA LATERAL (MODO PROPOSTA)
+    ============================================================================= */
+
+.map-layout {
+    display: flex;
+    gap: 20px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.map-content {
+    flex: 1;
+    position: relative;
+    transition: all 0.3s ease;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+/* Estado expandido do mapa */
+.map-content.expanded {
+    flex: 1;
+    width: 100%;
+}
+
+/* Botão para mostrar lista (quando mapa expandido) */
+.show-radios-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: var(--gradient-primary);
+    color: var(--emidias-white);
+    border: none;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    z-index: 1000;
+    transition: all 0.3s ease;
+    display: none;
+}
+
+.show-radios-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    background: var(--gradient-accent);
+}
+
+/* =============================================================================
+    📻 LISTA LATERAL DE RÁDIOS
+    ============================================================================= */
+
+.radios-sidebar {
+    width: 350px;
+    background: var(--emidias-white);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--emidias-light-gray);
+    display: flex;
+    flex-direction: column;
+    max-height: 550px;
+    transition: all 0.3s ease;
+}
+
+.radios-sidebar-header {
+    padding: 20px;
+    border-bottom: 2px solid var(--emidias-light-gray);
+    background: linear-gradient(135deg, rgba(6, 5, 91, 0.02) 0%, var(--emidias-white) 100%);
+    border-radius: 16px 16px 0 0;
+}
+
+.radios-sidebar-title {
+    font-size: 18px;
+    font-weight: var(--font-weight-bold);
+    color: var(--emidias-primary);
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.radios-count {
+    background: var(--gradient-accent);
+    color: var(--emidias-white);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: var(--font-weight-bold);
+}
+
+.expand-map-btn {
+    background: var(--gradient-success);
+    color: var(--emidias-white);
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.expand-map-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.radios-list-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.radios-actions {
+    padding: 16px 20px 0 20px;
+    display: flex;
+    gap: 8px;
+}
+
+.radios-action-btn {
+    flex: 1;
+    background: var(--emidias-light-gray);
+    color: var(--emidias-gray);
+    border: none;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.radios-action-btn:hover {
+    background: var(--emidias-primary);
+    color: var(--emidias-white);
+}
+
+.radios-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px 20px 20px;
+}
+
+/* =============================================================================
+    📻 ITEM DE RÁDIO NA LISTA LATERAL
+    ============================================================================= */
+
+.radio-list-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border: 2px solid var(--emidias-light-gray);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background: var(--emidias-white);
+}
+
+.radio-list-item:hover {
+    border-color: var(--emidias-primary);
+    background: rgba(6, 5, 91, 0.02);
+    transform: translateX(4px);
+}
+
+.radio-list-item.disabled {
+    opacity: 0.5;
+    background: rgba(0, 0, 0, 0.02);
+    border-color: #E2E8F0;
+}
+
+.radio-list-item.disabled:hover {
+    transform: none;
+    border-color: #E2E8F0;
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.radio-checkbox {
+    width: 18px;
+    height: 18px;
+    margin-right: 12px;
+    cursor: pointer;
+    accent-color: var(--emidias-primary);
+}
+
+.radio-logo-list {
+    width: 48px;
+    height: 36px;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-right: 12px;
+    border: 1px solid var(--emidias-light-gray);
+    transition: all 0.3s ease;
+}
+
+.radio-list-item:hover .radio-logo-list {
+    border-color: var(--emidias-primary);
+    transform: scale(1.05);
+}
+
+.radio-info-list {
+    flex: 1;
+    min-width: 0;
+}
+
+.radio-name-list {
+    font-weight: var(--font-weight-semibold);
+    font-size: 14px;
+    color: var(--emidias-dark);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.radio-details-list {
+    font-size: 12px;
+    color: var(--emidias-gray);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.radio-stats-list {
+    font-size: 11px;
+    color: var(--emidias-gray);
+    margin-top: 2px;
+}
+
+/* =============================================================================
+    �� RESPONSIVIDADE DA LISTA LATERAL
+    ============================================================================= */
+
+@media (max-width: 1024px) {
+    .map-layout {
+        flex-direction: column;
+    }
+    
+    .radios-sidebar {
+        width: 100%;
+        max-height: 300px;
+        order: -1; /* Lista acima do mapa em mobile */
+    }
+    
+    .map-content {
+        height: 400px;
+    }
+    
+    #map {
+        height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .radios-sidebar {
+        max-height: 250px;
+    }
+    
+    .radio-list-item {
+        padding: 8px;
+    }
+    
+    .radio-logo-list {
+        width: 40px;
+        height: 30px;
+    }
+    
+    .radios-actions {
+        padding: 12px 16px 0 16px;
+    }
+    
+    .radios-action-btn {
+        font-size: 10px;
+        padding: 4px 6px;
+    }
+}

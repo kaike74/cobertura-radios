@@ -12,6 +12,8 @@ let filteredCities = [];
 let isPropostaMode = false; // Flag para detectar modo
 let activeRadios = []; // Array para controlar rádios ativas (checkboxes)
 let cityRadioMapping = {}; // Mapeamento cidade -> rádios que a cobrem
+let isMapExpanded = false;
+let radioListItems = [];
 
 // Mapeamento entre nomes de cidades e índices dos marcadores
 window.cityPlacemarkMap = {};
@@ -887,11 +889,114 @@ async function initializePropostaMode() {
         ...radio
     }));
     
+    // Inicializar array de rádios ativas (todas ativas por padrão)
+    activeRadios = radioData.radios.map((radio, index) => ({
+        active: true,
+        index: index
+    }));
+    
     console.log('📊 Rádios validadas:', radioData.radios.length);
     
-    // renderInfoProposta();
     await initializeMapProposta();
+    renderRadiosList(); // 🆕 NOVA FUNÇÃO
     renderCidadesProposta();
+}
+
+// =========================================================================
+// 📻 NOVA FUNÇÃO: RENDERIZAR LISTA LATERAL DE RÁDIOS
+// =========================================================================
+function renderRadiosList() {
+    if (!isPropostaMode) return;
+    
+    const radiosList = document.getElementById('radios-list');
+    const radiosSidebar = document.getElementById('radios-sidebar');
+    const radiosCount = document.getElementById('radios-count');
+    
+    if (!radiosList || !radiosSidebar) {
+        console.warn('⚠️ Elementos da lista lateral não encontrados');
+        return;
+    }
+    
+    // Mostrar sidebar
+    radiosSidebar.style.display = 'flex';
+    
+    // Atualizar contador
+    const activeCount = activeRadios.filter(r => r.active).length;
+    radiosCount.textContent = `${activeCount}/${radioData.radios.length}`;
+    
+    // Gerar HTML da lista
+    radiosList.innerHTML = radioData.radios.map((radio, index) => {
+        const isActive = activeRadios[index].active;
+        const pmmFormatted = radio.pmm ? radio.pmm.toLocaleString() : '0';
+        const universoFormatted = radio.universo ? radio.universo.toLocaleString() : '0';
+        const cidadesCount = radio.cidades ? radio.cidades.length : 0;
+        
+        return `
+            <div class="radio-list-item ${!isActive ? 'disabled' : ''}" id="radio-item-${index}">
+                <input type="checkbox" 
+                       class="radio-checkbox" 
+                       id="checkbox-${index}"
+                       ${isActive ? 'checked' : ''}
+                       onchange="toggleRadioVisibility(${index})"
+                       onclick="event.stopPropagation()">
+                
+                <img src="${radio.imageUrl}" 
+                     alt="${radio.name}" 
+                     class="radio-logo-list"
+                     onerror="this.src='https://via.placeholder.com/48x36/06055B/white?text=${encodeURIComponent(radio.dial || 'FM')}'">
+                
+                <div class="radio-info-list" onclick="focusOnRadio(${index})">
+                    <div class="radio-name-list">${radio.name}</div>
+                    <div class="radio-details-list">
+                        <span><strong>${radio.dial}</strong></span>
+                        <span>•</span>
+                        <span>${radio.praca} - ${radio.uf}</span>
+                    </div>
+                    <div class="radio-stats-list">
+                        PMM: ${pmmFormatted} • Cidades: ${cidadesCount}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    console.log('📻 Lista lateral de rádios renderizada:', radioData.radios.length, 'rádios');
+}
+
+// =========================================================================
+// 🔘 FUNÇÃO: TOGGLE VISIBILIDADE DE RÁDIO
+// =========================================================================
+function toggleRadioVisibility(radioIndex) {
+    if (!radioData.radios || radioIndex >= radioData.radios.length) {
+        return;
+    }
+    
+    const checkbox = document.getElementById(`checkbox-${radioIndex}`);
+    const radioItem = document.getElementById(`radio-item-${radioIndex}`);
+    
+    if (!checkbox || !radioItem) {
+        return;
+    }
+    
+    const isActive = checkbox.checked;
+    
+    // Atualizar array de rádios ativas
+    activeRadios[radioIndex].active = isActive;
+    
+    // Atualizar visual do item
+    if (isActive) {
+        radioItem.classList.remove('disabled');
+    } else {
+        radioItem.classList.add('disabled');
+    }
+    
+    // Atualizar mapa
+    updateMapLayers();
+    
+    // Atualizar contador
+    updateRadioCount();
+    
+    console.log(`📻 Rádio ${radioIndex} (${radioData.radios[radioIndex].name}): ${isActive ? 'Ativada' : 'Desativada'}`);
 }
 
 // =========================================================================
@@ -1614,20 +1719,104 @@ function buildCityRadioMappingForActiveRadios() {
 // =========================================================================
 function updateRadioCount() {
     const activeCount = activeRadios.filter(radio => radio.active).length;
-    const badge = document.getElementById('radio-count-badge');
+    const radiosCount = document.getElementById('radios-count');
     
-    if (badge) {
-        badge.textContent = `${activeCount}/${radioData.totalRadios}`;
+    if (radiosCount) {
+        radiosCount.textContent = `${activeCount}/${radioData.radios.length}`;
         
         // Mudança visual baseada na quantidade ativa
         if (activeCount === 0) {
-            badge.style.background = 'var(--emidias-gray)';
-        } else if (activeCount === radioData.totalRadios) {
-            badge.style.background = 'var(--gradient-accent)';
+            radiosCount.style.background = 'var(--emidias-gray)';
+        } else if (activeCount === radioData.radios.length) {
+            radiosCount.style.background = 'var(--gradient-accent)';
         } else {
-            badge.style.background = 'var(--gradient-primary)';
+            radiosCount.style.background = 'var(--gradient-primary)';
         }
     }
+}
+
+
+// =========================================================================
+// ✅ SELECIONAR/DESMARCAR TODAS AS RÁDIOS
+// =========================================================================
+function selectAllRadios() {
+    radioData.radios.forEach((radio, index) => {
+        const checkbox = document.getElementById(`checkbox-${index}`);
+        const radioItem = document.getElementById(`radio-item-${index}`);
+        
+        if (checkbox && radioItem) {
+            checkbox.checked = true;
+            activeRadios[index].active = true;
+            radioItem.classList.remove('disabled');
+        }
+    });
+    
+    updateMapLayers();
+    updateRadioCount();
+    console.log('✅ Todas as rádios selecionadas');
+}
+
+function deselectAllRadios() {
+    radioData.radios.forEach((radio, index) => {
+        const checkbox = document.getElementById(`checkbox-${index}`);
+        const radioItem = document.getElementById(`radio-item-${index}`);
+        
+        if (checkbox && radioItem) {
+            checkbox.checked = false;
+            activeRadios[index].active = false;
+            radioItem.classList.add('disabled');
+        }
+    });
+    
+    updateMapLayers();
+    updateRadioCount();
+    console.log('❌ Todas as rádios desmarcadas');
+}
+
+// =========================================================================
+// 🔍 EXPANDIR/RECOLHER MAPA
+// =========================================================================
+function toggleMapExpansion() {
+    const mapContent = document.getElementById('map-content');
+    const radiosSidebar = document.getElementById('radios-sidebar');
+    const showRadiosBtn = document.getElementById('show-radios-btn');
+    const expandBtn = document.querySelector('.expand-map-btn');
+    
+    if (!mapContent || !radiosSidebar || !showRadiosBtn) return;
+    
+    isMapExpanded = !isMapExpanded;
+    
+    if (isMapExpanded) {
+        // Expandir mapa
+        mapContent.classList.add('expanded');
+        radiosSidebar.style.display = 'none';
+        showRadiosBtn.style.display = 'block';
+        
+        console.log('🔍 Mapa expandido');
+    } else {
+        // Recolher mapa
+        mapContent.classList.remove('expanded');
+        radiosSidebar.style.display = 'flex';
+        showRadiosBtn.style.display = 'none';
+        
+        console.log('📻 Lista de rádios restaurada');
+    }
+    
+    // Atualizar texto do botão
+    if (expandBtn) {
+        expandBtn.textContent = isMapExpanded ? '📻 Mostrar Rádios' : '🔍 Expandir Mapa';
+    }
+    
+    // Recalcular tamanho do mapa
+    setTimeout(() => {
+        if (map) {
+            map.invalidateSize();
+        }
+    }, 300);
+}
+
+function showRadiosList() {
+    toggleMapExpansion();
 }
 
 // =========================================================================

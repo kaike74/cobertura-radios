@@ -56,6 +56,45 @@
       <div id="map"></div>
     </div>
 
+    <!-- MAPA E LISTA LATERAL (MODO PROPOSTA) -->
+    <div id="map-section" class="map-container" style="display: none;">
+        <div class="map-layout">
+            <!-- MAPA -->
+            <div class="map-content" id="map-content">
+                <div id="map"></div>
+                
+                <!-- BOTÃO PARA MOSTRAR LISTA (quando expandido) -->
+                <button class="show-radios-btn" id="show-radios-btn" onclick="showRadiosList()" style="display: none;">
+                    📻 Mostrar Rádios
+                </button>
+            </div>
+            
+            <!-- LISTA LATERAL DE RÁDIOS (MODO PROPOSTA) -->
+            <div class="radios-sidebar" id="radios-sidebar" style="display: none;">
+                <div class="radios-sidebar-header">
+                    <h3 class="radios-sidebar-title">
+                        📻 Rádios da Proposta
+                        <span class="radios-count" id="radios-count">0/0</span>
+                    </h3>
+                    <button class="expand-map-btn" onclick="toggleMapExpansion()">
+                        🔍 Expandir Mapa
+                    </button>
+                </div>
+                
+                <div class="radios-list-container">
+                    <div class="radios-actions">
+                        <button class="radios-action-btn" onclick="selectAllRadios()">✅ Selecionar Todas</button>
+                        <button class="radios-action-btn" onclick="deselectAllRadios()">❌ Desmarcar Todas</button>
+                    </div>
+                    
+                    <div class="radios-list" id="radios-list">
+                        <!-- Lista será preenchida dinamicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- CIDADES -->
     <div id="cidades-section" class="cidades-container" style="display: none;">
       <div class="cidades-header">
