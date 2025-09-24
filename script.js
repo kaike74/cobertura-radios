@@ -429,11 +429,17 @@ async function fetchPropostaFromNotion(databaseId) {
 }
 
 // =========================================================================
-// 🎯 MODO INDIVIDUAL (ORIGINAL)
+// 🎯 MODO INDIVIDUAL (ATUALIZADO PARA NOVA ESTRUTURA)
 // =========================================================================
 async function initializeIndividualMode() {
     console.log('🔍 Modo Individual ativado');
-    // NÃO chamamos renderInfoIndividual() pois essa função foi removida intencionalmente
+    
+    // Ajustar layout para modo individual
+    const mapLayout = document.querySelector('.map-layout');
+    if (mapLayout) {
+        mapLayout.classList.add('individual-mode');
+    }
+    
     await initializeMapIndividual();
     renderCidadesIndividual();
 }
@@ -856,7 +862,7 @@ function cleanDuplicateDistance(cityName) {
 }
 
 // =========================================================================
-// 🎯 MODO PROPOSTA (NOVO)
+// 🏢 MODO PROPOSTA - COM DEBUG (ATUALIZADO)
 // =========================================================================
 async function initializePropostaMode() {
     console.log('🏢 Modo Proposta ativado');
@@ -865,6 +871,8 @@ async function initializePropostaMode() {
     if (!radioData.radios || radioData.radios.length === 0) {
         throw new Error('Nenhuma rádio encontrada na proposta');
     }
+    
+    console.log('📊 Rádios encontradas:', radioData.radios.length);
     
     // Garantir que todos os rádios tenham propriedades necessárias
     radioData.radios = radioData.radios.map((radio, index) => ({
@@ -896,36 +904,64 @@ async function initializePropostaMode() {
     }));
     
     console.log('📊 Rádios validadas:', radioData.radios.length);
+    console.log('📊 activeRadios inicializado:', activeRadios.length);
     
+    // Inicializar mapa
     await initializeMapProposta();
-    renderRadiosList(); // 🆕 NOVA FUNÇÃO
-    renderCidadesProposta();
+    
+    // 🔧 DEBUG: Verificar elementos antes de renderizar
+    setTimeout(() => {
+        debugRadiosList();
+        renderRadiosList();
+        renderCidadesProposta();
+    }, 500);
 }
 
 // =========================================================================
-// 📻 NOVA FUNÇÃO: RENDERIZAR LISTA LATERAL DE RÁDIOS
+// 📻 RENDERIZAR LISTA LATERAL DE RÁDIOS (COM DEBUG)
 // =========================================================================
 function renderRadiosList() {
-    if (!isPropostaMode) return;
+    console.log('📻 Iniciando renderRadiosList()');
+    console.log('- isPropostaMode:', isPropostaMode);
+    
+    if (!isPropostaMode) {
+        console.log('❌ Não é modo proposta, saindo...');
+        return;
+    }
     
     const radiosList = document.getElementById('radios-list');
     const radiosSidebar = document.getElementById('radios-sidebar');
     const radiosCount = document.getElementById('radios-count');
     
+    console.log('📻 Elementos encontrados:');
+    console.log('- radiosList:', radiosList ? 'SIM' : 'NÃO');
+    console.log('- radiosSidebar:', radiosSidebar ? 'SIM' : 'NÃO');
+    console.log('- radiosCount:', radiosCount ? 'SIM' : 'NÃO');
+    
     if (!radiosList || !radiosSidebar) {
-        console.warn('⚠️ Elementos da lista lateral não encontrados');
+        console.error('❌ Elementos da lista lateral não encontrados');
+        console.log('🔍 Tentando criar elementos...');
+        
+        // Tentar criar os elementos se não existirem
+        createRadiosListElements();
         return;
     }
     
+    console.log('📻 Mostrando sidebar...');
     // Mostrar sidebar
     radiosSidebar.style.display = 'flex';
+    radiosSidebar.style.visibility = 'visible';
     
     // Atualizar contador
     const activeCount = activeRadios.filter(r => r.active).length;
-    radiosCount.textContent = `${activeCount}/${radioData.radios.length}`;
+    if (radiosCount) {
+        radiosCount.textContent = `${activeCount}/${radioData.radios.length}`;
+    }
+    
+    console.log('📻 Gerando HTML para', radioData.radios.length, 'rádios...');
     
     // Gerar HTML da lista
-    radiosList.innerHTML = radioData.radios.map((radio, index) => {
+    const radiosHTML = radioData.radios.map((radio, index) => {
         const isActive = activeRadios[index].active;
         const pmmFormatted = radio.pmm ? radio.pmm.toLocaleString() : '0';
         const universoFormatted = radio.universo ? radio.universo.toLocaleString() : '0';
@@ -960,7 +996,99 @@ function renderRadiosList() {
         `;
     }).join('');
     
-    console.log('📻 Lista lateral de rádios renderizada:', radioData.radios.length, 'rádios');
+    radiosList.innerHTML = radiosHTML;
+    
+    console.log('✅ Lista lateral de rádios renderizada:', radioData.radios.length, 'rádios');
+    console.log('📻 HTML gerado:', radiosHTML.length, 'caracteres');
+}
+
+// =========================================================================
+// 🔧 FUNÇÃO PARA CRIAR ELEMENTOS SE NÃO EXISTIREM
+// =========================================================================
+function createRadiosListElements() {
+    console.log('🔧 Criando elementos da lista de rádios...');
+    
+    const mapSection = document.getElementById('map-section');
+    if (!mapSection) {
+        console.error('❌ map-section não encontrado');
+        return;
+    }
+    
+    // Verificar se já existe map-layout
+    let mapLayout = mapSection.querySelector('.map-layout');
+    if (!mapLayout) {
+        console.log('🔧 Criando map-layout...');
+        
+        // Pegar o mapa existente
+        const existingMap = document.getElementById('map');
+        if (!existingMap) {
+            console.error('❌ Mapa não encontrado');
+            return;
+        }
+        
+        // Criar nova estrutura
+        mapLayout = document.createElement('div');
+        mapLayout.className = 'map-layout';
+        
+        // Criar map-content
+        const mapContent = document.createElement('div');
+        mapContent.className = 'map-content';
+        mapContent.id = 'map-content';
+        
+        // Mover o mapa para dentro do map-content
+        mapContent.appendChild(existingMap);
+        
+        // Criar botão de mostrar rádios
+        const showBtn = document.createElement('button');
+        showBtn.className = 'show-radios-btn';
+        showBtn.id = 'show-radios-btn';
+        showBtn.onclick = showRadiosList;
+        showBtn.style.display = 'none';
+        showBtn.textContent = '📻 Mostrar Rádios';
+        mapContent.appendChild(showBtn);
+        
+        // Criar sidebar
+        const sidebar = document.createElement('div');
+        sidebar.className = 'radios-sidebar';
+        sidebar.id = 'radios-sidebar';
+        sidebar.innerHTML = `
+            <div class="radios-sidebar-header">
+                <h3 class="radios-sidebar-title">
+                    📻 Rádios da Proposta
+                    <span class="radios-count" id="radios-count">0/0</span>
+                </h3>
+                <button class="expand-map-btn" onclick="toggleMapExpansion()">
+                    🔍 Expandir Mapa
+                </button>
+            </div>
+            
+            <div class="radios-list-container">
+                <div class="radios-actions">
+                    <button class="radios-action-btn" onclick="selectAllRadios()">✅ Selecionar Todas</button>
+                    <button class="radios-action-btn" onclick="deselectAllRadios()">❌ Desmarcar Todas</button>
+                </div>
+                
+                <div class="radios-list" id="radios-list">
+                    <!-- Lista será preenchida dinamicamente -->
+                </div>
+            </div>
+        `;
+        
+        // Montar estrutura
+        mapLayout.appendChild(mapContent);
+        mapLayout.appendChild(sidebar);
+        
+        // Limpar mapSection e adicionar nova estrutura
+        mapSection.innerHTML = '';
+        mapSection.appendChild(mapLayout);
+        
+        console.log('✅ Elementos criados com sucesso');
+        
+        // Tentar renderizar novamente
+        setTimeout(() => {
+            renderRadiosList();
+        }, 100);
+    }
 }
 
 // =========================================================================
@@ -2091,6 +2219,13 @@ function hideLoading() {
         }
         if (radioInfoElement) radioInfoElement.textContent = `${radioData.dial} • ${radioData.praca} - ${radioData.uf}`;
     }
+        // 🔧 DEBUG: Verificar se é modo proposta e chamar debug
+    if (isPropostaMode) {
+        setTimeout(() => {
+            console.log('🔍 Executando debug após hideLoading...');
+            debugRadiosList();
+        }, 1000);
+    }
 }
 
 function showError(message, details = null) {
@@ -2236,4 +2371,29 @@ function cleanAllDuplicateDistances(cityName) {
     }
     
     return cleanName;
+}
+
+// =========================================================================
+// �� FUNÇÃO DE DEBUG PARA VERIFICAR ELEMENTOS
+// =========================================================================
+function debugRadiosList() {
+    console.log('🔍 DEBUG - Verificando elementos da lista de rádios:');
+    console.log('- isPropostaMode:', isPropostaMode);
+    console.log('- radioData.radios:', radioData.radios ? radioData.radios.length : 'undefined');
+    console.log('- activeRadios:', activeRadios ? activeRadios.length : 'undefined');
+    
+    const elements = {
+        radiosList: document.getElementById('radios-list'),
+        radiosSidebar: document.getElementById('radios-sidebar'),
+        radiosCount: document.getElementById('radios-count'),
+        mapSection: document.getElementById('map-section')
+    };
+    
+    Object.entries(elements).forEach(([name, element]) => {
+        console.log(`- ${name}:`, element ? 'ENCONTRADO' : 'NÃO ENCONTRADO');
+        if (element) {
+            console.log(`  - display:`, getComputedStyle(element).display);
+            console.log(`  - visibility:`, getComputedStyle(element).visibility);
+        }
+    });
 }

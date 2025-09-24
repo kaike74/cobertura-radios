@@ -1367,3 +1367,17 @@ body {
         padding: 4px 6px;
     }
 }
+
+/* =============================================================================
+    🗺️ LAYOUT DO MAPA - MODO INDIVIDUAL (ATUALIZADO)
+    ============================================================================= */
+
+/* Quando for modo individual, ocultar sidebar */
+.map-layout.individual-mode .radios-sidebar {
+    display: none !important;
+}
+
+.map-layout.individual-mode .map-content {
+    width: 100%;
+    flex: none;
+}
