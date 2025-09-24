@@ -1316,7 +1316,7 @@ function fitMapToMultipleCoverage() {
     }
 }
 
-function renderInfoProposta() {
+/*function renderInfoProposta() {
     const container = document.getElementById('info-section');
     container.className = 'info-grid proposta'; // Adicionar classe especial
     
@@ -1395,7 +1395,7 @@ function renderInfoProposta() {
     `;
     
     container.style.display = 'grid';
-}
+}*/
 
 function renderCidadesProposta() {
     // Usar apenas cidades únicas (filtrar nomes de rádios)
