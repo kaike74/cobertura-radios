@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // =========================================================================
-// 📡 CARREGAR DADOS DO NOTION E-MÍDIAS
+// 📡 CARREGAR DADOS DO NOTION E-MÍDIAS (CORRIGIDO PARA TESTE)
 // =========================================================================
 async function loadRadioData() {
     const params = new URLSearchParams(window.location.search);
@@ -275,7 +275,7 @@ async function loadRadioData() {
             throw new Error(`Erro ao carregar dados: ${error.message}`);
         }
     } else {
-        // Dados de exemplo para desenvolvimento/teste
+        // 🔧 DADOS DE EXEMPLO CORRIGIDOS PARA DESENVOLVIMENTO/TESTE
         radioData = {
             name: 'RÁDIO EXEMPLO FM',
             dial: '107.3',
@@ -288,14 +288,92 @@ async function loadRadioData() {
             universo: 1061390,
             pmm: 12886,
             imageUrl: 'https://via.placeholder.com/100x75/06055B/white?text=107.3',
-            coverageType: 'circle',
+            coverageType: 'circle', // Usar cobertura circular para teste
+            // 🆕 CIDADES DE EXEMPLO PARA TESTE
             cidades: [
-                'Florianópolis - SC', 'São José - SC', 'Palhoça - SC', 'Biguaçu - SC',
-                'Blumenau - SC', 'Joinville - SC', 'Itajaí - SC'
+                'Florianópolis - SC',
+                'São José - SC', 
+                'Palhoça - SC',
+                'Biguaçu - SC',
+                'Santo Amaro da Imperatriz - SC',
+                'Águas Mornas - SC',
+                'Antônio Carlos - SC',
+                'Governador Celso Ramos - SC',
+                'Blumenau - SC',
+                'Joinville - SC',
+                'Itajaí - SC',
+                'Balneário Camboriú - SC',
+                'Chapecó - SC',
+                'Criciúma - SC',
+                'Lages - SC',
+                'Tubarão - SC',
+                'Caçador - SC',
+                'Concórdia - SC',
+                'Videira - SC',
+                'Joaçaba - SC'
+            ],
+            // 🆕 PLACEMARKS DE EXEMPLO (COORDENADAS REAIS DE SC)
+            kmlPlacemarks: [
+                {
+                    name: 'São José',
+                    coordinates: [-27.1173, -48.6167],
+                    description: '15.2 km'
+                },
+                {
+                    name: 'Palhoça',
+                    coordinates: [-27.6386, -48.6703],
+                    description: '22.8 km'
+                },
+                {
+                    name: 'Biguaçu',
+                    coordinates: [-27.4939, -48.6581],
+                    description: '18.5 km'
+                },
+                {
+                    name: 'Santo Amaro da Imperatriz',
+                    coordinates: [-27.6889, -48.7806],
+                    description: '35.4 km'
+                },
+                {
+                    name: 'Blumenau',
+                    coordinates: [-26.9194, -49.0661],
+                    description: '85.2 km'
+                },
+                {
+                    name: 'Joinville',
+                    coordinates: [-26.3044, -48.8456],
+                    description: '120.8 km'
+                },
+                {
+                    name: 'Itajaí',
+                    coordinates: [-26.9078, -48.6614],
+                    description: '95.6 km'
+                },
+                {
+                    name: 'Balneário Camboriú',
+                    coordinates: [-26.9906, -48.6336],
+                    description: '78.3 km'
+                },
+                {
+                    name: 'Chapecó',
+                    coordinates: [-27.1009, -52.6156],
+                    description: '285.7 km'
+                },
+                {
+                    name: 'Criciúma',
+                    coordinates: [-28.6778, -49.3694],
+                    description: '195.4 km'
+                }
             ],
             source: 'example',
             type: 'individual'
         };
+        
+        console.log('🧪 Dados de exemplo carregados para teste:', {
+            cidades: radioData.cidades.length,
+            placemarks: radioData.kmlPlacemarks.length,
+            coordinates: [radioData.latitude, radioData.longitude]
+        });
     }
 }
 
@@ -358,6 +436,9 @@ async function initializeIndividualMode() {
     renderCidadesIndividual();
 }
 
+// =========================================================================
+// 🗺️ INICIALIZAR MAPA INDIVIDUAL (CORRIGIDO - SEM TRAVAMENTO)
+// =========================================================================
 async function initializeMapIndividual() {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
@@ -371,25 +452,37 @@ async function initializeMapIndividual() {
                     throw new Error('Elemento do mapa não encontrado');
                 }
                 
-                map = L.map('map');
+                console.log('🗺️ Criando mapa individual...');
                 
+                // Criar mapa COM POSIÇÃO INICIAL
+                map = L.map('map').setView([radioData.latitude, radioData.longitude], 8);
+                
+                // Adicionar camada de tiles
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© OpenStreetMap contributors',
                     maxZoom: 18
                 }).addTo(map);
                 
+                console.log('🗺️ Mapa criado, adicionando elementos...');
+                
+                // Invalidar tamanho após criação
                 setTimeout(() => {
                     map.invalidateSize();
+                    
+                    // Adicionar elementos do mapa
+                    addRadioMarkerIndividual();
+                    addCoverageIndividual();
+                    
+                    // Ajustar zoom após elementos serem adicionados
+                    setTimeout(() => {
+                        fitMapToCoverageIndividual();
+                        resolve();
+                    }, 200);
+                    
                 }, 100);
                 
-                addRadioMarkerIndividual();
-                addCoverageIndividual();
-                fitMapToCoverageIndividual();
-                
-                resolve();
-                
             } catch (error) {
-                console.error('Erro detalhado do mapa:', error);
+                console.error('❌ Erro detalhado do mapa individual:', error);
                 reject(error);
             }
         }, 50);
@@ -563,31 +656,91 @@ function addCityMarkersIndividual() {
     });
 }
 
+// =========================================================================
+// 🗺️ AJUSTAR ZOOM INDIVIDUAL (CORRIGIDO PARA EVITAR ERRO getBounds)
+// =========================================================================
 function fitMapToCoverageIndividual() {
-    if (radioData.coverageType === 'kml' && radioData.kmlBounds) {
-        const bounds = L.latLngBounds(
-            [radioData.kmlBounds.south, radioData.kmlBounds.west],
-            [radioData.kmlBounds.north, radioData.kmlBounds.east]
-        );
-        map.fitBounds(bounds, { padding: [50, 50] });
-    } else if (coverageLayers.length > 0 && coverageLayers[0].getBounds) {
-        map.fitBounds(coverageLayers[0].getBounds(), { padding: [80, 80] });
-    } else {
-        const radiusKm = radioData.radius / 1000;
-        let zoom = 5;
+    try {
+        let bounds = L.latLngBounds();
+        let boundsCreated = false;
         
-        if (radiusKm > 300) zoom = 3;
-        else if (radiusKm > 200) zoom = 4;
-        else if (radiusKm > 150) zoom = 4;
-        else if (radiusKm > 100) zoom = 5;
-        else if (radiusKm > 75) zoom = 5;
-        else if (radiusKm > 50) zoom = 6;
-        else if (radiusKm > 25) zoom = 7;
-        else zoom = 8;
+        console.log('🗺️ Iniciando ajuste de zoom individual...');
         
-        map.setView([radioData.latitude, radioData.longitude], zoom);
+        // 1. Adicionar coordenadas da rádio
+        if (radioData.latitude && radioData.longitude) {
+            bounds.extend([radioData.latitude, radioData.longitude]);
+            boundsCreated = true;
+            console.log('📍 Coordenadas da rádio adicionadas:', [radioData.latitude, radioData.longitude]);
+        }
+        
+        // 2. Adicionar bounds do KML se existir
+        if (radioData.coverageType === 'kml' && radioData.kmlBounds) {
+            bounds.extend([radioData.kmlBounds.south, radioData.kmlBounds.west]);
+            bounds.extend([radioData.kmlBounds.north, radioData.kmlBounds.east]);
+            boundsCreated = true;
+            console.log('🗺️ KML bounds adicionados');
+        }
+        
+        // 3. Adicionar coordenadas de todas as cidades (placemarks)
+        if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
+            radioData.kmlPlacemarks.forEach((placemark, index) => {
+                if (placemark.coordinates && placemark.coordinates.length >= 2) {
+                    const [lat, lng] = placemark.coordinates;
+                    if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+                        bounds.extend([lat, lng]);
+                        boundsCreated = true;
+                    }
+                }
+            });
+            console.log(`🏙️ ${radioData.kmlPlacemarks.length} cidades adicionadas ao bounds`);
+        }
+        
+        // 4. Se cobertura circular, calcular área baseada no raio
+        if (radioData.coverageType === 'circle' && radioData.radius) {
+            const radiusInDegrees = radioData.radius / 111320; // Conversão aproximada metros para graus
+            bounds.extend([
+                radioData.latitude - radiusInDegrees,
+                radioData.longitude - radiusInDegrees
+            ]);
+            bounds.extend([
+                radioData.latitude + radiusInDegrees,
+                radioData.longitude + radiusInDegrees
+            ]);
+            boundsCreated = true;
+            console.log('⭕ Cobertura circular adicionada, raio:', radioData.radius / 1000, 'km');
+        }
+        
+        // 5. Aplicar bounds com padding adequado
+        if (boundsCreated && bounds.isValid()) {
+            // ⚠️ AGUARDAR MAPA ESTAR COMPLETAMENTE CARREGADO
+            setTimeout(() => {
+                try {
+                    map.fitBounds(bounds, { 
+                        padding: [30, 30],
+                        maxZoom: 10 // Evitar zoom muito próximo
+                    });
+                    console.log('✅ Zoom individual aplicado com sucesso');
+                } catch (error) {
+                    console.error('❌ Erro ao aplicar fitBounds:', error);
+                    // Fallback seguro
+                    map.setView([radioData.latitude, radioData.longitude], 8);
+                }
+            }, 200); // Aguardar 200ms para garantir que o mapa está pronto
+        } else {
+            // Fallback: zoom padrão na rádio
+            map.setView([radioData.latitude, radioData.longitude], 8);
+            console.log('⚠️ Usando fallback: zoom padrão na rádio');
+        }
+        
+    } catch (error) {
+        console.error('❌ Erro ao ajustar zoom individual:', error);
+        // Fallback seguro
+        setTimeout(() => {
+            map.setView([radioData.latitude, radioData.longitude], 6);
+        }, 100);
     }
 }
+
 
 function renderInfoIndividual() {
     const container = document.getElementById('info-section');
@@ -634,13 +787,30 @@ function renderInfoIndividual() {
     container.style.display = 'grid';
 }
 
+// =========================================================================
+// 🏙️ RENDERIZAR CIDADES INDIVIDUAL (CORRIGIDO)
+// =========================================================================
 function renderCidadesIndividual() {
-    allCities = (radioData.cidades || []).filter(cidade => {
-        const cityName = cidade.toLowerCase();
-        const radioName = radioData.name.toLowerCase();
+    console.log('🏙️ Renderizando cidades individuais...');
+    
+    // Garantir que temos cidades para mostrar
+    if (!radioData.cidades || radioData.cidades.length === 0) {
+        console.warn('⚠️ Nenhuma cidade encontrada nos dados');
+        allCities = [];
+    } else {
+        // Filtrar cidades válidas (remover nomes de rádios)
+        allCities = radioData.cidades.filter(cidade => {
+            const cityName = cidade.toLowerCase();
+            const radioName = (radioData.name || '').toLowerCase();
+            const radioLocation = (radioData.praca || '').toLowerCase();
+            
+            // Não incluir se for o nome da rádio ou localização da rádio
+            return !cityName.includes(radioName.replace('rádio', '').replace('fm', '').trim()) &&
+                   !cityName.includes(radioLocation);
+        });
         
-        return !cityName.includes(radioName.replace('rádio', '').replace('fm', '').trim());
-    });
+        console.log('🏙️ Cidades válidas encontradas:', allCities.length);
+    }
     
     filteredCities = [...allCities];
     
@@ -648,8 +818,18 @@ function renderCidadesIndividual() {
     setupCitySearch();
     
     // Atualizar contador
-    document.getElementById('cidade-count').textContent = allCities.length;
-    document.getElementById('cidades-section').style.display = 'block';
+    const cidadeCountElement = document.getElementById('cidade-count');
+    if (cidadeCountElement) {
+        cidadeCountElement.textContent = allCities.length;
+    }
+    
+    // Mostrar seção
+    const cidadesSectionElement = document.getElementById('cidades-section');
+    if (cidadesSectionElement) {
+        cidadesSectionElement.style.display = 'block';
+    }
+    
+    console.log('✅ Seção de cidades renderizada:', allCities.length, 'cidades');
 }
 
 // =========================================================================
@@ -693,6 +873,9 @@ async function initializePropostaMode() {
     renderCidadesProposta();
 }
 
+// =========================================================================
+// 🗺️ INICIALIZAR MAPA PROPOSTA (CORRIGIDO TAMBÉM)
+// =========================================================================
 async function initializeMapProposta() {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
@@ -706,7 +889,11 @@ async function initializeMapProposta() {
                     throw new Error('Elemento do mapa não encontrado');
                 }
                 
-                map = L.map('map');
+                console.log('��️ Criando mapa proposta...');
+                
+                // Usar coordenadas da primeira rádio como posição inicial
+                const firstRadio = radioData.radios[0];
+                map = L.map('map').setView([firstRadio.latitude, firstRadio.longitude], 6);
                 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© OpenStreetMap contributors',
@@ -715,15 +902,18 @@ async function initializeMapProposta() {
                 
                 setTimeout(() => {
                     map.invalidateSize();
+                    
+                    addMultipleRadios();
+                    
+                    setTimeout(() => {
+                        fitMapToMultipleCoverage();
+                        resolve();
+                    }, 200);
+                    
                 }, 100);
                 
-                addMultipleRadios();
-                fitMapToMultipleCoverage();
-                
-                resolve();
-                
             } catch (error) {
-                console.error('Erro detalhado do mapa proposta:', error);
+                console.error('❌ Erro detalhado do mapa proposta:', error);
                 reject(error);
             }
         }, 50);
@@ -979,54 +1169,96 @@ function addCityMarkersProposta(radio, radioIndex, color) {
 }
 
 function fitMapToMultipleCoverage() {
-    if (radioMarkers.length === 0) {
-        console.warn('Nenhum marcador de rádio para ajustar o zoom');
-        return;
-    }
-    
     try {
-        // Criar grupo com todos os marcadores e coberturas
-        const allLayers = [...radioMarkers, ...coverageLayers, ...cityMarkers];
-        
-        if (allLayers.length === 0) {
-            console.warn('Nenhuma camada para ajustar o zoom');
-            return;
-        }
-        
-        // Calcular bounds manualmente se necessário
         let bounds = L.latLngBounds();
         let boundsCreated = false;
         
-        // Adicionar coordenadas dos marcadores de rádio
-        radioData.radios.forEach(radio => {
-            if (radio.latitude && radio.longitude) {
+        console.log('🗺️ Iniciando ajuste de zoom para proposta com', radioData.radios.length, 'rádios');
+        
+        // 1. Adicionar coordenadas de todas as rádios
+        radioData.radios.forEach((radio, index) => {
+            if (radio.latitude && radio.longitude && !isNaN(radio.latitude) && !isNaN(radio.longitude)) {
                 bounds.extend([radio.latitude, radio.longitude]);
                 boundsCreated = true;
+                console.log(`📍 Rádio ${index + 1} adicionada ao bounds:`, [radio.latitude, radio.longitude]);
             }
         });
         
-        // Adicionar bounds das coberturas KML
-        radioData.radios.forEach(radio => {
+        // 2. Adicionar bounds de KML de cada rádio
+        radioData.radios.forEach((radio, index) => {
             if (radio.kmlBounds) {
                 bounds.extend([radio.kmlBounds.south, radio.kmlBounds.west]);
                 bounds.extend([radio.kmlBounds.north, radio.kmlBounds.east]);
                 boundsCreated = true;
+                console.log(`🗺️ KML bounds da rádio ${index + 1} adicionados`);
             }
         });
         
-        if (boundsCreated) {
-            map.fitBounds(bounds, { padding: [50, 50] });
+        // 3. Adicionar coordenadas de todas as cidades (placemarks)
+        radioData.radios.forEach((radio, index) => {
+            if (radio.kmlPlacemarks && radio.kmlPlacemarks.length > 0) {
+                radio.kmlPlacemarks.forEach(placemark => {
+                    if (placemark.coordinates && placemark.coordinates.length >= 2) {
+                        const [lat, lng] = placemark.coordinates;
+                        if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+                            bounds.extend([lat, lng]);
+                            boundsCreated = true;
+                        }
+                    }
+                });
+                console.log(`🏙️ ${radio.kmlPlacemarks.length} cidades da rádio ${index + 1} adicionadas`);
+            }
+        });
+        
+        // 4. Se não tem dados suficientes, usar cobertura circular de cada rádio
+        if (!boundsCreated) {
+            radioData.radios.forEach(radio => {
+                if (radio.latitude && radio.longitude && radio.radius) {
+                    const radiusInDegrees = radio.radius / 111320; // Conversão aproximada
+                    bounds.extend([
+                        radio.latitude - radiusInDegrees,
+                        radio.longitude - radiusInDegrees
+                    ]);
+                    bounds.extend([
+                        radio.latitude + radiusInDegrees,
+                        radio.longitude + radiusInDegrees
+                    ]);
+                    boundsCreated = true;
+                }
+            });
+        }
+        
+        // 5. Aplicar bounds com configurações otimizadas
+        if (boundsCreated && bounds.isValid()) {
+            // Calcular zoom ideal baseado na área
+            const boundsSize = bounds.getNorthEast().distanceTo(bounds.getSouthWest());
+            let maxZoom = 10;
+            
+            if (boundsSize > 500000) maxZoom = 6;      // Área muito grande
+            else if (boundsSize > 200000) maxZoom = 7; // Área grande
+            else if (boundsSize > 100000) maxZoom = 8; // Área média
+            else if (boundsSize > 50000) maxZoom = 9;  // Área pequena
+            
+            map.fitBounds(bounds, { 
+                padding: [40, 40],
+                maxZoom: maxZoom
+            });
+            
+            console.log('✅ Zoom da proposta ajustado com sucesso. Área:', boundsSize.toFixed(0), 'm, MaxZoom:', maxZoom);
         } else {
             // Fallback: centralizar na primeira rádio
             const firstRadio = radioData.radios[0];
-            map.setView([firstRadio.latitude, firstRadio.longitude], 8);
+            map.setView([firstRadio.latitude, firstRadio.longitude], 6);
+            console.log('⚠️ Usando fallback: centralizado na primeira rádio');
         }
         
     } catch (error) {
-        console.error('Erro ao ajustar zoom da proposta:', error);
-        // Fallback: centralizar na primeira rádio
-        const firstRadio = radioData.radios[0];
-        map.setView([firstRadio.latitude, firstRadio.longitude], 8);
+        console.error('❌ Erro ao ajustar zoom da proposta:', error);
+        // Fallback seguro
+        if (radioData.radios && radioData.radios.length > 0) {
+            const firstRadio = radioData.radios[0];
+            map.setView([firstRadio.latitude, firstRadio.longitude], 5);
+        }
     }
 }
 
@@ -1251,6 +1483,61 @@ function toggleRadio(radioIndex) {
 }
 
 // =========================================================================
+// 🎯 NOVA FUNÇÃO: AJUSTAR ZOOM APENAS PARA RÁDIOS ATIVAS
+// =========================================================================
+function fitMapToActiveCoverage() {
+    try {
+        let bounds = L.latLngBounds();
+        let boundsCreated = false;
+        
+        // Coletar bounds apenas das rádios ativas
+        activeRadios.forEach((radio, index) => {
+            if (!radio.active || !radioData.radios[index]) return;
+            
+            const radioData_single = radioData.radios[index];
+            
+            // Adicionar coordenadas da rádio
+            if (radioData_single.latitude && radioData_single.longitude) {
+                bounds.extend([radioData_single.latitude, radioData_single.longitude]);
+                boundsCreated = true;
+            }
+            
+            // Adicionar bounds KML
+            if (radioData_single.kmlBounds) {
+                bounds.extend([radioData_single.kmlBounds.south, radioData_single.kmlBounds.west]);
+                bounds.extend([radioData_single.kmlBounds.north, radioData_single.kmlBounds.east]);
+                boundsCreated = true;
+            }
+            
+            // Adicionar placemarks
+            if (radioData_single.kmlPlacemarks) {
+                radioData_single.kmlPlacemarks.forEach(placemark => {
+                    if (placemark.coordinates && placemark.coordinates.length >= 2) {
+                        const [lat, lng] = placemark.coordinates;
+                        if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+                            bounds.extend([lat, lng]);
+                            boundsCreated = true;
+                        }
+                    }
+                });
+            }
+        });
+        
+        // Aplicar bounds se válido
+        if (boundsCreated && bounds.isValid()) {
+            map.fitBounds(bounds, { 
+                padding: [40, 40],
+                maxZoom: 10
+            });
+            console.log('🎯 Zoom ajustado para rádios ativas');
+        }
+        
+    } catch (error) {
+        console.error('Erro ao ajustar zoom para rádios ativas:', error);
+    }
+}
+
+// =========================================================================
 // 🗺️ ATUALIZAR CAMADAS DO MAPA (PROPOSTA)
 // =========================================================================
 function updateMapLayers() {
@@ -1281,6 +1568,11 @@ function updateMapLayers() {
             }
         }
     });
+    
+    // 🆕 REAJUSTAR ZOOM PARA RÁDIOS ATIVAS
+    setTimeout(() => {
+        fitMapToActiveCoverage();
+    }, 100);
     
     // Atualizar lista de cidades (mostrar apenas cidades das rádios ativas)
     updateCitiesForActiveRadios();
@@ -1369,7 +1661,7 @@ function updateRadioCount() {
 }
 
 // =========================================================================
-// 🎨 FUNÇÕES COMUNS (USADAS POR AMBOS OS MODOS)
+// 📋 ATUALIZAR LISTA DE CIDADES (CORRIGIDO PARA MODO INDIVIDUAL)
 // =========================================================================
 function updateCidadesList() {
     if (isPropostaMode) {
@@ -1377,21 +1669,32 @@ function updateCidadesList() {
         return;
     }
     
-    // Modo individual (lógica original)
+    // 🔧 MODO INDIVIDUAL CORRIGIDO
     const container = document.getElementById('cidades-list');
     
-    if (filteredCities.length === 0) {
-        container.innerHTML = '<div class="cidade-item">❌ Nenhuma cidade encontrada</div>';
+    if (!container) {
+        console.error('❌ Container de cidades não encontrado');
         return;
     }
     
-    container.innerHTML = filteredCities.map(cidade => {
+    if (filteredCities.length === 0) {
+        container.innerHTML = `
+            <div class="cidade-item" style="text-align: center; padding: 20px; color: var(--emidias-gray);">
+                ❌ Nenhuma cidade encontrada
+            </div>
+        `;
+        return;
+    }
+    
+    console.log('📋 Atualizando lista com', filteredCities.length, 'cidades');
+    
+    container.innerHTML = filteredCities.map((cidade, index) => {
         const parts = cidade.split(' - ');
         const nome = parts[0];
-        const uf = parts[1] || radioData.uf;
+        const uf = parts[1] || radioData.uf || '';
         
         return `
-            <div class="cidade-item" onclick="highlightCity('${cidade}')">
+            <div class="cidade-item" onclick="highlightCity('${cidade}')" title="Clique para localizar no mapa">
                 <div class="cidade-info">
                     <span class="cidade-name">${nome}</span>
                     <span class="cidade-uf">${uf}</span>
@@ -1399,6 +1702,8 @@ function updateCidadesList() {
             </div>
         `;
     }).join('');
+    
+    console.log('✅ Lista de cidades atualizada');
 }
 
 // =========================================================================
