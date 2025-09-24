@@ -1451,3 +1451,184 @@ body {
         gap: 2px;
     }
 }
+
+/* =============================================================================
+    💬 TOOLTIP PARA LOGOS DAS RÁDIOS
+    ============================================================================= */
+
+.radio-logo-cidade {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 2px solid var(--emidias-light-gray);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative; /* 🆕 Para posicionamento do tooltip */
+}
+
+.radio-logo-cidade:hover {
+    transform: scale(1.1);
+    border-color: var(--emidias-primary);
+    box-shadow: 0 2px 8px rgba(6, 5, 91, 0.2);
+    z-index: 1000; /* 🆕 Para tooltip ficar acima */
+}
+
+/* Tooltip container */
+.radio-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    background: var(--emidias-dark);
+    color: var(--emidias-white);
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 12px;
+    white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1001;
+    pointer-events: none;
+    font-family: var(--font-primary);
+    min-width: 200px;
+    text-align: center;
+}
+
+/* Seta do tooltip */
+.radio-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--emidias-dark);
+}
+
+/* Mostrar tooltip no hover */
+.radio-logo-cidade:hover .radio-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-4px);
+}
+
+/* Conteúdo do tooltip */
+.tooltip-radio-name {
+    font-weight: var(--font-weight-bold);
+    font-size: 14px;
+    margin-bottom: 4px;
+    color: var(--emidias-white);
+}
+
+.tooltip-radio-details {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 2px;
+}
+
+.tooltip-radio-stats {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Ajustes para quando há muitas rádios */
+.cidade-radios-logos:has(.radio-logo-cidade:nth-child(4)) .radio-logo-cidade {
+    width: 28px;
+    height: 28px;
+}
+
+.cidade-radios-logos:has(.radio-logo-cidade:nth-child(6)) .radio-logo-cidade {
+    width: 24px;
+    height: 24px;
+}
+
+/* =============================================================================
+    📱 RESPONSIVIDADE PARA TOOLTIP
+    ============================================================================= */
+
+@media (max-width: 768px) {
+    .radio-tooltip {
+        min-width: 180px;
+        font-size: 11px;
+        padding: 10px 12px;
+    }
+    
+    .tooltip-radio-name {
+        font-size: 13px;
+    }
+    
+    .tooltip-radio-details {
+        font-size: 10px;
+    }
+    
+    .tooltip-radio-stats {
+        font-size: 9px;
+    }
+}
+
+@media (max-width: 480px) {
+    .radio-tooltip {
+        min-width: 160px;
+        font-size: 10px;
+        padding: 8px 10px;
+    }
+    
+    .tooltip-radio-name {
+        font-size: 12px;
+    }
+    
+    /* Em mobile, posicionar tooltip acima se não couber */
+    .radio-tooltip {
+        bottom: auto;
+        top: 100%;
+        margin-bottom: 0;
+        margin-top: 8px;
+    }
+    
+    .radio-tooltip::after {
+        top: auto;
+        bottom: 100%;
+        border-top-color: transparent;
+        border-bottom-color: var(--emidias-dark);
+    }
+}
+
+/* =============================================================================
+    �� ANIMAÇÕES PARA MARCADORES
+    ============================================================================= */
+
+@keyframes markerBounce {
+    0%, 20%, 53%, 80%, 100% {
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+    40%, 43% {
+        transform: translate3d(0, -10px, 0) scale(1.1);
+    }
+    70% {
+        transform: translate3d(0, -5px, 0) scale(1.05);
+    }
+    90% {
+        transform: translate3d(0, -2px, 0) scale(1.02);
+    }
+}
+
+/* Efeito de destaque no hover da logo */
+.radio-logo-cidade:hover {
+    transform: scale(1.1);
+    border-color: var(--emidias-primary);
+    box-shadow: 0 2px 8px rgba(6, 5, 91, 0.2);
+    z-index: 1000;
+}
+
+/* Efeito de clique */
+.radio-logo-cidade:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+}

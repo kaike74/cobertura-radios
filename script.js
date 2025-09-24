@@ -2329,18 +2329,40 @@ function updateCidadesListProposta() {
     console.log('📋 Atualizando lista com', filteredCities.length, 'cidades únicas');
     
     container.innerHTML = filteredCities.map((cidade, index) => {
-        // Gerar HTML das logos das rádios
+        // Gerar HTML das logos das rádios com tooltip e clique
         const radiosHtml = cidade.radios.map(radio => {
             const colorIndex = radio.originalIndex % RADIO_COLORS.length;
             const color = RADIO_COLORS[colorIndex];
+            const pmmFormatted = radio.pmm ? radio.pmm.toLocaleString() : '0';
+            const universoFormatted = radio.universo ? radio.universo.toLocaleString() : '0';
+            const cidadesCount = radio.cidades ? radio.cidades.length : 0;
             
             return `
-                <img class="radio-logo-cidade" 
-                     src="${radio.imageUrl}" 
-                     alt="${radio.name} - ${radio.dial}"
-                     title="${radio.name} - ${radio.dial}"
+                <div class="radio-logo-cidade" 
                      style="border-color: ${color};"
-                     onerror="this.src='https://via.placeholder.com/32x32/${color.replace('#', '')}/white?text=${encodeURIComponent(radio.dial || 'FM')}'">
+                     onclick="centerMapOnRadioList(${radio.originalIndex}); event.stopPropagation();"
+                     data-radio-index="${radio.originalIndex}">
+                    
+                    <img src="${radio.imageUrl}" 
+                         alt="${radio.name} - ${radio.dial}"
+                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;"
+                         onerror="this.src='https://via.placeholder.com/32x32/${color.replace('#', '')}/white?text=${encodeURIComponent(radio.dial || 'FM')}'">
+                    
+                    <!-- TOOLTIP -->
+                    <div class="radio-tooltip">
+                        <div class="tooltip-radio-name">${radio.name}</div>
+                        <div class="tooltip-radio-details">
+                            <strong>${radio.dial}</strong> • ${radio.praca} - ${radio.uf}
+                        </div>
+                        <div class="tooltip-radio-details">
+                            ${radio.region || 'Região não informada'}
+                        </div>
+                        <div class="tooltip-radio-stats">
+                            PMM: ${pmmFormatted} • Universo: ${universoFormatted}<br>
+                            Cidades: ${cidadesCount} • Clique para centralizar
+                        </div>
+                    </div>
+                </div>
             `;
         }).join('');
         
@@ -2358,7 +2380,7 @@ function updateCidadesListProposta() {
         `;
     }).join('');
     
-    console.log('✅ Lista de cidades atualizada (modo proposta)');
+    console.log('✅ Lista de cidades atualizada (modo proposta) com tooltips');
 }
 
 function setupCitySearch() {
@@ -2659,4 +2681,83 @@ function debugRadiosList() {
             console.log(`  - visibility:`, getComputedStyle(element).visibility);
         }
     });
+}
+
+// =========================================================================
+// 🎯 CENTRALIZAR MAPA EM RÁDIO ESPECÍFICA
+// =========================================================================
+function centerMapOnRadioList(radioIndex) {
+    console.log('🎯 Centralizando mapa na rádio:', radioIndex);
+    
+    if (!radioData.radios || !radioData.radios[radioIndex]) {
+        console.error('❌ Rádio não encontrada:', radioIndex);
+        return;
+    }
+    
+    const radio = radioData.radios[radioIndex];
+    const lat = radio.latitude;
+    const lng = radio.longitude;
+    
+    if (!lat || !lng) {
+        console.error('❌ Coordenadas da rádio não encontradas');
+        return;
+    }
+    
+    // Centralizar mapa na rádio com animação
+    map.flyTo([lat, lng], 11, {
+        animate: true,
+        duration: 1.5
+    });
+    
+    // Destacar o marcador da rádio
+    const radioMarker = radioMarkers[radioIndex];
+    if (radioMarker) {
+        // Abrir popup do marcador
+        setTimeout(() => {
+            radioMarker.openPopup();
+        }, 1000);
+        
+        // Efeito de "bounce" no marcador
+        setTimeout(() => {
+            const markerElement = radioMarker.getElement();
+            if (markerElement) {
+                markerElement.style.animation = 'markerBounce 0.6s ease-in-out';
+                setTimeout(() => {
+                    markerElement.style.animation = '';
+                }, 600);
+            }
+        }, 1500);
+    }
+    
+    console.log(`✅ Mapa centralizado na rádio: ${radio.name} (${radio.dial})`);
+}
+
+// =========================================================================
+// 🎯 DESTACAR MARCADOR DE RÁDIO (FUNÇÃO AUXILIAR)
+// =========================================================================
+function highlightRadioMarker(radioIndex) {
+    const radioMarker = radioMarkers[radioIndex];
+    if (!radioMarker) return;
+    
+    // Criar efeito de destaque temporário
+    const originalIcon = radioMarker.options.icon;
+    
+    // Criar ícone destacado (maior e com brilho)
+    const highlightIcon = L.divIcon({
+        html: originalIcon.options.html.replace(
+            'transform: scale(1)',
+            'transform: scale(1.3); box-shadow: 0 0 20px rgba(6, 5, 91, 0.6);'
+        ),
+        className: originalIcon.options.className,
+        iconSize: originalIcon.options.iconSize,
+        iconAnchor: originalIcon.options.iconAnchor
+    });
+    
+    // Aplicar ícone destacado
+    radioMarker.setIcon(highlightIcon);
+    
+    // Voltar ao normal após 2 segundos
+    setTimeout(() => {
+        radioMarker.setIcon(originalIcon);
+    }, 2000);
 }
