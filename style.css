@@ -1391,6 +1391,7 @@ body {
     align-items: center;
     gap: 4px;
     flex-wrap: wrap;
+    position: relative; /* 🆕 Para contexto de z-index */
 }
 
 .radio-logo-cidade {
@@ -1401,12 +1402,15 @@ body {
     border: 2px solid var(--emidias-light-gray);
     transition: all 0.3s ease;
     cursor: pointer;
+    position: relative;
+    z-index: 1; /* 🆕 Z-index base */
 }
 
 .radio-logo-cidade:hover {
     transform: scale(1.1);
     border-color: var(--emidias-primary);
     box-shadow: 0 2px 8px rgba(6, 5, 91, 0.2);
+    z-index: 9999; /* 🔧 Z-index alto para sobrepor tudo */
 }
 
 /* Quando há muitas rádios, limitar o tamanho */
@@ -1476,35 +1480,33 @@ body {
 
 /* Tooltip container */
 .radio-tooltip {
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-bottom: 8px;
+    position: fixed; /* 🔧 MUDADO de absolute para fixed */
+    bottom: auto;
+    left: auto;
+    transform: none;
+    margin: 0;
     background: var(--emidias-dark);
     color: var(--emidias-white);
     padding: 12px 16px;
     border-radius: 12px;
     font-size: 12px;
     white-space: nowrap;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
-    z-index: 1001;
+    z-index: 10000; /* 🔧 Z-index máximo */
     pointer-events: none;
     font-family: var(--font-primary);
     min-width: 200px;
     text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Seta do tooltip */
 .radio-tooltip::after {
     content: '';
     position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
     border: 6px solid transparent;
     border-top-color: var(--emidias-dark);
 }
@@ -1513,7 +1515,6 @@ body {
 .radio-logo-cidade:hover .radio-tooltip {
     opacity: 1;
     visibility: visible;
-    transform: translateX(-50%) translateY(-4px);
 }
 
 /* Conteúdo do tooltip */
@@ -1536,6 +1537,48 @@ body {
     margin-top: 4px;
     padding-top: 4px;
     border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Garantir que a lista de cidades não corte o tooltip */
+.cidades-list {
+    overflow: visible !important; /* 🔧 IMPORTANTE */
+    position: relative;
+    z-index: 1;
+}
+
+.cidades-container {
+    overflow: visible !important; /* 🔧 IMPORTANTE */
+    position: relative;
+    z-index: 1;
+}
+
+.cidade-item {
+    position: relative;
+    z-index: 1;
+    overflow: visible !important; /* 🔧 IMPORTANTE */
+}
+
+/* Seta do tooltip com posicionamento dinâmico */
+.radio-tooltip::after {
+    content: '';
+    position: absolute;
+    left: var(--arrow-left, 50%);
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+}
+
+/* Seta quando tooltip está acima */
+.radio-tooltip[style*="--arrow-position: bottom"]::after {
+    top: 100%;
+    border-top-color: var(--emidias-dark);
+    border-bottom-color: transparent;
+}
+
+/* Seta quando tooltip está abaixo */
+.radio-tooltip[style*="--arrow-position: top"]::after {
+    bottom: 100%;
+    border-bottom-color: var(--emidias-dark);
+    border-top-color: transparent;
 }
 
 /* Ajustes para quando há muitas rádios */

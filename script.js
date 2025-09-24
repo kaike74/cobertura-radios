@@ -29,145 +29,119 @@ const RADIO_COLORS = [
 ];
 
 // =========================================================================
-// 📊 FUNÇÃO EXPORT EXCEL (.XLSX) - E-MÍDIAS (MELHORADA PARA PROPOSTA)
+// 📊 EXPORTAR PARA EXCEL (NOVA ESTRUTURA)
 // =========================================================================
 function exportToExcel() {
-    let citiesToExport = [];
+    console.log('📊 Iniciando exportação para Excel...');
     
-    if (isPropostaMode) {
-        // Modo proposta: usar apenas cidades únicas (sem nomes de rádios)
-        citiesToExport = getUniqueCitiesOnly() || [];
-    } else {
-        // Modo individual: usar radioData.cidades
-        citiesToExport = radioData.cidades || [];
-    }
-    
-    if (!citiesToExport || citiesToExport.length === 0) {
-        alert('❌ Nenhuma cidade disponível para exportar.');
+    if (!filteredCities || filteredCities.length === 0) {
+        alert('❌ Nenhuma cidade disponível para exportação.');
         return;
     }
     
     try {
-        // Preparar dados para Excel
+        // Preparar dados conforme nova estrutura
         const excelData = [];
         
         // Cabeçalho
-        if (isPropostaMode) {
-            excelData.push(['Cidade', 'UF', 'Rádios', 'Impactos', 'Universo']);
-        } else {
-            excelData.push(['Cidade', 'UF', 'Região', 'Distância (km)']);
-        }
+        excelData.push(['UF', 'Cidade', 'Rádios que abrangem a praça']);
         
-        // Dados das cidades
-        citiesToExport.forEach(cidadeOriginal => {
-            let nomeCidade = cidadeOriginal;
-            let uf = '';
-            
-            // Separar UF se houver " - UF"
-            if (cidadeOriginal.includes(' - ')) {
-                const parts = cidadeOriginal.split(' - ');
-                nomeCidade = parts[0];
-                uf = parts[1];
-            }
+        // Processar cada cidade
+        filteredCities.forEach(cidade => {
+            // Filtrar apenas rádios ativas (se for modo proposta)
+            let radiosParaExportar = cidade.radios;
             
             if (isPropostaMode) {
-                // Buscar rádios que cobrem esta cidade
-                const radiosQueCobrema = cityRadioMapping[nomeCidade] || [];
-                const radiosTexto = radiosQueCobrema.map(radio => 
-                    `${radio.name} ${radio.dial}`
-                ).join(', ');
+                radiosParaExportar = cidade.radios.filter(radio => 
+                    activeRadios[radio.originalIndex] && activeRadios[radio.originalIndex].active
+                );
+            }
+            
+            if (radiosParaExportar.length === 0) return;
+            
+            // Criar string das rádios no formato: "Rádio - Dial - Cidade de origem"
+            const radiosString = radiosParaExportar.map(radio => {
+                const nomeRadio = radio.name || 'Rádio Desconhecida';
+                const dial = radio.dial || 'N/A';
+                const cidadeOrigem = radio.praca || 'N/A';
                 
-                // Calcular impactos e universo desta cidade
-                const totalImpactos = radiosQueCobrema.reduce((sum, radio) => 
-                    sum + (radio.impactos || radio.pmm || 0), 0);
-                const maxUniverso = Math.max(...radiosQueCobrema.map(radio => 
-                    radio.universo || 0), 0);
-                
-                excelData.push([
-                    nomeCidade,
-                    uf,
-                    radiosTexto,
-                    totalImpactos.toLocaleString(),
-                    maxUniverso.toLocaleString()
-                ]);
-            } else {
-                // Modo individual (lógica original)
-                let distanciaKm = 0;
-                
-                // Extrair distância se houver parênteses
-                if (nomeCidade.includes('(') && nomeCidade.includes('km')) {
-                    const regex = /^(.*?)\s*\((\d+\.?\d*)\s*km\)$/;
-                    const match = nomeCidade.match(regex);
-                    
-                    if (match) {
-                        nomeCidade = match[1].trim();
-                        distanciaKm = parseFloat(match[2]);
-                    }
-                }
-                
-                excelData.push([
-                    nomeCidade,
-                    uf || radioData.uf,
-                    radioData.region || 'N/A',
-                    distanciaKm
-                ]);
+                return `${nomeRadio} - ${dial} - ${cidadeOrigem}`;
+            }).join(', ');
+            
+            // Adicionar linha à planilha
+            excelData.push([
+                cidade.uf,           // Coluna A: UF
+                cidade.nome,         // Coluna B: Cidade (sem quilometragem)
+                radiosString         // Coluna C: Rádios que abrangem a praça
+            ]);
+        });
+        
+        console.log('📊 Dados preparados:', excelData.length - 1, 'cidades');
+        
+        // Criar workbook
+        const ws = XLSX.utils.aoa_to_sheet(excelData);
+        const wb = XLSX.utils.book_new();
+        
+        // Configurar larguras das colunas
+        ws['!cols'] = [
+            { wch: 8 },   // Coluna A (UF): 8 caracteres
+            { wch: 25 },  // Coluna B (Cidade): 25 caracteres
+            { wch: 60 }   // Coluna C (Rádios): 60 caracteres
+        ];
+        
+        // Estilizar cabeçalho
+        const headerStyle = {
+            font: { bold: true, color: { rgb: "FFFFFF" } },
+            fill: { fgColor: { rgb: "06055B" } },
+            alignment: { horizontal: "center", vertical: "center" }
+        };
+        
+        // Aplicar estilo ao cabeçalho
+        ['A1', 'B1', 'C1'].forEach(cell => {
+            if (ws[cell]) {
+                ws[cell].s = headerStyle;
             }
         });
         
-        // Criar workbook usando SheetJS
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.aoa_to_sheet(excelData);
-        
-        // Configurar largura das colunas
-        if (isPropostaMode) {
-            ws['!cols'] = [
-                { width: 30 }, // Cidade
-                { width: 8 },  // UF
-                { width: 50 }, // Rádios
-                { width: 15 }, // Impactos
-                { width: 15 }  // Universo
-            ];
-        } else {
-            ws['!cols'] = [
-                { width: 30 }, // Cidade
-                { width: 8 },  // UF
-                { width: 15 }, // Região
-                { width: 15 }  // Distância (km)
-            ];
-        }
-        
         // Adicionar worksheet ao workbook
-        XLSX.utils.book_append_sheet(wb, ws, "Cobertura");
+        XLSX.utils.book_append_sheet(wb, ws, 'Cidades de Cobertura');
         
         // Gerar nome do arquivo
-        let fileName;
+        let fileName = 'cidades_cobertura';
+        
         if (isPropostaMode) {
-            const dateStr = new Date().toISOString().split('T')[0];
-            const activeCount = activeRadios.filter(r => r.active).length;
-            fileName = `cobertura-proposta-${activeCount}radios-${dateStr}.xlsx`;
-        } else {
-            const radioName = radioData.name ? radioData.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'radio';
-            fileName = `cobertura-${radioName}-${new Date().toISOString().split('T')[0]}.xlsx`;
+            fileName = 'proposta_cidades_cobertura';
+        } else if (radioData.name) {
+            const radioNameClean = radioData.name
+                .replace(/[^a-zA-Z0-9\s]/g, '')
+                .replace(/\s+/g, '_')
+                .toLowerCase();
+            fileName = `${radioNameClean}_cidades`;
         }
         
-        // Baixar arquivo Excel
+        fileName += `_${new Date().toISOString().split('T')[0]}.xlsx`;
+        
+        // Fazer download
         XLSX.writeFile(wb, fileName);
         
+        console.log('✅ Exportação concluída:', fileName);
+        
         // Feedback visual
-        const btn = document.querySelector('.excel-export-btn');
-        if (btn) {
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '✅ Exportado!';
-            btn.style.background = 'var(--gradient-success)';
+        const exportBtn = document.querySelector('.excel-export-btn');
+        if (exportBtn) {
+            const originalText = exportBtn.textContent;
+            exportBtn.textContent = '✅ Exportado!';
+            exportBtn.style.background = 'var(--gradient-success)';
+            
             setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.style.background = 'var(--gradient-success)';
+                exportBtn.textContent = originalText;
+                exportBtn.style.background = '';
             }, 2000);
         }
         
     } catch (error) {
-        console.error('Erro detalhado:', error);
-        alert('❌ Erro ao exportar arquivo. Tente novamente.');
+        console.error('❌ Erro na exportação:', error);
+        alert('❌ Erro ao exportar planilha. Verifique o console para mais detalhes.');
     }
 }
 
@@ -907,7 +881,14 @@ async function initializePropostaMode() {
     console.log('📊 activeRadios inicializado:', activeRadios.length);
     
     // Inicializar mapa
-    await initializeMapProposta();
+      await initializeMapProposta();
+    renderRadiosList();
+    renderCidadesProposta();
+    
+    // 🆕 INICIALIZAR TOOLTIPS
+    setTimeout(() => {
+        setupTooltipPositioning();
+    }, 500);
     
     // 🔧 DEBUG: Verificar elementos antes de renderizar
     setTimeout(() => {
@@ -1118,14 +1099,18 @@ function toggleRadioVisibility(radioIndex) {
         radioItem.classList.add('disabled');
     }
     
-    // Atualizar mapa
-    updateMapLayers();
+    // 🔧 ATUALIZAR APENAS O MAPA, NÃO RECRIAR A LISTA DE CIDADES
+    updateMapLayersOnly();
     
     // Atualizar contador
     updateRadioCount();
     
+    // 🆕 ATUALIZAR APENAS A VISIBILIDADE DAS CIDADES NA LISTA EXISTENTE
+    updateCityListVisibility();
+    
     console.log(`📻 Rádio ${radioIndex} (${radioData.radios[radioIndex].name}): ${isActive ? 'Ativada' : 'Desativada'}`);
 }
+
 
 // =========================================================================
 // 🗺️ INICIALIZAR MAPA PROPOSTA (CORRIGIDO TAMBÉM)
@@ -1651,13 +1636,24 @@ function setupCitySearchProposta() {
     console.log('�� Busca de cidades configurada (modo proposta)');
 }
 
+// =========================================================================
+// �� BUSCA DE CIDADES NO MODO PROPOSTA (CORRIGIDA)
+// =========================================================================
 function handleCitySearchProposta(event) {
     const searchTerm = event.target.value.toLowerCase().trim();
     
     if (searchTerm === '') {
-        filteredCities = [...allCities];
-    } else {
+        // Mostrar todas as cidades que têm pelo menos uma rádio ativa
         filteredCities = allCities.filter(cidade => {
+            return cidade.radios.some(radio => activeRadios[radio.originalIndex].active);
+        });
+    } else {
+        // Buscar nas cidades que têm pelo menos uma rádio ativa
+        const cidadesVisiveis = allCities.filter(cidade => {
+            return cidade.radios.some(radio => activeRadios[radio.originalIndex].active);
+        });
+        
+        filteredCities = cidadesVisiveis.filter(cidade => {
             const nomeMatch = cidade.nome.toLowerCase().includes(searchTerm);
             const ufMatch = cidade.uf.toLowerCase().includes(searchTerm);
             const radioMatch = cidade.radios.some(radio => 
@@ -1670,7 +1666,7 @@ function handleCitySearchProposta(event) {
         });
     }
     
-    updateCidadesListProposta();
+    updateCidadesListPropostaVisibility(); // 🔧 USAR FUNÇÃO CORRIGIDA
     
     // Atualizar contador
     const cidadeCountElement = document.getElementById('cidade-count');
@@ -2155,7 +2151,7 @@ function updateRadioCount() {
 
 
 // =========================================================================
-// ✅ SELECIONAR/DESMARCAR TODAS AS RÁDIOS
+// ✅ SELECIONAR/DESMARCAR TODAS AS RÁDIOS (CORRIGIDAS)
 // =========================================================================
 function selectAllRadios() {
     radioData.radios.forEach((radio, index) => {
@@ -2169,8 +2165,11 @@ function selectAllRadios() {
         }
     });
     
-    updateMapLayers();
+    // 🔧 USAR FUNÇÃO CORRIGIDA
+    updateMapLayersOnly();
     updateRadioCount();
+    updateCityListVisibility(); // 🆕 ATUALIZAR VISIBILIDADE
+    
     console.log('✅ Todas as rádios selecionadas');
 }
 
@@ -2186,8 +2185,11 @@ function deselectAllRadios() {
         }
     });
     
-    updateMapLayers();
+    // 🔧 USAR FUNÇÃO CORRIGIDA
+    updateMapLayersOnly();
     updateRadioCount();
+    updateCityListVisibility(); // �� ATUALIZAR VISIBILIDADE
+    
     console.log('❌ Todas as rádios desmarcadas');
 }
 
@@ -2761,3 +2763,204 @@ function highlightRadioMarker(radioIndex) {
         radioMarker.setIcon(originalIcon);
     }, 2000);
 }
+
+// =========================================================================
+// 🗺️ ATUALIZAR APENAS CAMADAS DO MAPA (SEM RECRIAR LISTA DE CIDADES)
+// =========================================================================
+function updateMapLayersOnly() {
+    if (!isPropostaMode) return;
+    
+    console.log('🗺️ Atualizando apenas camadas do mapa...');
+    
+    // 1. MOSTRAR/OCULTAR MARCADORES DE RÁDIO
+    radioMarkers.forEach((marker, index) => {
+        if (activeRadios[index] && activeRadios[index].active) {
+            if (!map.hasLayer(marker)) {
+                map.addLayer(marker);
+            }
+        } else {
+            if (map.hasLayer(marker)) {
+                map.removeLayer(marker);
+            }
+        }
+    });
+    
+    // 2. MOSTRAR/OCULTAR CAMADAS DE COBERTURA
+    coverageLayers.forEach((layer, index) => {
+        if (activeRadios[index] && activeRadios[index].active) {
+            if (!map.hasLayer(layer)) {
+                map.addLayer(layer);
+            }
+        } else {
+            if (map.hasLayer(layer)) {
+                map.removeLayer(layer);
+            }
+        }
+    });
+    
+    // 3. ATUALIZAR MARCADORES DE CIDADES
+    updateCityMarkersVisibility();
+    
+    // 4. REAJUSTAR ZOOM PARA RÁDIOS ATIVAS
+    setTimeout(() => {
+        fitMapToActiveCoverage();
+    }, 100);
+}
+
+// =========================================================================
+// 🏙️ ATUALIZAR VISIBILIDADE DAS CIDADES NA LISTA (SEM RECRIAR)
+// =========================================================================
+function updateCityListVisibility() {
+    if (!isPropostaMode) return;
+    
+    console.log('🏙️ Atualizando visibilidade das cidades na lista...');
+    
+    // Filtrar cidades que têm pelo menos uma rádio ativa
+    const cidadesVisiveis = allCities.filter(cidade => {
+        return cidade.radios.some(radio => activeRadios[radio.originalIndex].active);
+    });
+    
+    // Atualizar array de cidades filtradas
+    filteredCities = cidadesVisiveis;
+    
+    // Atualizar a exibição da lista
+    updateCidadesListPropostaVisibility();
+    
+    // Atualizar contador
+    const cidadeCountElement = document.getElementById('cidade-count');
+    if (cidadeCountElement) {
+        cidadeCountElement.textContent = filteredCities.length;
+    }
+    
+    console.log(`🏙️ ${filteredCities.length} cidades visíveis de ${allCities.length} total`);
+}
+
+// =========================================================================
+// 🏙️ ATUALIZAR EXIBIÇÃO DA LISTA (MANTENDO ESTRUTURA ORIGINAL)
+// =========================================================================
+function updateCidadesListPropostaVisibility() {
+    const container = document.getElementById('cidades-list');
+    
+    if (!container) {
+        console.error('❌ Container de cidades não encontrado');
+        return;
+    }
+    
+    if (filteredCities.length === 0) {
+        container.innerHTML = `
+            <div class="cidade-item" style="text-align: center; padding: 20px; color: var(--emidias-gray);">
+                ❌ Nenhuma cidade visível (todas as rádios estão desmarcadas)
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = filteredCities.map((cidade, index) => {
+        // Filtrar apenas as rádios ativas desta cidade
+        const radiosAtivas = cidade.radios.filter(radio => activeRadios[radio.originalIndex].active);
+        
+        // Gerar HTML apenas das logos das rádios ativas
+        const radiosHtml = radiosAtivas.map(radio => {
+            const colorIndex = radio.originalIndex % RADIO_COLORS.length;
+            const color = RADIO_COLORS[colorIndex];
+            const pmmFormatted = radio.pmm ? radio.pmm.toLocaleString() : '0';
+            const universoFormatted = radio.universo ? radio.universo.toLocaleString() : '0';
+            const cidadesCount = radio.cidades ? radio.cidades.length : 0;
+            
+            return `
+                <div class="radio-logo-cidade" 
+                     style="border-color: ${color};"
+                     onclick="centerMapOnRadio(${radio.originalIndex}); event.stopPropagation();"
+                     data-radio-index="${radio.originalIndex}">
+                    
+                    <img src="${radio.imageUrl}" 
+                         alt="${radio.name} - ${radio.dial}"
+                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;"
+                         onerror="this.src='https://via.placeholder.com/32x32/${color.replace('#', '')}/white?text=${encodeURIComponent(radio.dial || 'FM')}'">
+                    
+                    <!-- TOOLTIP -->
+                    <div class="radio-tooltip">
+                        <div class="tooltip-radio-name">${radio.name}</div>
+                        <div class="tooltip-radio-details">
+                            <strong>${radio.dial}</strong> • ${radio.praca} - ${radio.uf}
+                        </div>
+                        <div class="tooltip-radio-details">
+                            ${radio.region || 'Região não informada'}
+                        </div>
+                        <div class="tooltip-radio-stats">
+                            PMM: ${pmmFormatted} • Universo: ${universoFormatted}<br>
+                            Cidades: ${cidadesCount} • Clique para centralizar
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        return `
+            <div class="cidade-item" onclick="highlightCityProposta('${cidade.nomeCompleto}')" 
+                 title="Clique para localizar no mapa">
+                <div class="cidade-info">
+                    <span class="cidade-name">${cidade.nome}</span>
+                    <span class="cidade-uf">${cidade.uf}</span>
+                </div>
+                <div class="cidade-radios-logos">
+                    ${radiosHtml}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    console.log('✅ Visibilidade da lista de cidades atualizada');
+}
+
+// =========================================================================
+// 💬 POSICIONAMENTO DINÂMICO DO TOOLTIP
+// =========================================================================
+function setupTooltipPositioning() {
+    // Adicionar event listeners para posicionamento dinâmico
+    document.addEventListener('mouseover', function(event) {
+        const logoElement = event.target.closest('.radio-logo-cidade');
+        if (!logoElement) return;
+        
+        const tooltip = logoElement.querySelector('.radio-tooltip');
+        if (!tooltip) return;
+        
+        // Calcular posição do elemento
+        const rect = logoElement.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+        
+        // Posição inicial (acima do elemento)
+        let top = rect.top - tooltipRect.height - 12;
+        let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+        
+        // Verificar se tooltip sai da tela (direita)
+        if (left + tooltipRect.width > window.innerWidth - 10) {
+            left = window.innerWidth - tooltipRect.width - 10;
+        }
+        
+        // Verificar se tooltip sai da tela (esquerda)
+        if (left < 10) {
+            left = 10;
+        }
+        
+        // Verificar se tooltip sai da tela (topo)
+        if (top < 10) {
+            // Mostrar abaixo do elemento
+            top = rect.bottom + 12;
+            tooltip.style.setProperty('--arrow-position', 'top');
+        } else {
+            tooltip.style.setProperty('--arrow-position', 'bottom');
+        }
+        
+        // Aplicar posição
+        tooltip.style.top = top + 'px';
+        tooltip.style.left = left + 'px';
+        
+        // Posicionar seta
+        const arrowLeft = rect.left + (rect.width / 2) - left;
+        tooltip.style.setProperty('--arrow-left', arrowLeft + 'px');
+    });
+}
+
+// Chamar a função após carregar a página
+document.addEventListener('DOMContentLoaded', setupTooltipPositioning);
