@@ -544,27 +544,9 @@ function addRadioMarkerIndividual() {
         radioMarkers.push(radioMarker);
         console.log('✅ Marcador da rádio adicionado');
 
-        // Ao clicar, centralizar suavemente e abrir popup (com offset para o popup não ficar cortado)
+        // 🔧 CORREÇÃO: Centralização melhorada
         radioMarker.on('click', () => {
-            // calcula ponto do marcador no container e desloca para cima 120px (para abrir espaço pro popup)
-            try {
-                const containerPoint = map.latLngToContainerPoint([r.latitude, r.longitude]);
-                const targetPoint = L.point(containerPoint.x, containerPoint.y - 120);
-                const targetLatLng = map.containerPointToLatLng(targetPoint);
-
-                map.once('moveend', () => {
-                    radioMarker.openPopup();
-                });
-
-                map.flyTo(targetLatLng, Math.max(map.getZoom(), 8), {
-                    animate: true,
-                    duration: 0.8
-                });
-            } catch (e) {
-                // fallback simples se ocorrer algum problema
-                radioMarker.openPopup();
-                map.flyTo([r.latitude, r.longitude], Math.max(map.getZoom(), 8), { animate: true, duration: 0.8 });
-            }
+            centerMapOnRadio(r.latitude, r.longitude, radioMarker);
         });
 
     } catch (error) {
@@ -1081,32 +1063,15 @@ function addRadioMarkerProposta(radio) {
 
         radioMarkers.push(radioMarker);
 
-        // Centralizar suavemente e abrir popup ao clicar
+        // 🔧 CORREÇÃO: Centralização melhorada
         radioMarker.on('click', () => {
-            try {
-                const containerPoint = map.latLngToContainerPoint([radio.latitude, radio.longitude]);
-                const targetPoint = L.point(containerPoint.x, containerPoint.y - 120);
-                const targetLatLng = map.containerPointToLatLng(targetPoint);
-
-                map.once('moveend', () => {
-                    radioMarker.openPopup();
-                });
-
-                map.flyTo(targetLatLng, Math.max(map.getZoom(), 8), {
-                    animate: true,
-                    duration: 0.8
-                });
-            } catch (e) {
-                radioMarker.openPopup();
-                map.flyTo([radio.latitude, radio.longitude], Math.max(map.getZoom(), 8), { animate: true, duration: 0.8 });
-            }
+            centerMapOnRadio(radio.latitude, radio.longitude, radioMarker);
         });
 
     } catch (error) {
         console.error('❌ Erro ao adicionar marcador da rádio (proposta):', error);
     }
 }
-
 
 function addCoverageProposta(radio, index, color) {
     if (radio.coverageType === 'kml' && radio.kmlCoordinates && radio.kmlCoordinates.length > 0) {
@@ -1315,87 +1280,6 @@ function fitMapToMultipleCoverage() {
         }
     }
 }
-
-/*function renderInfoProposta() {
-    const container = document.getElementById('info-section');
-    container.className = 'info-grid proposta'; // Adicionar classe especial
-    
-    // Calcular Impactos totais (somar campo "impactos" ao invés de PMM)
-    const totalImpactos = radioData.radios.reduce((sum, radio) => {
-        return sum + (radio.impactos || radio.pmm || 0); // Fallback para PMM se impactos não existir
-    }, 0);
-    
-    // Calcular universo único por cidade
-    const universosPorCidade = {};
-    radioData.radios.forEach(radio => {
-        const cidade = radio.praca;
-        if (cidade) {
-            if (!universosPorCidade[cidade] || radio.universo > universosPorCidade[cidade]) {
-                universosPorCidade[cidade] = radio.universo || 0;
-            }
-        }
-    });
-    const universoUnicoTotal = Object.values(universosPorCidade).reduce((sum, val) => sum + val, 0);
-    
-    const totalImpactosFormatted = totalImpactos ? totalImpactos.toLocaleString() : 'N/A';
-    const universoUnicoFormatted = universoUnicoTotal ? universoUnicoTotal.toLocaleString() : 'N/A';
-    const totalCidades = radioData.stats?.totalCidades || 0;
-    
-    // Inicializar array de rádios ativas (todas marcadas por padrão)
-    activeRadios = radioData.radios.map((radio, index) => ({
-        ...radio,
-        index: index,
-        active: true
-    }));
-    
-    // Lista de rádios para o card com checkboxes
-    const radiosListHtml = radioData.radios.map((radio, index) => `
-        <div class="radio-item" id="radio-item-${index}">
-            <img src="${radio.imageUrl}" 
-                    alt="${radio.name}"
-                    onerror="this.src='https://via.placeholder.com/36x27/${RADIO_COLORS[index % RADIO_COLORS.length].replace('#', '')}/white?text=FM'">
-            <div class="radio-item-info" onclick="focusOnRadio(${index})">
-                <div class="radio-item-name">${radio.name}</div>
-                <div class="radio-item-details">${radio.dial} • ${radio.praca} - ${radio.uf}</div>
-            </div>
-            <input type="checkbox" 
-                    class="radio-item-checkbox" 
-                    id="checkbox-${index}"
-                    checked 
-                    onchange="toggleRadio(${index})">
-        </div>
-    `).join('');
-    
-    container.innerHTML = `
-        <!-- ALCANCE TOTAL -->
-        <div class="info-card">
-            <h3 class="card-title">🌐 Alcance Total</h3>
-            <div class="info-item">
-                <span class="info-label">Impactos Totais:</span>
-                <span class="info-value">${totalImpactosFormatted}</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Universo Único:</span>
-                <span class="info-value">${universoUnicoFormatted}</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Cidades Únicas:</span>
-                <span class="info-value">${totalCidades}</span>
-            </div>
-        </div>
-        
-        <!-- LISTA DE RÁDIOS -->
-        <div class="info-card" style="position: relative;">
-            <h3 class="card-title">📻 Rádios do Plano</h3>
-            <span class="radio-count-badge" id="radio-count-badge">${radioData.totalRadios}</span>
-            <div class="radios-list">
-                ${radiosListHtml}
-            </div>
-        </div>
-    `;
-    
-    container.style.display = 'grid';
-}*/
 
 function renderCidadesProposta() {
     // Usar apenas cidades únicas (filtrar nomes de rádios)
@@ -1980,4 +1864,97 @@ function showError(message, details = null) {
     }
     
     if (errorElement) errorElement.style.display = 'block';
+}
+
+function centerMapOnRadio(lat, lng, marker) {
+    try {
+        // 1. Obter dimensões do mapa
+        const mapSize = map.getSize();
+        const mapHeight = mapSize.y;
+        
+        // 2. Calcular offset baseado na altura do mapa (popup aparece acima)
+        const popupHeight = 200; // Altura estimada do popup
+        const offsetPixels = Math.min(popupHeight / 2, mapHeight * 0.2); // Máximo 20% da altura
+        
+        // 3. Converter offset de pixels para coordenadas
+        const zoom = Math.max(map.getZoom(), 9); // Zoom mínimo para boa visualização
+        const offsetLat = (offsetPixels * 360) / (256 * Math.pow(2, zoom)) / Math.cos(lat * Math.PI / 180);
+        
+        // 4. Calcular posição ajustada (mover para baixo para dar espaço ao popup)
+        const adjustedLat = lat - offsetLat;
+        
+        // 5. Verificar se a posição ajustada está dentro dos bounds do mapa
+        const mapBounds = map.getBounds();
+        const targetLat = Math.max(mapBounds.getSouth(), Math.min(mapBounds.getNorth(), adjustedLat));
+        const targetLng = Math.max(mapBounds.getWest(), Math.min(mapBounds.getEast(), lng));
+        
+        console.log('🎯 Centralizando rádio:', {
+            original: [lat, lng],
+            adjusted: [targetLat, targetLng],
+            offset: offsetLat,
+            zoom: zoom
+        });
+        
+        // 6. Animar para a posição com callback para abrir popup
+        map.once('moveend', () => {
+            // Pequeno delay para garantir que a animação terminou
+            setTimeout(() => {
+                if (marker && marker.openPopup) {
+                    marker.openPopup();
+                }
+            }, 100);
+        });
+        
+        // 7. Executar movimento suave
+        map.flyTo([targetLat, targetLng], zoom, {
+            animate: true,
+            duration: 0.8,
+            easeLinearity: 0.25
+        });
+        
+    } catch (error) {
+        console.error('❌ Erro na centralização:', error);
+        
+        // Fallback simples em caso de erro
+        try {
+            map.setView([lat, lng], Math.max(map.getZoom(), 9));
+            if (marker && marker.openPopup) {
+                setTimeout(() => marker.openPopup(), 200);
+            }
+        } catch (fallbackError) {
+            console.error('❌ Erro no fallback:', fallbackError);
+        }
+    }
+}
+
+// =========================================================================
+// �� FUNÇÃO AUXILIAR: DETECTAR DISPOSITIVO MÓVEL
+// =========================================================================
+function isMobileDevice() {
+    return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+// =========================================================================
+// �� VERSÃO OTIMIZADA PARA MOBILE (OPCIONAL)
+// =========================================================================
+function centerMapOnRadioMobile(lat, lng, marker) {
+    if (!isMobileDevice()) {
+        return centerMapOnRadio(lat, lng, marker);
+    }
+    
+    // Em mobile, usar centralização mais simples
+    const zoom = Math.max(map.getZoom(), 10);
+    
+    map.once('moveend', () => {
+        setTimeout(() => {
+            if (marker && marker.openPopup) {
+                marker.openPopup();
+            }
+        }, 150);
+    });
+    
+    map.flyTo([lat, lng], zoom, {
+        animate: true,
+        duration: 0.6
+    });
 }
