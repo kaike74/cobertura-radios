@@ -394,11 +394,12 @@ body {
 .cidades-container {
     background: var(--emidias-white);
     border-radius: 16px;
-    padding: 28px;
-    box-shadow: var(--shadow-md);
-    border-left: 4px solid var(--emidias-primary);
+    box-shadow: var(--shadow-lg);
+    margin-bottom: 24px;
+    border: 1px solid var(--emidias-light-gray);
     position: relative;
-    overflow: hidden;
+    z-index: 1;
+    overflow: hidden; /* 🔧 RESTAURAR overflow hidden no container principal */
 }
 
 .cidades-container::before {
@@ -493,27 +494,29 @@ body {
 }
 
 .cidades-list {
-    max-height: 350px;
-    overflow-y: auto;
-    border: 1px solid var(--emidias-light-gray);
-    border-radius: 12px;
-    background: var(--emidias-white);
+    max-height: 400px; /* 🔧 RESTAURAR altura máxima */
+    overflow-y: auto; /* 🔧 RESTAURAR scroll vertical */
+    overflow-x: hidden; /* 🔧 MANTER scroll horizontal oculto */
+    padding: 0;
+    position: relative;
+    z-index: 1;
 }
 
 .cidade-item {
-    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
     border-bottom: 1px solid var(--emidias-light-gray);
     transition: all 0.3s ease;
     cursor: pointer;
     position: relative;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    z-index: 1;
+    overflow: visible; /* �� MANTER visible apenas no item para tooltip */
 }
 
 .cidade-item:hover {
-    background: linear-gradient(90deg, rgba(6, 5, 91, 0.03) 0%, var(--emidias-white) 100%);
-    transform: translateX(8px);
+    background: rgba(6, 5, 91, 0.02);
     border-left: 4px solid var(--emidias-primary);
     padding-left: 16px;
 }
@@ -1391,26 +1394,34 @@ body {
     align-items: center;
     gap: 4px;
     flex-wrap: wrap;
-    position: relative; /* 🆕 Para contexto de z-index */
+    position: relative;
+    z-index: 2; /* 🔧 Z-index para ficar acima do item */
 }
 
 .radio-logo-cidade {
     width: 32px;
     height: 32px;
     border-radius: 6px;
-    object-fit: cover;
     border: 2px solid var(--emidias-light-gray);
     transition: all 0.3s ease;
     cursor: pointer;
     position: relative;
-    z-index: 1; /* 🆕 Z-index base */
+    z-index: 3;
+    overflow: hidden; /* 🔧 ADICIONAR para imagem */
+}
+
+.radio-logo-cidade img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
 }
 
 .radio-logo-cidade:hover {
     transform: scale(1.1);
     border-color: var(--emidias-primary);
     box-shadow: 0 2px 8px rgba(6, 5, 91, 0.2);
-    z-index: 9999; /* 🔧 Z-index alto para sobrepor tudo */
+    z-index: 9999; /* 🔧 Z-index alto para tooltip */
 }
 
 /* Quando há muitas rádios, limitar o tamanho */
@@ -1478,13 +1489,11 @@ body {
     z-index: 1000; /* 🆕 Para tooltip ficar acima */
 }
 
-/* Tooltip container */
 .radio-tooltip {
-    position: fixed; /* 🔧 MUDADO de absolute para fixed */
-    bottom: auto;
-    left: auto;
-    transform: none;
-    margin: 0;
+    position: absolute; /* 🔧 VOLTAR para absolute */
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
     background: var(--emidias-dark);
     color: var(--emidias-white);
     padding: 12px 16px;
@@ -1495,7 +1504,7 @@ body {
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
-    z-index: 10000; /* 🔧 Z-index máximo */
+    z-index: 10000;
     pointer-events: none;
     font-family: var(--font-primary);
     min-width: 200px;
@@ -1507,6 +1516,9 @@ body {
 .radio-tooltip::after {
     content: '';
     position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
     border: 6px solid transparent;
     border-top-color: var(--emidias-dark);
 }
@@ -1515,6 +1527,28 @@ body {
 .radio-logo-cidade:hover .radio-tooltip {
     opacity: 1;
     visibility: visible;
+    transform: translateX(-50%) translateY(-4px);
+}
+
+/* Ajuste quando tooltip sai da tela */
+.cidade-item:first-child .radio-tooltip,
+.cidade-item:nth-child(2) .radio-tooltip {
+    bottom: auto;
+    top: 100%;
+    transform: translateX(-50%) translateY(8px);
+}
+
+.cidade-item:first-child .radio-tooltip::after,
+.cidade-item:nth-child(2) .radio-tooltip::after {
+    top: auto;
+    bottom: 100%;
+    border-top-color: transparent;
+    border-bottom-color: var(--emidias-dark);
+}
+
+.cidade-item:first-child .radio-logo-cidade:hover .radio-tooltip,
+.cidade-item:nth-child(2) .radio-logo-cidade:hover .radio-tooltip {
+    transform: translateX(-50%) translateY(4px);
 }
 
 /* Conteúdo do tooltip */
@@ -1671,6 +1705,32 @@ body {
 }
 
 /* Efeito de clique */
+.radio-logo-cidade:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+}
+
+/* =============================================================================
+    ✨ ANIMAÇÃO DE DESTAQUE PARA MARCADORES
+    ============================================================================= */
+
+.marker-highlight {
+    animation: markerPulse 0.6s ease-in-out 3;
+    transform-origin: center center;
+}
+
+@keyframes markerPulse {
+    0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 0 rgba(6, 5, 91, 0.6));
+    }
+    50% {
+        transform: scale(1.2);
+        filter: drop-shadow(0 0 15px rgba(6, 5, 91, 0.8));
+    }
+}
+
+/* Efeito de clique na logo */
 .radio-logo-cidade:active {
     transform: scale(0.95);
     transition: transform 0.1s ease;

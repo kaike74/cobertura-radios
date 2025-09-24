@@ -889,7 +889,7 @@ async function initializePropostaMode() {
     setTimeout(() => {
         setupTooltipPositioning();
     }, 500);
-    
+
     // 🔧 DEBUG: Verificar elementos antes de renderizar
     setTimeout(() => {
         debugRadiosList();
@@ -2330,59 +2330,8 @@ function updateCidadesListProposta() {
     
     console.log('📋 Atualizando lista com', filteredCities.length, 'cidades únicas');
     
-    container.innerHTML = filteredCities.map((cidade, index) => {
-        // Gerar HTML das logos das rádios com tooltip e clique
-        const radiosHtml = cidade.radios.map(radio => {
-            const colorIndex = radio.originalIndex % RADIO_COLORS.length;
-            const color = RADIO_COLORS[colorIndex];
-            const pmmFormatted = radio.pmm ? radio.pmm.toLocaleString() : '0';
-            const universoFormatted = radio.universo ? radio.universo.toLocaleString() : '0';
-            const cidadesCount = radio.cidades ? radio.cidades.length : 0;
-            
-            return `
-                <div class="radio-logo-cidade" 
-                     style="border-color: ${color};"
-                     onclick="centerMapOnRadioList(${radio.originalIndex}); event.stopPropagation();"
-                     data-radio-index="${radio.originalIndex}">
-                    
-                    <img src="${radio.imageUrl}" 
-                         alt="${radio.name} - ${radio.dial}"
-                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;"
-                         onerror="this.src='https://via.placeholder.com/32x32/${color.replace('#', '')}/white?text=${encodeURIComponent(radio.dial || 'FM')}'">
-                    
-                    <!-- TOOLTIP -->
-                    <div class="radio-tooltip">
-                        <div class="tooltip-radio-name">${radio.name}</div>
-                        <div class="tooltip-radio-details">
-                            <strong>${radio.dial}</strong> • ${radio.praca} - ${radio.uf}
-                        </div>
-                        <div class="tooltip-radio-details">
-                            ${radio.region || 'Região não informada'}
-                        </div>
-                        <div class="tooltip-radio-stats">
-                            PMM: ${pmmFormatted} • Universo: ${universoFormatted}<br>
-                            Cidades: ${cidadesCount} • Clique para centralizar
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-        
-        return `
-            <div class="cidade-item" onclick="highlightCityProposta('${cidade.nomeCompleto}')" 
-                 title="Clique para localizar no mapa">
-                <div class="cidade-info">
-                    <span class="cidade-name">${cidade.nome}</span>
-                    <span class="cidade-uf">${cidade.uf}</span>
-                </div>
-                <div class="cidade-radios-logos">
-                    ${radiosHtml}
-                </div>
-            </div>
-        `;
-    }).join('');
-    
-    console.log('✅ Lista de cidades atualizada (modo proposta) com tooltips');
+    // Usar a função corrigida
+    updateCidadesListPropostaVisibility();
 }
 
 function setupCitySearch() {
@@ -2697,11 +2646,11 @@ function centerMapOnRadioList(radioIndex) {
     }
     
     const radio = radioData.radios[radioIndex];
-    const lat = radio.latitude;
-    const lng = radio.longitude;
+    const lat = parseFloat(radio.latitude);
+    const lng = parseFloat(radio.longitude);
     
-    if (!lat || !lng) {
-        console.error('❌ Coordenadas da rádio não encontradas');
+    if (isNaN(lat) || isNaN(lng)) {
+        console.error('❌ Coordenadas da rádio inválidas:', lat, lng);
         return;
     }
     
@@ -2713,21 +2662,15 @@ function centerMapOnRadioList(radioIndex) {
     
     // Destacar o marcador da rádio
     const radioMarker = radioMarkers[radioIndex];
-    if (radioMarker) {
+    if (radioMarker && map.hasLayer(radioMarker)) {
         // Abrir popup do marcador
         setTimeout(() => {
             radioMarker.openPopup();
         }, 1000);
         
-        // Efeito de "bounce" no marcador
+        // Efeito visual no marcador
         setTimeout(() => {
-            const markerElement = radioMarker.getElement();
-            if (markerElement) {
-                markerElement.style.animation = 'markerBounce 0.6s ease-in-out';
-                setTimeout(() => {
-                    markerElement.style.animation = '';
-                }, 600);
-            }
+            highlightRadioMarker(radioIndex);
         }, 1500);
     }
     
@@ -2739,30 +2682,21 @@ function centerMapOnRadioList(radioIndex) {
 // =========================================================================
 function highlightRadioMarker(radioIndex) {
     const radioMarker = radioMarkers[radioIndex];
-    if (!radioMarker) return;
+    if (!radioMarker || !map.hasLayer(radioMarker)) return;
     
-    // Criar efeito de destaque temporário
-    const originalIcon = radioMarker.options.icon;
-    
-    // Criar ícone destacado (maior e com brilho)
-    const highlightIcon = L.divIcon({
-        html: originalIcon.options.html.replace(
-            'transform: scale(1)',
-            'transform: scale(1.3); box-shadow: 0 0 20px rgba(6, 5, 91, 0.6);'
-        ),
-        className: originalIcon.options.className,
-        iconSize: originalIcon.options.iconSize,
-        iconAnchor: originalIcon.options.iconAnchor
-    });
-    
-    // Aplicar ícone destacado
-    radioMarker.setIcon(highlightIcon);
-    
-    // Voltar ao normal após 2 segundos
-    setTimeout(() => {
-        radioMarker.setIcon(originalIcon);
-    }, 2000);
+    // Obter elemento DOM do marcador
+    const markerElement = radioMarker.getElement();
+    if (markerElement) {
+        // Adicionar classe de destaque
+        markerElement.classList.add('marker-highlight');
+        
+        // Remover destaque após 2 segundos
+        setTimeout(() => {
+            markerElement.classList.remove('marker-highlight');
+        }, 2000);
+    }
 }
+
 
 // =========================================================================
 // 🗺️ ATUALIZAR APENAS CAMADAS DO MAPA (SEM RECRIAR LISTA DE CIDADES)
@@ -2870,12 +2804,10 @@ function updateCidadesListPropostaVisibility() {
             return `
                 <div class="radio-logo-cidade" 
                      style="border-color: ${color};"
-                     onclick="centerMapOnRadio(${radio.originalIndex}); event.stopPropagation();"
                      data-radio-index="${radio.originalIndex}">
                     
                     <img src="${radio.imageUrl}" 
                          alt="${radio.name} - ${radio.dial}"
-                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;"
                          onerror="this.src='https://via.placeholder.com/32x32/${color.replace('#', '')}/white?text=${encodeURIComponent(radio.dial || 'FM')}'">
                     
                     <!-- TOOLTIP -->
@@ -2897,8 +2829,7 @@ function updateCidadesListPropostaVisibility() {
         }).join('');
         
         return `
-            <div class="cidade-item" onclick="highlightCityProposta('${cidade.nomeCompleto}')" 
-                 title="Clique para localizar no mapa">
+            <div class="cidade-item" data-cidade="${cidade.nomeCompleto}">
                 <div class="cidade-info">
                     <span class="cidade-name">${cidade.nome}</span>
                     <span class="cidade-uf">${cidade.uf}</span>
@@ -2910,7 +2841,38 @@ function updateCidadesListPropostaVisibility() {
         `;
     }).join('');
     
-    console.log('✅ Visibilidade da lista de cidades atualizada');
+    // 🔧 ADICIONAR EVENT LISTENERS APÓS CRIAR O HTML
+    setupCityItemEvents();
+    
+    console.log('✅ Visibilidade da lista de cidades atualizada com eventos');
+}
+
+function setupCityItemEvents() {
+    // Event listeners para clique nas cidades
+    document.querySelectorAll('.cidade-item').forEach(item => {
+        const cidadeNome = item.dataset.cidade;
+        if (cidadeNome) {
+            item.addEventListener('click', function(event) {
+                // Verificar se o clique foi na logo da rádio
+                if (!event.target.closest('.radio-logo-cidade')) {
+                    highlightCityProposta(cidadeNome);
+                }
+            });
+        }
+    });
+    
+    // Event listeners para clique nas logos das rádios
+    document.querySelectorAll('.radio-logo-cidade').forEach(logo => {
+        const radioIndex = parseInt(logo.dataset.radioIndex);
+        if (!isNaN(radioIndex)) {
+            logo.addEventListener('click', function(event) {
+                event.stopPropagation(); // Impedir propagação para o item da cidade
+                centerMapOnRadioList(radioIndex);
+            });
+        }
+    });
+    
+    console.log('🎯 Event listeners configurados para cidades e rádios');
 }
 
 // =========================================================================
