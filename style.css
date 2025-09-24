@@ -968,15 +968,15 @@ body {
     animation-delay: 0.3s;
 }
 
-/* CABEÇALHO SUPERIOR COM LOGO */
+/* CABEÇALHO SUPERIOR COM LOGO - CORRIGIDO */
 .top-header {
-    background: var(--emidias-primary);
+    background: var(--emidias-primary); /* 🔵 Garantir que seja azul */
     padding: 12px 20px;
     text-align: center;
     box-shadow: 0 2px 8px rgba(6, 5, 91, 0.2);
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 1050; /* ⬆️ AUMENTADO para ficar acima do mapa */
     border-bottom: 2px solid var(--emidias-magenta);
 }
 
@@ -997,28 +997,91 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
-    margin-top: 0; /* Remove margem superior já que temos o cabeçalho fixo */
+    margin-top: 0;
+    position: relative; /* 🔧 ADICIONAR para contexto de z-index */
+    z-index: 1; /* 🔧 ADICIONAR z-index baixo */
 }
 
-/* RESPONSIVIDADE DO CABEÇALHO */
+/* CORRIGIR Z-INDEX DO MAPA */
+.map-container {
+    background: var(--emidias-white);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    margin-bottom: 24px;
+    transition: all 0.3s ease;
+    border: 1px solid var(--emidias-light-gray);
+    position: relative; /* 🔧 ADICIONAR */
+    z-index: 10; /* �� ADICIONAR z-index baixo para não sobrepor cabeçalho */
+}
+
+#map {
+    height: 550px;
+    width: 100%;
+    min-height: 550px;
+    transition: filter 0.3s ease;
+    position: relative; /* 🔧 ADICIONAR */
+    z-index: 10; /* �� ADICIONAR z-index baixo */
+}
+
+/* CORRIGIR Z-INDEX DOS CONTROLES DO LEAFLET */
+.leaflet-control-container {
+    z-index: 500 !important; /* 🔧 GARANTIR que controles fiquem abaixo do cabeçalho */
+}
+
+.leaflet-popup-pane {
+    z-index: 600 !important; /* 🔧 POPUPS abaixo do cabeçalho */
+}
+
+.leaflet-marker-pane {
+    z-index: 400 !important; /* 🔧 MARCADORES abaixo do cabeçalho */
+}
+
+/* GARANTIR QUE A MARCA D'ÁGUA FIQUE ABAIXO DO CABEÇALHO */
+.brand-watermark {
+    position: fixed;
+    top: 80px; /* 🔧 AJUSTAR para ficar abaixo do cabeçalho */
+    right: 20px;
+    height: 120px;
+    width: auto;
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 999; /* �� ABAIXO do cabeçalho mas acima do conteúdo */
+    transition: opacity 0.3s ease;
+}
+
+/* RESPONSIVIDADE DO CABEÇALHO - CORRIGIDA */
 @media (max-width: 768px) {
     .top-header {
         padding: 8px 16px;
+        z-index: 1050; /* �� MANTER z-index alto */
     }
     
     .top-logo {
         max-height: 32px;
         max-width: 160px;
     }
+    
+    .brand-watermark {
+        top: 60px; /* 🔧 AJUSTAR para mobile */
+        height: 80px;
+        right: 10px;
+    }
 }
 
 @media (max-width: 480px) {
     .top-header {
         padding: 6px 12px;
+        z-index: 1050; /* 🔧 MANTER z-index alto */
     }
     
     .top-logo {
         max-height: 28px;
         max-width: 140px;
+    }
+    
+    .brand-watermark {
+        top: 50px; /* 🔧 AJUSTAR para mobile pequeno */
+        height: 60px;
     }
 }

@@ -1052,7 +1052,6 @@ function addRadioMarkerProposta(radio) {
                     <div style="margin-top:6px;"><strong>PMM:</strong> ${pmmFormatted}</div>
                     <div><strong>Universo:</strong> ${universoFormatted}</div>
                     <div><strong>Cidades:</strong> ${cidadesCount}</div>
-                    <div><strong>Raio:</strong> ${coverageKm} km</div>
                 </div>
             </div>
         `;
