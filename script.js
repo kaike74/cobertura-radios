@@ -2926,3 +2926,4 @@ function setupTooltipPositioning() {
 
 // Chamar a função após carregar a página
 document.addEventListener('DOMContentLoaded', setupTooltipPositioning);
+

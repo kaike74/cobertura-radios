@@ -391,6 +391,7 @@ body {
 /* =============================================================================
     🌍 SEÇÃO CIDADES E-MÍDIAS
     ============================================================================= */
+
 .cidades-container {
     background: var(--emidias-white);
     border-radius: 16px;
@@ -399,35 +400,53 @@ body {
     border: 1px solid var(--emidias-light-gray);
     position: relative;
     z-index: 1;
-    overflow: hidden; /* 🔧 RESTAURAR overflow hidden no container principal */
+    /* 🔧 CONTENÇÃO CRÍTICA */
+    overflow: hidden;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    /* 🔧 ISOLAR CONTEXTO DE FORMATAÇÃO */
+    contain: layout style paint;
 }
 
+/* 🔧 LINHA DECORATIVA SUPERIOR - CORRIGIDA */
 .cidades-container::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 2px;
+    height: 5px;
     background: var(--gradient-primary);
+    border-radius: 16px 16px 0 0;
+    z-index: 3;
 }
 
 .cidades-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 16px;
+    padding: 20px;
+    border-bottom: 2px solid var(--emidias-light-gray);
+    background: linear-gradient(135deg, rgba(6, 5, 91, 0.02) 0%, var(--emidias-white) 100%);
+    border-radius: 16px 16px 0 0;
+    position: relative;
+    z-index: 2;
+    /* 🔧 CONTENÇÃO DO HEADER */
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .cidades-title {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: var(--font-weight-bold);
     color: var(--emidias-primary);
+    margin: 0;
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: space-between;
+    gap: 12px;
+    /* 🔧 TRUNCAMENTO DO TÍTULO */
+    min-width: 0;
+    flex-wrap: wrap;
 }
 
 .cidade-count {
@@ -471,7 +490,14 @@ body {
 }
 
 .search-box {
-    margin-bottom: 20px;
+    padding: 0 20px 20px 20px;
+    background: var(--emidias-white);
+    position: relative;
+    z-index: 2;
+    /* 🔧 CONTENÇÃO DA BUSCA */
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .search-input {
@@ -484,6 +510,10 @@ body {
     font-weight: var(--font-weight-normal);
     transition: all 0.3s ease;
     background: var(--emidias-white);
+    /* 🔧 CONTENÇÃO DO INPUT */
+    box-sizing: border-box;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .search-input:focus {
@@ -493,53 +523,148 @@ body {
     background: rgba(6, 5, 91, 0.01);
 }
 
+/* 🔧 LISTA DE CIDADES - SCROLLBAR CORRIGIDA */
 .cidades-list {
-    max-height: 400px; /* 🔧 RESTAURAR altura máxima */
-    overflow-y: auto; /* 🔧 RESTAURAR scroll vertical */
-    overflow-x: hidden; /* 🔧 MANTER scroll horizontal oculto */
+    max-height: 400px;
+    /* 🔧 SCROLLBAR SEMPRE VISÍVEL E FUNCIONAL */
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
     padding: 0;
+    margin: 0;
     position: relative;
     z-index: 1;
+    background: var(--emidias-white);
+    border-radius: 0 0 16px 16px;
+    width: 100%;
+    box-sizing: border-box;
+    /* 🔧 REMOVER CONTENÇÃO QUE BLOQUEIA SCROLLBAR */
+    /* contain: layout style; - REMOVIDO */
 }
 
+/* 🎨 SCROLLBAR CUSTOMIZADA E-MÍDIAS - FORÇADA */
+.cidades-list::-webkit-scrollbar {
+    width: 14px !important; /* Aumentado para garantir visibilidade */
+    background: var(--emidias-light-gray) !important;
+    border-radius: 0 16px 16px 0 !important;
+}
+
+.cidades-list::-webkit-scrollbar-track {
+    background: var(--emidias-light-gray) !important;
+    border-radius: 0 16px 16px 0 !important;
+    margin: 0 !important;
+}
+
+.cidades-list::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--emidias-primary) 0%, var(--emidias-roxo) 100%) !important;
+    border-radius: 7px !important;
+    border: 2px solid var(--emidias-light-gray) !important;
+    min-height: 40px !important;
+}
+
+.cidades-list::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--emidias-magenta) 0%, var(--emidias-rosa) 100%) !important;
+    border-color: var(--emidias-white) !important;
+}
+
+.cidades-list::-webkit-scrollbar-thumb:active {
+    background: var(--gradient-accent) !important;
+}
+
+/* 🔧 FALLBACK PARA FIREFOX */
+.cidades-list {
+    scrollbar-width: auto !important; /* Mudança: de thin para auto */
+    scrollbar-color: var(--emidias-primary) var(--emidias-light-gray) !important;
+}
+
+/* 🆕 INDICADOR VISUAL DE SCROLL */
+.cidades-list::before {
+    content: '';
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, 
+        var(--emidias-primary) 0%, 
+        var(--emidias-magenta) 50%, 
+        var(--emidias-primary) 100%);
+    z-index: 10;
+    opacity: 0.8;
+}
+
+/* 🔧 ITEM DE CIDADE - AJUSTADO PARA SCROLLBAR */
 .cidade-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 20px;
+    padding: 12px 20px; /* 🔧 PADDING NORMAL */
     border-bottom: 1px solid var(--emidias-light-gray);
     transition: all 0.3s ease;
     cursor: pointer;
     position: relative;
     z-index: 1;
-    overflow: visible; /* �� MANTER visible apenas no item para tooltip */
+    background: var(--emidias-white);
+    width: 100%; /* 🔧 LARGURA TOTAL */
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    /* 🔧 PERMITIR OVERFLOW PARA TOOLTIPS */
+    overflow: visible;
+    /* 🔧 REMOVER CONTENÇÃO PROBLEMÁTICA */
+    /* contain: layout style; - REMOVIDO */
 }
 
 .cidade-item:hover {
     background: rgba(6, 5, 91, 0.02);
     border-left: 4px solid var(--emidias-primary);
     padding-left: 16px;
+    overflow: hidden;
+    /* 🆕 EFEITO VISUAL NO HOVER */
+    box-shadow: 2px 0 8px rgba(6, 5, 91, 0.1);
 }
 
 .cidade-item:last-child {
     border-bottom: none;
+    border-radius: 0 0 16px 16px;
 }
 
+/* 🔧 INFORMAÇÕES DA CIDADE - CONTENÇÃO CRÍTICA */
 .cidade-info {
     flex: 1;
+    /* 🔧 PERMITIR ENCOLHIMENTO E FORÇAR CONTENÇÃO */
+    min-width: 0;
+    margin-right: 12px;
+    overflow: hidden;
+    max-width: calc(100% - 220px); /* 🔧 RESERVAR ESPAÇO PARA LOGOS */
+    box-sizing: border-box;
 }
 
 .cidade-name {
-    font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-semibold);
+    font-size: 14px;
     color: var(--emidias-dark);
-    font-size: 15px;
+    display: block;
+    margin-bottom: 2px;
+    /* 🔧 TRUNCAMENTO FORÇADO */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .cidade-uf {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--emidias-gray);
-    margin-left: 8px;
-    font-weight: var(--font-weight-normal);
+    font-weight: var(--font-weight-medium);
+    display: block;
+    /* 🔧 TRUNCAMENTO FORÇADO */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .cidade-radios {
@@ -1393,21 +1518,42 @@ body {
     display: flex;
     align-items: center;
     gap: 4px;
-    flex-wrap: wrap;
+    /* 🔧 NUNCA QUEBRAR LINHA OU ENCOLHER */
+    flex-wrap: nowrap;
+    flex-shrink: 0;
     position: relative;
-    z-index: 2; /* 🔧 Z-index para ficar acima do item */
+    z-index: 2;
+    /* 🔧 CONTENÇÃO ABSOLUTA */
+    max-width: 200px;
+    width: auto;
+    overflow: hidden;
+    box-sizing: border-box;
+    contain: layout style;
 }
 
 .radio-logo-cidade {
+    /* 🔧 DIMENSÕES ABSOLUTAMENTE FIXAS */
     width: 32px;
     height: 32px;
+    min-width: 32px;
+    max-width: 32px;
+    min-height: 32px;
+    max-height: 32px;
+    
     border-radius: 6px;
     border: 2px solid var(--emidias-light-gray);
     transition: all 0.3s ease;
     cursor: pointer;
     position: relative;
     z-index: 3;
-    overflow: hidden; /* 🔧 ADICIONAR para imagem */
+    overflow: hidden;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    
+    /* 🔧 GARANTIR QUE A IMAGEM NUNCA ULTRAPASSE */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .radio-logo-cidade img {
@@ -1415,24 +1561,45 @@ body {
     height: 100%;
     object-fit: cover;
     border-radius: 4px;
+    /* 🔧 GARANTIR CONTENÇÃO DA IMAGEM */
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
 }
 
 .radio-logo-cidade:hover {
     transform: scale(1.1);
     border-color: var(--emidias-primary);
     box-shadow: 0 2px 8px rgba(6, 5, 91, 0.2);
-    z-index: 9999; /* 🔧 Z-index alto para tooltip */
+    z-index: 1000;
 }
 
-/* Quando há muitas rádios, limitar o tamanho */
+/* 🔧 AJUSTES RESPONSIVOS PARA LOGOS */
 .cidade-radios-logos:has(.radio-logo-cidade:nth-child(4)) .radio-logo-cidade {
     width: 28px;
     height: 28px;
+    min-width: 28px;
+    max-width: 28px;
+    min-height: 28px;
+    max-height: 28px;
 }
 
 .cidade-radios-logos:has(.radio-logo-cidade:nth-child(6)) .radio-logo-cidade {
     width: 24px;
     height: 24px;
+    min-width: 24px;
+    max-width: 24px;
+    min-height: 24px;
+    max-height: 24px;
+}
+
+.cidade-radios-logos:has(.radio-logo-cidade:nth-child(8)) .radio-logo-cidade {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    max-width: 20px;
+    min-height: 20px;
+    max-height: 20px;
 }
 
 /* =============================================================================
@@ -1490,7 +1657,7 @@ body {
 }
 
 .radio-tooltip {
-    position: absolute; /* 🔧 VOLTAR para absolute */
+    position: absolute;
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%) translateY(-8px);
@@ -1510,9 +1677,12 @@ body {
     min-width: 200px;
     text-align: center;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    /* 🔧 GARANTIR QUE TOOLTIP NÃO CAUSE OVERFLOW */
+    max-width: 300px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
-/* Seta do tooltip */
 .radio-tooltip::after {
     content: '';
     position: absolute;
@@ -1523,12 +1693,12 @@ body {
     border-top-color: var(--emidias-dark);
 }
 
-/* Mostrar tooltip no hover */
 .radio-logo-cidade:hover .radio-tooltip {
     opacity: 1;
     visibility: visible;
     transform: translateX(-50%) translateY(-4px);
 }
+
 
 /* Ajuste quando tooltip sai da tela */
 .cidade-item:first-child .radio-tooltip,
@@ -1575,13 +1745,11 @@ body {
 
 /* Garantir que a lista de cidades não corte o tooltip */
 .cidades-list {
-    overflow: visible !important; /* 🔧 IMPORTANTE */
     position: relative;
     z-index: 1;
 }
 
 .cidades-container {
-    overflow: visible !important; /* 🔧 IMPORTANTE */
     position: relative;
     z-index: 1;
 }
@@ -1589,7 +1757,6 @@ body {
 .cidade-item {
     position: relative;
     z-index: 1;
-    overflow: visible !important; /* 🔧 IMPORTANTE */
 }
 
 /* Seta do tooltip com posicionamento dinâmico */
@@ -1627,53 +1794,65 @@ body {
 }
 
 /* =============================================================================
-    📱 RESPONSIVIDADE PARA TOOLTIP
+    📱 RESPONSIVIDADE
     ============================================================================= */
 
+/* 🔧 RESPONSIVIDADE - CONTENÇÃO MANTIDA */
 @media (max-width: 768px) {
-    .radio-tooltip {
-        min-width: 180px;
-        font-size: 11px;
-        padding: 10px 12px;
+    .cidade-item {
+        padding: 10px 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        /* 🔧 MANTER CONTENÇÃO EM MOBILE */
+        overflow: hidden;
     }
     
-    .tooltip-radio-name {
-        font-size: 13px;
+    .cidade-info {
+        margin-right: 0;
+        margin-bottom: 4px;
+        max-width: 100%;
+        width: 100%;
     }
     
-    .tooltip-radio-details {
-        font-size: 10px;
+    .cidade-radios-logos {
+        max-width: 100%;
+        justify-content: flex-start;
+        width: 100%;
     }
     
-    .tooltip-radio-stats {
-        font-size: 9px;
+    .radio-logo-cidade {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        max-width: 28px;
+        min-height: 28px;
+        max-height: 28px;
     }
 }
 
 @media (max-width: 480px) {
+    .cidades-list {
+        max-height: 300px;
+    }
+    
+    .cidade-item {
+        padding: 8px 12px;
+    }
+    
+    .radio-logo-cidade {
+        width: 24px;
+        height: 24px;
+        min-width: 24px;
+        max-width: 24px;
+        min-height: 24px;
+        max-height: 24px;
+    }
+    
     .radio-tooltip {
-        min-width: 160px;
-        font-size: 10px;
-        padding: 8px 10px;
-    }
-    
-    .tooltip-radio-name {
-        font-size: 12px;
-    }
-    
-    /* Em mobile, posicionar tooltip acima se não couber */
-    .radio-tooltip {
-        bottom: auto;
-        top: 100%;
-        margin-bottom: 0;
-        margin-top: 8px;
-    }
-    
-    .radio-tooltip::after {
-        top: auto;
-        bottom: 100%;
-        border-top-color: transparent;
-        border-bottom-color: var(--emidias-dark);
+        min-width: 180px;
+        font-size: 11px;
+        max-width: 250px;
     }
 }
 
@@ -1734,4 +1913,26 @@ body {
 .radio-logo-cidade:active {
     transform: scale(0.95);
     transition: transform 0.1s ease;
+}
+
+/* =============================================================================
+    �� GARANTIAS DE CONTENÇÃO
+    ============================================================================= */
+
+/* �� GARANTIAS FINAIS DE CONTENÇÃO */
+.cidades-container * {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+.cidades-list * {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* 🔧 FORÇAR CONTEXTO DE CONTENÇÃO */
+.cidade-item,
+.cidade-info,
+.cidade-radios-logos {
+    contain: layout style;
 }
