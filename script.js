@@ -1676,10 +1676,10 @@ function handleCitySearchProposta(event) {
 }
 
 // =========================================================================
-// 🎯 DESTACAR CIDADE NO MAPA (MODO PROPOSTA)
+// �� DESTACAR CIDADE NO MODO PROPOSTA (CORRIGIDA)
 // =========================================================================
 function highlightCityProposta(cidadeNomeCompleto) {
-    console.log('🎯 Destacando cidade no mapa:', cidadeNomeCompleto);
+    console.log('�� Destacando cidade no mapa (proposta):', cidadeNomeCompleto);
     
     // Encontrar a cidade nos dados
     const cidade = allCities.find(c => c.nomeCompleto === cidadeNomeCompleto);
@@ -1689,18 +1689,30 @@ function highlightCityProposta(cidadeNomeCompleto) {
         return;
     }
     
-    // Buscar coordenadas da cidade nos dados das rádios
+    // Buscar coordenadas da cidade nos dados das rádios ATIVAS
     let cityCoordinates = null;
+    let radioEncontrada = null;
     
     for (const radio of cidade.radios) {
+        // 🔧 VERIFICAR SE A RÁDIO ESTÁ ATIVA
+        if (!activeRadios[radio.originalIndex] || !activeRadios[radio.originalIndex].active) {
+            continue;
+        }
+        
         if (radio.kmlPlacemarks && radio.kmlPlacemarks.length > 0) {
             const placemark = radio.kmlPlacemarks.find(p => {
                 const placemarkName = p.name.replace(/\s*\([^)]*\)\s*/g, '').trim();
-                return placemarkName.toLowerCase().includes(cidade.nome.toLowerCase());
+                const cityBaseName = cidade.nome.toLowerCase();
+                const placemarkBaseName = placemarkName.toLowerCase();
+                
+                return placemarkBaseName.includes(cityBaseName) || 
+                       cityBaseName.includes(placemarkBaseName) ||
+                       placemarkName.toLowerCase() === cidadeNomeCompleto.toLowerCase();
             });
             
             if (placemark && placemark.coordinates) {
                 cityCoordinates = placemark.coordinates;
+                radioEncontrada = radio;
                 break;
             }
         }
@@ -1709,42 +1721,76 @@ function highlightCityProposta(cidadeNomeCompleto) {
     if (cityCoordinates) {
         const [lat, lng] = cityCoordinates;
         
-        // Centralizar mapa na cidade
+        console.log('✅ Coordenadas encontradas:', lat, lng);
+        
+        // Centralizar mapa na cidade com animação suave
         map.flyTo([lat, lng], 12, {
             animate: true,
-            duration: 1
+            duration: 1.5
         });
         
-        // Criar popup temporário
-        const popup = L.popup()
-            .setLatLng([lat, lng])
-            .setContent(`
-                <div style="text-align: center; min-width: 200px; font-family: var(--font-primary);">
-                    <h4 style="margin: 0 0 8px 0; color: var(--emidias-primary);">${cidade.nome} - ${cidade.uf}</h4>
-                    <p style="margin: 4px 0; font-size: 12px; color: var(--emidias-gray);">
-                        Coberta por ${cidade.radios.length} rádio${cidade.radios.length > 1 ? 's' : ''}:
-                    </p>
-                    <div style="display: flex; justify-content: center; gap: 4px; margin-top: 8px;">
-                        ${cidade.radios.map(radio => `
-                            <img src="${radio.imageUrl}" 
-                                 alt="${radio.name}"
-                                 title="${radio.name} - ${radio.dial}"
-                                 style="width: 24px; height: 24px; border-radius: 4px; border: 1px solid var(--emidias-light-gray);"
-                                 onerror="this.src='https://via.placeholder.com/24x24/06055B/white?text=${encodeURIComponent(radio.dial || 'FM')}'">
-                        `).join('')}
-                    </div>
-                </div>
-            `)
-            .openOn(map);
-        
-        // Remover popup após 3 segundos
+        // Criar popup temporário melhorado
         setTimeout(() => {
-            map.closePopup(popup);
-        }, 3000);
+            const radiosAtivasCount = cidade.radios.filter(r => 
+                activeRadios[r.originalIndex] && activeRadios[r.originalIndex].active
+            ).length;
+            
+            const popup = L.popup()
+                .setLatLng([lat, lng])
+                .setContent(`
+                    <div style="text-align: center; min-width: 220px; font-family: var(--font-primary);">
+                        <h4 style="margin: 0 0 12px 0; color: var(--emidias-primary); font-size: 16px;">
+                            📍 ${cidade.nome} - ${cidade.uf}
+                        </h4>
+                        <p style="margin: 6px 0; font-size: 13px; color: var(--emidias-gray);">
+                            Coberta por <strong>${radiosAtivasCount}</strong> rádio${radiosAtivasCount > 1 ? 's' : ''} ativa${radiosAtivasCount > 1 ? 's' : ''}
+                        </p>
+                        <div style="display: flex; justify-content: center; gap: 6px; margin: 12px 0; flex-wrap: wrap;">
+                            ${cidade.radios
+                                .filter(r => activeRadios[r.originalIndex] && activeRadios[r.originalIndex].active)
+                                .map(radio => {
+                                    const colorIndex = radio.originalIndex % RADIO_COLORS.length;
+                                    const color = RADIO_COLORS[colorIndex];
+                                    return `
+                                        <img src="${radio.imageUrl}" 
+                                             alt="${radio.name} - ${radio.dial}"
+                                             title="${radio.name} - ${radio.dial}"
+                                             style="width: 32px; height: 32px; border-radius: 6px; border: 2px solid ${color}; cursor: pointer;"
+                                             onclick="centerMapOnRadioList(${radio.originalIndex})"
+                                             onerror="this.src='https://via.placeholder.com/32x32/${color.replace('#', '')}/white?text=${encodeURIComponent(radio.dial || 'FM')}'">
+                                    `;
+                                }).join('')}
+                        </div>
+                        <p style="margin: 8px 0 0 0; font-size: 11px; color: var(--emidias-gray);">
+                            💡 Clique nas logos para centralizar nas rádios
+                        </p>
+                    </div>
+                `)
+                .openOn(map);
+            
+            // Remover popup após 5 segundos
+            setTimeout(() => {
+                map.closePopup(popup);
+            }, 5000);
+            
+        }, 1000);
         
-        console.log('✅ Cidade destacada no mapa');
+        console.log('✅ Cidade destacada no mapa (proposta)');
     } else {
         console.warn('⚠️ Coordenadas da cidade não encontradas');
+        
+        // Fallback: centralizar na primeira rádio ativa da cidade
+        const primeiraRadioAtiva = cidade.radios.find(r => 
+            activeRadios[r.originalIndex] && activeRadios[r.originalIndex].active
+        );
+        
+        if (primeiraRadioAtiva) {
+            map.flyTo([primeiraRadioAtiva.latitude, primeiraRadioAtiva.longitude], 10, {
+                animate: true,
+                duration: 1.5
+            });
+            console.log('📍 Centralizado na rádio:', primeiraRadioAtiva.name);
+        }
     }
 }
 
@@ -2350,70 +2396,75 @@ function setupCitySearch() {
     }
 }
 
+// =========================================================================
+// 🎯 DESTACAR CIDADE NO MAPA (UNIFICADO PARA AMBOS OS MODOS)
+// =========================================================================
 function highlightCity(cityName) {
+    console.log('🎯 Destacando cidade:', cityName, 'Modo:', isPropostaMode ? 'Proposta' : 'Individual');
+    
+    if (isPropostaMode) {
+        highlightCityProposta(cityName);
+    } else {
+        highlightCityIndividual(cityName);
+    }
+}
+
+// =========================================================================
+// 🎯 DESTACAR CIDADE NO MODO INDIVIDUAL (FUNÇÃO ORIGINAL RENOMEADA)
+// =========================================================================
+function highlightCityIndividual(cityName) {
     const cityBaseName = cityName.split(' - ')[0].toLowerCase();
     
-    // Modo individual: usar lógica original
-    if (!isPropostaMode) {
-        if (window.cityPlacemarkMap && window.cityPlacemarkMap[cityBaseName]) {
-            const cityData = window.cityPlacemarkMap[cityBaseName];
-            const [lat, lng] = cityData.coordinates;
-            
-            map.setView([lat, lng], 11);
-            
-            if (cityMarkers[cityData.markerIndex]) {
+    // Usar lógica original do modo individual
+    if (window.cityPlacemarkMap && window.cityPlacemarkMap[cityBaseName]) {
+        const cityData = window.cityPlacemarkMap[cityBaseName];
+        const [lat, lng] = cityData.coordinates;
+        
+        map.flyTo([lat, lng], 11, {
+            animate: true,
+            duration: 1.5
+        });
+        
+        if (cityMarkers[cityData.markerIndex]) {
+            setTimeout(() => {
                 cityMarkers[cityData.markerIndex].openPopup();
-                return;
-            }
+            }, 1000);
         }
-        
-        if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
-            for (let i = 0; i < radioData.kmlPlacemarks.length; i++) {
-                const placemark = radioData.kmlPlacemarks[i];
-                const placemarkName = placemark.name.toLowerCase();
-                
-                if (placemarkName.includes(cityBaseName) || cityBaseName.includes(placemarkName)) {
-                    const mappedCity = window.cityPlacemarkMap[placemarkName];
-                    if (mappedCity) {
-                        const [lat, lng] = mappedCity.coordinates;
-                        map.setView([lat, lng], 11);
-                        
-                        if (cityMarkers[mappedCity.markerIndex]) {
-                            cityMarkers[mappedCity.markerIndex].openPopup();
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-        
-        map.setView([radioData.latitude, radioData.longitude], 8);
-    } else {
-        // Modo proposta: tentar encontrar a cidade em qualquer rádio
-        let cityFound = false;
-        
-        for (const radio of radioData.radios) {
-            if (radio.kmlPlacemarks && radio.kmlPlacemarks.length > 0) {
-                for (const placemark of radio.kmlPlacemarks) {
-                    const placemarkName = placemark.name.toLowerCase();
+        return;
+    }
+    
+    // Fallback para busca em placemarks
+    if (radioData.kmlPlacemarks && radioData.kmlPlacemarks.length > 0) {
+        for (let i = 0; i < radioData.kmlPlacemarks.length; i++) {
+            const placemark = radioData.kmlPlacemarks[i];
+            const placemarkName = placemark.name.toLowerCase();
+            
+            if (placemarkName.includes(cityBaseName) || cityBaseName.includes(placemarkName)) {
+                const mappedCity = window.cityPlacemarkMap[placemarkName];
+                if (mappedCity) {
+                    const [lat, lng] = mappedCity.coordinates;
                     
-                    if (placemarkName.includes(cityBaseName) || cityBaseName.includes(placemarkName)) {
-                        const [lat, lng] = placemark.coordinates;
-                        map.setView([lat, lng], 11);
-                        cityFound = true;
-                        break;
+                    map.flyTo([lat, lng], 11, {
+                        animate: true,
+                        duration: 1.5
+                    });
+                    
+                    if (cityMarkers[mappedCity.markerIndex]) {
+                        setTimeout(() => {
+                            cityMarkers[mappedCity.markerIndex].openPopup();
+                        }, 1000);
                     }
+                    return;
                 }
-                if (cityFound) break;
             }
-        }
-        
-        // Se não encontrou, centralizar na primeira rádio
-        if (!cityFound && radioData.radios.length > 0) {
-            const firstRadio = radioData.radios[0];
-            map.setView([firstRadio.latitude, firstRadio.longitude], 8);
         }
     }
+    
+    // Fallback final
+    map.flyTo([radioData.latitude, radioData.longitude], 8, {
+        animate: true,
+        duration: 1.5
+    });
 }
 
 function hideLoading() {
@@ -2847,17 +2898,30 @@ function updateCidadesListPropostaVisibility() {
     console.log('✅ Visibilidade da lista de cidades atualizada com eventos');
 }
 
+// =========================================================================
+// 🎯 CONFIGURAR EVENT LISTENERS PARA CIDADES E RÁDIOS (CORRIGIDA)
+// =========================================================================
 function setupCityItemEvents() {
+    console.log('🎯 Configurando event listeners...');
+    
     // Event listeners para clique nas cidades
     document.querySelectorAll('.cidade-item').forEach(item => {
         const cidadeNome = item.dataset.cidade;
         if (cidadeNome) {
-            item.addEventListener('click', function(event) {
+            // Remover listeners anteriores
+            item.removeEventListener('click', item._cityClickHandler);
+            
+            // Criar novo handler
+            item._cityClickHandler = function(event) {
                 // Verificar se o clique foi na logo da rádio
                 if (!event.target.closest('.radio-logo-cidade')) {
-                    highlightCityProposta(cidadeNome);
+                    console.log('🏙️ Clique na cidade:', cidadeNome);
+                    highlightCity(cidadeNome);
                 }
-            });
+            };
+            
+            // Adicionar novo listener
+            item.addEventListener('click', item._cityClickHandler);
         }
     });
     
@@ -2865,14 +2929,24 @@ function setupCityItemEvents() {
     document.querySelectorAll('.radio-logo-cidade').forEach(logo => {
         const radioIndex = parseInt(logo.dataset.radioIndex);
         if (!isNaN(radioIndex)) {
-            logo.addEventListener('click', function(event) {
+            // Remover listeners anteriores
+            logo.removeEventListener('click', logo._radioClickHandler);
+            
+            // Criar novo handler
+            logo._radioClickHandler = function(event) {
                 event.stopPropagation(); // Impedir propagação para o item da cidade
+                console.log('📻 Clique na rádio:', radioIndex);
                 centerMapOnRadioList(radioIndex);
-            });
+            };
+            
+            // Adicionar novo listener
+            logo.addEventListener('click', logo._radioClickHandler);
         }
     });
     
-    console.log('🎯 Event listeners configurados para cidades e rádios');
+    console.log('✅ Event listeners configurados para', 
+                document.querySelectorAll('.cidade-item').length, 'cidades e',
+                document.querySelectorAll('.radio-logo-cidade').length, 'rádios');
 }
 
 // =========================================================================
