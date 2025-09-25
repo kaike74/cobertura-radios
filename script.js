@@ -29,10 +29,11 @@ const RADIO_COLORS = [
 ];
 
 // =========================================================================
-// 📊 EXPORTAR PARA EXCEL (NOVA ESTRUTURA)
+// 📊 EXPORTAR PARA EXCEL (CORRIGIDA PARA AMBOS OS MODOS)
 // =========================================================================
 function exportToExcel() {
     console.log('📊 Iniciando exportação para Excel...');
+    console.log('📊 Modo atual:', isPropostaMode ? 'Proposta' : 'Individual');
     
     if (!filteredCities || filteredCities.length === 0) {
         alert('❌ Nenhuma cidade disponível para exportação.');
@@ -40,108 +41,205 @@ function exportToExcel() {
     }
     
     try {
-        // Preparar dados conforme nova estrutura
+        // Preparar dados conforme o modo
         const excelData = [];
         
-        // Cabeçalho
-        excelData.push(['UF', 'Cidade', 'Rádios que abrangem a praça']);
-        
-        // Processar cada cidade
-        filteredCities.forEach(cidade => {
-            // Filtrar apenas rádios ativas (se for modo proposta)
-            let radiosParaExportar = cidade.radios;
-            
-            if (isPropostaMode) {
-                radiosParaExportar = cidade.radios.filter(radio => 
-                    activeRadios[radio.originalIndex] && activeRadios[radio.originalIndex].active
-                );
-            }
-            
-            if (radiosParaExportar.length === 0) return;
-            
-            // Criar string das rádios no formato: "Rádio - Dial - Cidade de origem"
-            const radiosString = radiosParaExportar.map(radio => {
-                const nomeRadio = radio.name || 'Rádio Desconhecida';
-                const dial = radio.dial || 'N/A';
-                const cidadeOrigem = radio.praca || 'N/A';
-                
-                return `${nomeRadio} - ${dial} - ${cidadeOrigem}`;
-            }).join(', ');
-            
-            // Adicionar linha à planilha
-            excelData.push([
-                cidade.uf,           // Coluna A: UF
-                cidade.nome,         // Coluna B: Cidade (sem quilometragem)
-                radiosString         // Coluna C: Rádios que abrangem a praça
-            ]);
-        });
-        
-        console.log('📊 Dados preparados:', excelData.length - 1, 'cidades');
-        
-        // Criar workbook
-        const ws = XLSX.utils.aoa_to_sheet(excelData);
-        const wb = XLSX.utils.book_new();
-        
-        // Configurar larguras das colunas
-        ws['!cols'] = [
-            { wch: 8 },   // Coluna A (UF): 8 caracteres
-            { wch: 25 },  // Coluna B (Cidade): 25 caracteres
-            { wch: 60 }   // Coluna C (Rádios): 60 caracteres
-        ];
-        
-        // Estilizar cabeçalho
-        const headerStyle = {
-            font: { bold: true, color: { rgb: "FFFFFF" } },
-            fill: { fgColor: { rgb: "06055B" } },
-            alignment: { horizontal: "center", vertical: "center" }
-        };
-        
-        // Aplicar estilo ao cabeçalho
-        ['A1', 'B1', 'C1'].forEach(cell => {
-            if (ws[cell]) {
-                ws[cell].s = headerStyle;
-            }
-        });
-        
-        // Adicionar worksheet ao workbook
-        XLSX.utils.book_append_sheet(wb, ws, 'Cidades de Cobertura');
-        
-        // Gerar nome do arquivo
-        let fileName = 'cidades_cobertura';
-        
         if (isPropostaMode) {
-            fileName = 'proposta_cidades_cobertura';
-        } else if (radioData.name) {
-            const radioNameClean = radioData.name
-                .replace(/[^a-zA-Z0-9\s]/g, '')
-                .replace(/\s+/g, '_')
-                .toLowerCase();
-            fileName = `${radioNameClean}_cidades`;
+            // MODO PROPOSTA: Estrutura complexa com múltiplas rádios
+            exportPropostaMode(excelData);
+        } else {
+            // MODO INDIVIDUAL: Estrutura simples com uma rádio
+            exportIndividualMode(excelData);
         }
         
-        fileName += `_${new Date().toISOString().split('T')[0]}.xlsx`;
+        console.log('�� Dados preparados:', excelData.length - 1, 'cidades');
         
-        // Fazer download
-        XLSX.writeFile(wb, fileName);
-        
-        console.log('✅ Exportação concluída:', fileName);
-        
-        // Feedback visual
-        const exportBtn = document.querySelector('.excel-export-btn');
-        if (exportBtn) {
-            const originalText = exportBtn.textContent;
-            exportBtn.textContent = '✅ Exportado!';
-            exportBtn.style.background = 'var(--gradient-success)';
-            
-            setTimeout(() => {
-                exportBtn.textContent = originalText;
-                exportBtn.style.background = '';
-            }, 2000);
-        }
+        // Criar e baixar planilha
+        createAndDownloadExcel(excelData);
         
     } catch (error) {
         console.error('❌ Erro na exportação:', error);
         alert('❌ Erro ao exportar planilha. Verifique o console para mais detalhes.');
+    }
+}
+
+// =========================================================================
+// 📊 EXPORTAÇÃO MODO PROPOSTA
+// =========================================================================
+function exportPropostaMode(excelData) {
+    console.log('🏢 Exportando modo proposta...');
+    
+    // Cabeçalho
+    excelData.push(['UF', 'Cidade', 'Rádios que abrangem a praça']);
+    
+    // Processar cada cidade
+    filteredCities.forEach(cidade => {
+        // Verificar se cidade tem a estrutura esperada
+        if (!cidade.radios || !Array.isArray(cidade.radios)) {
+            console.warn('⚠️ Cidade sem estrutura de rádios:', cidade);
+            return;
+        }
+        
+        // Filtrar apenas rádios ativas
+        const radiosParaExportar = cidade.radios.filter(radio => 
+            activeRadios[radio.originalIndex] && activeRadios[radio.originalIndex].active
+        );
+        
+        if (radiosParaExportar.length === 0) return;
+        
+        // Criar string das rádios no formato: "Rádio - Dial - Cidade de origem"
+        const radiosString = radiosParaExportar.map(radio => {
+            const nomeRadio = radio.name || 'Rádio Desconhecida';
+            const dial = radio.dial || 'N/A';
+            const cidadeOrigem = radio.praca || 'N/A';
+            
+            return `${nomeRadio} - ${dial} - ${cidadeOrigem}`;
+        }).join(', ');
+        
+        // Adicionar linha à planilha
+        excelData.push([
+            cidade.uf || '',           // Coluna A: UF
+            cidade.nome || cidade.nomeCompleto || 'Cidade Desconhecida', // Coluna B: Cidade
+            radiosString               // Coluna C: Rádios que abrangem a praça
+        ]);
+    });
+    
+    console.log('✅ Modo proposta exportado:', excelData.length - 1, 'cidades');
+}
+
+// =========================================================================
+// 📊 EXPORTAÇÃO MODO INDIVIDUAL
+// =========================================================================
+function exportIndividualMode(excelData) {
+    console.log('📻 Exportando modo individual...');
+    
+    // Cabeçalho
+    excelData.push(['UF', 'Cidade', 'Rádio que abrange a praça']);
+    
+    // Processar cada cidade (que são strings simples no modo individual)
+    filteredCities.forEach(cidadeString => {
+        // Verificar se é string
+        if (typeof cidadeString !== 'string') {
+            console.warn('⚠️ Cidade não é string:', cidadeString);
+            return;
+        }
+        
+        // Processar string da cidade
+        const cidadeProcessada = processCityForExport(cidadeString);
+        
+        // Criar string da rádio no formato: "Rádio - Dial - Cidade de origem"
+        const radioString = `${radioData.name || 'Rádio Desconhecida'} - ${radioData.dial || 'N/A'} - ${radioData.praca || 'N/A'}`;
+        
+        // Adicionar linha à planilha
+        excelData.push([
+            cidadeProcessada.uf,        // Coluna A: UF
+            cidadeProcessada.nome,      // Coluna B: Cidade (sem quilometragem)
+            radioString                 // Coluna C: Rádio que abrange a praça
+        ]);
+    });
+    
+    console.log('✅ Modo individual exportado:', excelData.length - 1, 'cidades');
+}
+
+// =========================================================================
+// 🔧 PROCESSAR CIDADE PARA EXPORTAÇÃO (MODO INDIVIDUAL)
+// =========================================================================
+function processCityForExport(cidadeString) {
+    // Limpar distâncias duplicadas
+    const cleanCity = cleanDuplicateDistance(cidadeString);
+    
+    // Separar nome e UF
+    let nome = cleanCity;
+    let uf = radioData.uf || '';
+    
+    // Remover informações de distância entre parênteses
+    nome = nome.replace(/\s*\([^)]*\)\s*/g, '').trim();
+    
+    // Padrão: "Cidade - UF"
+    if (nome.includes(' - ')) {
+        const parts = nome.split(' - ');
+        nome = parts[0].trim();
+        uf = parts[1] ? parts[1].trim() : uf;
+    }
+    
+    return {
+        nome: nome,
+        uf: uf
+    };
+}
+
+// =========================================================================
+// 📊 CRIAR E BAIXAR PLANILHA EXCEL
+// =========================================================================
+function createAndDownloadExcel(excelData) {
+    // Criar workbook
+    const ws = XLSX.utils.aoa_to_sheet(excelData);
+    const wb = XLSX.utils.book_new();
+    
+    // Configurar larguras das colunas
+    ws['!cols'] = [
+        { wch: 8 },   // Coluna A (UF): 8 caracteres
+        { wch: 25 },  // Coluna B (Cidade): 25 caracteres
+        { wch: 60 }   // Coluna C (Rádios): 60 caracteres
+    ];
+    
+    // Estilizar cabeçalho
+    const headerStyle = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "06055B" } },
+        alignment: { horizontal: "center", vertical: "center" }
+    };
+    
+    // Aplicar estilo ao cabeçalho
+    ['A1', 'B1', 'C1'].forEach(cell => {
+        if (ws[cell]) {
+            ws[cell].s = headerStyle;
+        }
+    });
+    
+    // Adicionar worksheet ao workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Cidades de Cobertura');
+    
+    // Gerar nome do arquivo
+    let fileName = 'cidades_cobertura';
+    
+    if (isPropostaMode) {
+        fileName = 'proposta_cidades_cobertura';
+    } else if (radioData.name) {
+        const radioNameClean = radioData.name
+            .replace(/[^a-zA-Z0-9\s]/g, '')
+            .replace(/\s+/g, '_')
+            .toLowerCase();
+        fileName = `${radioNameClean}_cidades`;
+    }
+    
+    fileName += `_${new Date().toISOString().split('T')[0]}.xlsx`;
+    
+    // Fazer download
+    XLSX.writeFile(wb, fileName);
+    
+    console.log('✅ Exportação concluída:', fileName);
+    
+    // Feedback visual
+    showExportSuccess();
+}
+
+// =========================================================================
+// ✅ FEEDBACK VISUAL DE SUCESSO
+// =========================================================================
+function showExportSuccess() {
+    const exportBtn = document.querySelector('.excel-export-btn');
+    if (exportBtn) {
+        const originalText = exportBtn.textContent;
+        const originalStyle = exportBtn.style.background;
+        
+        exportBtn.textContent = '✅ Exportado!';
+        exportBtn.style.background = 'var(--gradient-success)';
+        
+        setTimeout(() => {
+            exportBtn.textContent = originalText;
+            exportBtn.style.background = originalStyle;
+        }, 2000);
     }
 }
 
@@ -3001,7 +3099,9 @@ function setupTooltipPositioning() {
 // Chamar a função após carregar a página
 document.addEventListener('DOMContentLoaded', setupTooltipPositioning);
 
-// =========================================================================
+/*Botão para alternar entre INDIVIDUAL e PROPOSTA no arquivo local
+
+//=========================================================================
 // 🔄 SISTEMA DE ALTERNÂNCIA DE MODOS (PARA DESENVOLVIMENTO)
 // =========================================================================
 
@@ -3291,4 +3391,4 @@ function createIndividualTestData() {
             { name: 'Joinville', coordinates: [-26.3044, -48.8456], description: '120.8 km' }
         ]
     };
-}
+} */
