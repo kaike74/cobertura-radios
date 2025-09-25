@@ -3001,3 +3001,294 @@ function setupTooltipPositioning() {
 // Chamar a função após carregar a página
 document.addEventListener('DOMContentLoaded', setupTooltipPositioning);
 
+// =========================================================================
+// 🔄 SISTEMA DE ALTERNÂNCIA DE MODOS (PARA DESENVOLVIMENTO)
+// =========================================================================
+
+// Adicionar botão de alternância após carregar a página
+document.addEventListener('DOMContentLoaded', () => {
+    // Aguardar um pouco para garantir que tudo carregou
+    setTimeout(() => {
+        addModeToggleButton();
+    }, 2000);
+});
+
+function addModeToggleButton() {
+    // Verificar se já existe o botão
+    if (document.getElementById('mode-toggle-btn')) return;
+    
+    // Criar botão
+    const toggleBtn = document.createElement('button');
+    toggleBtn.id = 'mode-toggle-btn';
+    toggleBtn.innerHTML = `
+        🔄 Alternar para ${isPropostaMode ? 'Individual' : 'Proposta'}
+    `;
+    toggleBtn.style.cssText = `
+        position: fixed;
+        top: 80px;
+        left: 20px;
+        z-index: 2000;
+        background: linear-gradient(135deg, #FC1E75 0%, #D71E97 100%);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 12px;
+        font-family: var(--font-primary);
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(252, 30, 117, 0.3);
+        transition: all 0.3s ease;
+    `;
+    
+    // Efeitos hover
+    toggleBtn.addEventListener('mouseenter', () => {
+        toggleBtn.style.transform = 'translateY(-2px)';
+        toggleBtn.style.boxShadow = '0 6px 20px rgba(252, 30, 117, 0.4)';
+    });
+    
+    toggleBtn.addEventListener('mouseleave', () => {
+        toggleBtn.style.transform = 'translateY(0)';
+        toggleBtn.style.boxShadow = '0 4px 15px rgba(252, 30, 117, 0.3)';
+    });
+    
+    // Ação do clique
+    toggleBtn.addEventListener('click', toggleMode);
+    
+    // Adicionar ao body
+    document.body.appendChild(toggleBtn);
+    
+    console.log('🔄 Botão de alternância adicionado');
+}
+
+function toggleMode() {
+    const currentMode = isPropostaMode ? 'proposta' : 'individual';
+    const newMode = isPropostaMode ? 'individual' : 'proposta';
+    
+    console.log(`🔄 Alternando de ${currentMode} para ${newMode}`);
+    
+    // Mostrar loading
+    showModeChangeLoading();
+    
+    // Aguardar um pouco e recarregar com dados do novo modo
+    setTimeout(() => {
+        switchToMode(newMode);
+    }, 500);
+}
+
+function showModeChangeLoading() {
+    // Criar overlay de loading
+    const overlay = document.createElement('div');
+    overlay.id = 'mode-change-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(6, 5, 91, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        font-family: var(--font-primary);
+        color: white;
+    `;
+    
+    overlay.innerHTML = `
+        <div style="text-align: center;">
+            <div style="width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+            <h3 style="margin: 0; font-size: 18px;">🔄 Alternando Modo...</h3>
+            <p style="margin: 8px 0 0 0; opacity: 0.8;">Aguarde um momento</p>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+}
+
+function switchToMode(newMode) {
+    // Limpar mapa e dados atuais
+    if (map) {
+        map.remove();
+        map = null;
+    }
+    
+    // Resetar arrays
+    radioMarkers = [];
+    coverageLayers = [];
+    cityMarkers = [];
+    allCities = [];
+    filteredCities = [];
+    activeRadios = [];
+    
+    // Alterar dados baseado no modo
+    if (newMode === 'proposta') {
+        // Simular dados de proposta
+        radioData = createPropostaTestData();
+        isPropostaMode = true;
+    } else {
+        // Simular dados individuais
+        radioData = createIndividualTestData();
+        isPropostaMode = false;
+    }
+    
+    // Remover overlay
+    const overlay = document.getElementById('mode-change-overlay');
+    if (overlay) overlay.remove();
+    
+    // Reinicializar
+    setTimeout(async () => {
+        try {
+            if (isPropostaMode) {
+                await initializePropostaMode();
+            } else {
+                await initializeIndividualMode();
+            }
+            
+            // Atualizar botão
+            const toggleBtn = document.getElementById('mode-toggle-btn');
+            if (toggleBtn) {
+                toggleBtn.innerHTML = `🔄 Alternar para ${isPropostaMode ? 'Individual' : 'Proposta'}`;
+            }
+            
+            console.log(`✅ Modo alterado para: ${newMode}`);
+            
+        } catch (error) {
+            console.error('❌ Erro ao alternar modo:', error);
+            alert('Erro ao alternar modo. Verifique o console.');
+        }
+    }, 100);
+}
+
+// =========================================================================
+// 🧪 DADOS DE TESTE PARA PROPOSTA
+// =========================================================================
+function createPropostaTestData() {
+    return {
+        type: 'proposta',
+        name: 'Proposta E-MÍDIAS',
+        source: 'example',
+        radios: [
+            {
+                name: 'RÁDIO EXEMPLO FM',
+                dial: '107.3',
+                latitude: -27.0965,
+                longitude: -48.8438,
+                radius: 50000,
+                region: 'Sul',
+                uf: 'SC',
+                praca: 'Florianópolis',
+                universo: 1061390,
+                pmm: 12886,
+                imageUrl: 'https://via.placeholder.com/56x56/06055B/white?text=107.3',
+                coverageType: 'circle',
+                notionId: 'radio-1',
+                cidades: [
+                    'Florianópolis - SC',
+                    'São José - SC',
+                    'Palhoça - SC',
+                    'Biguaçu - SC',
+                    'Santo Amaro da Imperatriz - SC'
+                ],
+                kmlPlacemarks: [
+                    { name: 'São José', coordinates: [-27.1173, -48.6167], description: '15.2 km' },
+                    { name: 'Palhoça', coordinates: [-27.6386, -48.6703], description: '22.8 km' },
+                    { name: 'Biguaçu', coordinates: [-27.4939, -48.6581], description: '18.5 km' }
+                ]
+            },
+            {
+                name: 'RÁDIO TESTE AM',
+                dial: '1200',
+                latitude: -26.9194,
+                longitude: -49.0661,
+                radius: 60000,
+                region: 'Sul',
+                uf: 'SC',
+                praca: 'Blumenau',
+                universo: 850000,
+                pmm: 8500,
+                imageUrl: 'https://via.placeholder.com/56x56/FC1E75/white?text=1200',
+                coverageType: 'circle',
+                notionId: 'radio-2',
+                cidades: [
+                    'Blumenau - SC',
+                    'Pomerode - SC',
+                    'Timbó - SC',
+                    'Indaial - SC'
+                ],
+                kmlPlacemarks: [
+                    { name: 'Pomerode', coordinates: [-26.7406, -49.1764], description: '12.1 km' },
+                    { name: 'Timbó', coordinates: [-26.8225, -49.2731], description: '18.7 km' },
+                    { name: 'Indaial', coordinates: [-26.8989, -49.2331], description: '15.3 km' }
+                ]
+            },
+            {
+                name: 'RÁDIO DEMO FM',
+                dial: '95.5',
+                latitude: -26.3044,
+                longitude: -48.8456,
+                radius: 45000,
+                region: 'Sul',
+                uf: 'SC',
+                praca: 'Joinville',
+                universo: 720000,
+                pmm: 9200,
+                imageUrl: 'https://via.placeholder.com/56x56/D71E97/white?text=95.5',
+                coverageType: 'circle',
+                notionId: 'radio-3',
+                cidades: [
+                    'Joinville - SC',
+                    'Araquari - SC',
+                    'Guaramirim - SC',
+                    'São Francisco do Sul - SC'
+                ],
+                kmlPlacemarks: [
+                    { name: 'Araquari', coordinates: [-26.3708, -48.7217], description: '14.8 km' },
+                    { name: 'Guaramirim', coordinates: [-26.4733, -49.0042], description: '19.2 km' }
+                ]
+            }
+        ]
+    };
+}
+
+// =========================================================================
+// 🧪 DADOS DE TESTE PARA INDIVIDUAL
+// =========================================================================
+function createIndividualTestData() {
+    return {
+        name: 'RÁDIO EXEMPLO FM',
+        dial: '107.3',
+        latitude: -27.0965,
+        longitude: -48.8438,
+        radius: 50000,
+        region: 'Sul',
+        uf: 'SC',
+        praca: 'Florianópolis',
+        universo: 1061390,
+        pmm: 12886,
+        imageUrl: 'https://via.placeholder.com/100x75/06055B/white?text=107.3',
+        coverageType: 'circle',
+        source: 'example',
+        type: 'individual',
+        cidades: [
+            'Florianópolis - SC',
+            'São José - SC',
+            'Palhoça - SC',
+            'Biguaçu - SC',
+            'Santo Amaro da Imperatriz - SC',
+            'Águas Mornas - SC',
+            'Antônio Carlos - SC',
+            'Governador Celso Ramos - SC',
+            'Blumenau - SC',
+            'Joinville - SC'
+        ],
+        kmlPlacemarks: [
+            { name: 'São José', coordinates: [-27.1173, -48.6167], description: '15.2 km' },
+            { name: 'Palhoça', coordinates: [-27.6386, -48.6703], description: '22.8 km' },
+            { name: 'Biguaçu', coordinates: [-27.4939, -48.6581], description: '18.5 km' },
+            { name: 'Santo Amaro da Imperatriz', coordinates: [-27.6889, -48.7806], description: '35.4 km' },
+            { name: 'Blumenau', coordinates: [-26.9194, -49.0661], description: '85.2 km' },
+            { name: 'Joinville', coordinates: [-26.3044, -48.8456], description: '120.8 km' }
+        ]
+    };
+}
